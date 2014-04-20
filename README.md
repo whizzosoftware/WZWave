@@ -1,7 +1,7 @@
 WZWave
 ======
 
-# Overview
+## Overview
 
 Note: The project is not affiliated or endorsed by Sigma Designs and none of their IP was used
 in the creation of this library.
@@ -25,18 +25,22 @@ and supports a limited number of Z-Wave devices. Device support will continue to
 WZwave uses the RXTX library to access the serial port, so you will need to have the appropriate
 native library for the platform you are running it on.
 
-# Mac RXTX Installation
+## Mac RXTX Installation
 
 1. Install the latest [Silicon Labs VCP driver](http://www.silabs.com/products/mcu/Pages/USBtoUARTBridgeVCPDrivers.aspx)
 driver from here.
 
 2. Make sure you have a ``librxtxSerial.jnilib`` in your ``/Library/Java/Extensions`` folder. If not, you can
-download the (Mac librxtx JNI library)[http://www.dominion-automation.com/downloads/librxtxSerial.jnilib.zip].
+download the [Mac librxtx JNI library](http://www.dominion-automation.com/downloads/librxtxSerial.jnilib.zip).
 
 3. Run:
 
+```
     $ sudo mkdir /var/lock
+```
 
 4. Run:
 
+```
     $ sudo chmod a+rw /var/lock
+```
