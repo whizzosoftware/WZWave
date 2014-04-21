@@ -86,6 +86,8 @@ public class VersionCommandClass extends CommandClass {
 
     @Override
     public void queueStartupMessages(byte nodeId, DataQueue queue) {
+        queue.queueDataFrame(createGet(nodeId));
+
         for (CommandClass commandClass : queue.getCommandClasses()) {
             if (commandClass.getMaxSupportedVersion() > 1) {
                 queue.queueDataFrame(createCommandClassGet(nodeId, commandClass.getId()));

@@ -7,10 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.node;
 
-import com.whizzosoftware.wzwave.commandclass.BasicCommandClass;
-import com.whizzosoftware.wzwave.commandclass.CommandClass;
-import com.whizzosoftware.wzwave.commandclass.CommandClassFactory;
-import com.whizzosoftware.wzwave.commandclass.DataQueue;
+import com.whizzosoftware.wzwave.commandclass.*;
 import com.whizzosoftware.wzwave.controller.serial.SerialZWaveController;
 import com.whizzosoftware.wzwave.frame.*;
 import com.whizzosoftware.wzwave.util.ByteUtil;
@@ -41,6 +38,10 @@ abstract public class ZWaveNode implements DataQueue {
     protected DataFrame lastSentData;
     private State state;
     private int stateRetries;
+    /**
+     * Indicates whether the Version command class has sent its startup messages
+     */
+    private boolean versionStartupMessagesSent;
 
     public ZWaveNode(byte nodeId, NodeProtocolInfo info) {
         this.nodeId = nodeId;
@@ -125,12 +126,25 @@ abstract public class ZWaveNode implements DataQueue {
      * @param controller the Controller instance (used for command sending)
      */
     public void runLoop(SerialZWaveController controller) {
+        // if the node is ready to retrieve command class versions, allow the command class to queue its messages
+        if (state == State.RetrieveVersionPending) {
+            CommandClass cc = commandClassMap.get(VersionCommandClass.ID);
+            cc.queueStartupMessages(getNodeId(), this);
+            setState(State.RetrieveVersionCompleted);
+            versionStartupMessagesSent = true;
+        }
+
         // if the node is ready to retrieve its state, queue all command class startup messages
-        if (state == State.RetrieveState) {
+        if (state == State.RetrieveStatePending) {
             for (CommandClass cc : commandClassMap.values()) {
-                cc.queueStartupMessages(getNodeId(), this);
+                // queue all command class startup messages
+                // note: if the Version command class hasn't queued its startup messages at this point, allow it to
+                //       do so -- otherwise, we prevent it from occurring twice
+                if (cc.getId() != VersionCommandClass.ID || !versionStartupMessagesSent) {
+                    cc.queueStartupMessages(getNodeId(), this);
+                }
             }
-            setState(State.Started);
+            setState(State.RetrieveStateCompleted);
         }
 
         // if we aren't waiting on a message response and there's a new request message queued, send it
@@ -139,6 +153,12 @@ abstract public class ZWaveNode implements DataQueue {
             logger.trace("Sending data frame to controller: {}", d);
             controller.sendDataFrame(d);
             lastSentData = d;
+        } else if (lastSentData == null && writeQueue.size() == 0) {
+            if (state == State.RetrieveVersionCompleted) {
+                setState(State.RetrieveStatePending);
+            } else if (state == State.RetrieveStateCompleted) {
+                setState(State.Started);
+            }
         }
     }
 
@@ -228,7 +248,7 @@ abstract public class ZWaveNode implements DataQueue {
                         stateRetries++;
                     } else {
                         logger.debug("No node information provided after {} retries; moving to next state", stateRetries);
-                        setState(State.RetrieveState);
+                        setState(State.RetrieveStatePending);
                     }
                 } else {
                     // check if there are optional command classes
@@ -243,7 +263,14 @@ abstract public class ZWaveNode implements DataQueue {
                             }
                         }
                     }
-                    setState(State.RetrieveState);
+                    // if this node has the Version command class, then we should retrieve version for information
+                    // for all command classes it supports
+                    if (getCommandClass(VersionCommandClass.ID) != null) {
+                        setState(State.RetrieveVersionPending);
+                    // otherwise, we assume all command classes are version 1 and move on
+                    } else {
+                        setState(State.RetrieveStatePending);
+                    }
                 }
                 break;
 
@@ -258,7 +285,10 @@ abstract public class ZWaveNode implements DataQueue {
 
     public enum State {
         NodeInfo,
-        RetrieveState,
+        RetrieveVersionPending,
+        RetrieveVersionCompleted,
+        RetrieveStatePending,
+        RetrieveStateCompleted,
         Started
     }
 }
