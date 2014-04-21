@@ -17,6 +17,7 @@ import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -85,7 +86,7 @@ abstract public class ZWaveNode implements DataQueue {
         return commandClassMap.containsKey(commandClassId);
     }
 
-    protected CommandClass getCommandClass(byte commandClassId) {
+    public CommandClass getCommandClass(byte commandClassId) {
         return commandClassMap.get(commandClassId);
     }
 
@@ -94,6 +95,10 @@ abstract public class ZWaveNode implements DataQueue {
             logger.debug("Registering command class: {}", commandClass.getName());
             commandClassMap.put(commandClassId, commandClass);
         }
+    }
+
+    public Collection<CommandClass> getCommandClasses() {
+        return commandClassMap.values();
     }
 
     protected void setState(State state) {

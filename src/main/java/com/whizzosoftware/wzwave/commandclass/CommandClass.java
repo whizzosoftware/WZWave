@@ -28,6 +28,15 @@ abstract public class CommandClass {
     }
 
     /**
+     * Returns the highest supported command class version
+     *
+     * @return the version
+     */
+    public int getMaxSupportedVersion() {
+        return 1;
+    }
+
+    /**
      * Sets the command class version
      *
      * @param version the version
@@ -44,7 +53,7 @@ abstract public class CommandClass {
     abstract public byte getId();
 
     /**
-     * Returns the command class name. This is primarily for loggin purposes.
+     * Returns the command class name. This is primarily for logging purposes.
      *
      * @return the name
      */

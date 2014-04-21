@@ -406,12 +406,5 @@ public class SerialZWaveController implements Runnable, ZWaveController, FrameLi
     public static void main(String[] args) throws Exception {
         SerialZWaveController c = new SerialZWaveController(new RXTXChannel("/dev/cu.SLAB_USBtoUART"), null);
         c.start();
-        boolean on = false;
-        Thread.sleep(10000);
-        while (true) {
-            on = !on;
-            c.sendDataFrame(BinarySwitchCommandClass.createSet((byte)20, on));
-            Thread.sleep(5000);
-        }
     }
 }
