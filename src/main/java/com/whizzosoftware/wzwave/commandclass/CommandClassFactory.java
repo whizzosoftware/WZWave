@@ -21,6 +21,8 @@ public class CommandClassFactory {
                 return new BatteryCommandClass();
             case BinarySensorCommandClass.ID:
                 return new BinarySensorCommandClass();
+            case BinarySwitchCommandClass.ID:
+                return new BinarySwitchCommandClass();
             case ManufacturerSpecificCommandClass.ID:
                 return new ManufacturerSpecificCommandClass();
             case MeterCommandClass.ID:
