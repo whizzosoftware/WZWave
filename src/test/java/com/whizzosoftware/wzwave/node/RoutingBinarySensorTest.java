@@ -23,7 +23,7 @@ public class RoutingBinarySensorTest {
         SerialZWaveController controller = new SerialZWaveController(new MockSerialChannel(), delegate, null);
 
         // discover a routing binary sensor
-        RoutingBinarySensor sensor = new RoutingBinarySensor((byte)0x09, (NodeProtocolInfo)listener.messages.get(0));
+        RoutingBinarySensor sensor = new RoutingBinarySensor((byte)0x09, (NodeProtocolInfo)listener.messages.get(0), null);
         controller.createNode(sensor);
         controller.process(System.currentTimeMillis());
 
@@ -37,7 +37,7 @@ public class RoutingBinarySensorTest {
         SerialZWaveController controller = new SerialZWaveController(new MockSerialChannel(), delegate, null);
 
         // discover a routing binary sensor
-        RoutingBinarySensor sensor = new RoutingBinarySensor((byte)0x09, new NodeProtocolInfo((byte)0x04, (byte)0x20, (byte)0x01, false));
+        RoutingBinarySensor sensor = new RoutingBinarySensor((byte)0x09, new NodeProtocolInfo((byte)0x04, (byte)0x20, (byte)0x01, false), null);
         controller.createNode(sensor);
         controller.process(System.currentTimeMillis());
 
@@ -70,14 +70,14 @@ public class RoutingBinarySensorTest {
     @Test
     public void testWakeupQueue() {
         // discover a routing binary sensor
-        RoutingBinarySensor sensor = new RoutingBinarySensor((byte)0x09, new NodeProtocolInfo((byte)0x04, (byte)0x20, (byte)0x01, false));
+        RoutingBinarySensor sensor = new RoutingBinarySensor((byte)0x09, new NodeProtocolInfo((byte)0x04, (byte)0x20, (byte)0x01, false), null);
 
         // make sure we have no messages waiting in the wakeup queue
         sensor.runLoop(null);
         assertEquals(0, sensor.getWakeupQueueCount());
 
         // put into started state & verify messages in wakeup queue
-        sensor.setState(ZWaveNode.State.RetrieveState);
+        sensor.setState(ZWaveNode.State.RetrieveStatePending);
         sensor.runLoop(null);
         assertEquals(2, sensor.getWakeupQueueCount());
 
@@ -103,7 +103,7 @@ public class RoutingBinarySensorTest {
         assertEquals(0, delegate.getFrameCount());
 
         // discover a routing binary sensor
-        controller.createNode(new RoutingBinarySensor((byte) 0x0D, new NodeProtocolInfo((byte) 0x04, (byte) 0x20, (byte) 0x01, false)));
+        controller.createNode(new RoutingBinarySensor((byte) 0x0D, new NodeProtocolInfo((byte) 0x04, (byte) 0x20, (byte) 0x01, false), null));
         controller.process(System.currentTimeMillis());
 
         /** RequestNodeInfo transaction start */

@@ -9,6 +9,8 @@ package com.whizzosoftware.wzwave.util;
 
 import com.whizzosoftware.wzwave.frame.Frame;
 
+import java.math.BigDecimal;
+
 /**
  * A utility class for various byte related functions.
  *
@@ -47,7 +49,16 @@ public class ByteUtil {
         return new String(hexChars);
     }
 
-    static public int convertTwoBytesToInt(byte b1, byte b2) {
-        return (b1 << 8) | (b2);
+    static public int convertTwoBytesToInt(byte msb, byte lsb) {
+        return (msb << 8) | (lsb);
+    }
+
+    static public double parseValue(byte[] b, int start, int length, int precision) {
+        long value = 0;
+        for (int i=start; i < start+length; i++) {
+            int shift = 8 * ((length - (i - start)) - 1);
+            value += b[i] << shift;
+        }
+        return new BigDecimal(value).movePointLeft(precision).doubleValue();
     }
 }

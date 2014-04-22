@@ -7,6 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.node.specific;
 
+import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.generic.MultilevelSwitch;
 import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
 
@@ -18,7 +19,7 @@ import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
 public class MultilevelPowerSwitch extends MultilevelSwitch {
     static public final byte ID = 0x01;
 
-    public MultilevelPowerSwitch(byte nodeId, NodeProtocolInfo info) {
-        super(nodeId, info);
+    public MultilevelPowerSwitch(byte nodeId, NodeProtocolInfo info, NodeListener listener) {
+        super(nodeId, info, listener);
     }
 }

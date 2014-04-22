@@ -17,7 +17,7 @@ public class BinarySwitchTest {
     public void testStart() {
         // create new binary switch
         // make sure it's set to listening to startup commands don't go to wakeup queue
-        BinarySwitch bs = new BinarySwitch((byte)0x01, new NodeProtocolInfo((byte)0x04, (byte)0x10, (byte)0x01, true));
+        BinarySwitch bs = new BinarySwitch((byte)0x01, new NodeProtocolInfo((byte)0x04, (byte)0x10, (byte)0x01, true), null);
         assertEquals(0, bs.getWakeupQueueCount());
         assertEquals(1, bs.getWriteQueueCount());
         assertTrue(bs.writeQueue.get(0) instanceof RequestNodeInfo);
@@ -29,7 +29,7 @@ public class BinarySwitchTest {
         SerialZWaveController controller = new SerialZWaveController(new MockSerialChannel(), delegate, null);
 
         // discover a routing binary sensor
-        BinarySwitch bswitch = new BinarySwitch((byte)0x01, new NodeProtocolInfo((byte)0x04, (byte)0x10, (byte)0x01, true));
+        BinarySwitch bswitch = new BinarySwitch((byte)0x01, new NodeProtocolInfo((byte)0x04, (byte)0x10, (byte)0x01, true), null);
         controller.createNode(bswitch);
         controller.process(System.currentTimeMillis());
 
@@ -40,7 +40,7 @@ public class BinarySwitchTest {
     @Test
     public void testBasicReportMapping() {
         // create new binary switch
-        BinarySwitch bs = new BinarySwitch((byte)0x01, new NodeProtocolInfo((byte)0x04, (byte)0x10, (byte)0x01, false));
+        BinarySwitch bs = new BinarySwitch((byte)0x01, new NodeProtocolInfo((byte)0x04, (byte)0x10, (byte)0x01, false), null);
 
         // assert that the new switch has the appropriate command classes and its initial values are null (undefined)
         assertTrue(bs.hasCommandClass(BinarySwitchCommandClass.ID));
@@ -60,7 +60,7 @@ public class BinarySwitchTest {
     @Test
     public void testBinarySwitchReport() {
         // create new binary switch
-        BinarySwitch bs = new BinarySwitch((byte)0x01, new NodeProtocolInfo((byte)0x04, (byte)0x10, (byte)0x01, false));
+        BinarySwitch bs = new BinarySwitch((byte)0x01, new NodeProtocolInfo((byte)0x04, (byte)0x10, (byte)0x01, false), null);
 
         // assert that the new switch has the appropriate command class and its initial value is null (undefined)
         assertTrue(bs.hasCommandClass(BinarySwitchCommandClass.ID));

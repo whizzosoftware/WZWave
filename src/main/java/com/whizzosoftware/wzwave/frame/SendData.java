@@ -38,6 +38,7 @@ public class SendData extends DataFrame {
 
         this.name = name;
         this.sendData = data;
+        this.nodeId = nodeId;
         this.isResponseExpected = isResponseExpected;
 
         byte b[] = new byte[data.length + 4];
@@ -82,6 +83,10 @@ public class SendData extends DataFrame {
 
     public Byte getCallbackId() {
         return callbackId;
+    }
+
+    public byte[] getSendData() {
+        return sendData;
     }
 
     public String toString() {

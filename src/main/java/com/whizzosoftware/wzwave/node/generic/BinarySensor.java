@@ -10,6 +10,7 @@ package com.whizzosoftware.wzwave.node.generic;
 import com.whizzosoftware.wzwave.commandclass.BasicCommandClass;
 import com.whizzosoftware.wzwave.commandclass.BinarySensorCommandClass;
 import com.whizzosoftware.wzwave.commandclass.CommandClass;
+import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.ZWaveNode;
 import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
 
@@ -23,8 +24,8 @@ public class BinarySensor extends ZWaveNode {
 
     private Byte value = null;
 
-    public BinarySensor(byte nodeId, NodeProtocolInfo info) {
-        super(nodeId, info);
+    public BinarySensor(byte nodeId, NodeProtocolInfo info, NodeListener listener) {
+        super(nodeId, info, listener);
 
         addCommandClass(BasicCommandClass.ID, new BasicCommandClass());
         addCommandClass(BinarySensorCommandClass.ID, new BinarySensorCommandClass());
@@ -40,7 +41,7 @@ public class BinarySensor extends ZWaveNode {
 
     @Override
     protected void refresh(boolean deferIfNotListening) {
-        queueDataFrame(BinarySensorCommandClass.createGet(getNodeId()));
+        queueDataFrame(BinarySensorCommandClass.createGetv1(getNodeId()));
     }
 
     public Boolean isSensorIdle() {

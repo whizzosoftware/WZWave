@@ -7,6 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.node.generic;
 
+import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.ZWaveNode;
 import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
 import org.slf4j.Logger;
@@ -22,8 +23,8 @@ public class StaticController extends ZWaveNode {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public StaticController(byte nodeId, NodeProtocolInfo info) {
-        super(nodeId, info);
+    public StaticController(byte nodeId, NodeProtocolInfo info, NodeListener listener) {
+        super(nodeId, info, listener);
     }
 
     @Override

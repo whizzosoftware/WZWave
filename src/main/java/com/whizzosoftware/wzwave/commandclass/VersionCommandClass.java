@@ -9,6 +9,7 @@ package com.whizzosoftware.wzwave.commandclass;
 
 import com.whizzosoftware.wzwave.frame.DataFrame;
 import com.whizzosoftware.wzwave.frame.ApplicationCommand;
+import com.whizzosoftware.wzwave.node.NodeContext;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +56,7 @@ public class VersionCommandClass extends CommandClass {
     }
 
     @Override
-    public void onDataFrame(DataFrame m, DataQueue queue) {
+    public void onDataFrame(DataFrame m, NodeContext context) {
         if (m instanceof ApplicationCommand) {
             ApplicationCommand cmd = (ApplicationCommand)m;
             byte[] ccb = cmd.getCommandClassBytes();
@@ -65,16 +66,16 @@ public class VersionCommandClass extends CommandClass {
                 protocol = String.format("%d.%2d", ccb[startIndex + 1], ccb[startIndex + 2]);
                 application = String.format("%d.%2d", ccb[startIndex + 3], ccb[startIndex + 4]);
             } else if (ccb[1] == VERSION_COMMAND_CLASS_REPORT) {
-                CommandClass cc = queue.getCommandClass(ccb[2]);
+                CommandClass cc = context.getCommandClass(ccb[2]);
                 if (cc != null) {
                     logger.debug(
                         "Setting command class {} to version {}",
-                        ByteUtil.createString(ccb[2]),
+                        cc.getName(),
                         ByteUtil.createString(ccb[3])
                     );
                     cc.setVersion(ccb[3]);
                 } else {
-                    logger.error("Recieved version for unknown command class: {}", ByteUtil.createString(ccb[2]));
+                    logger.error("Received version for unknown command class: {}", ByteUtil.createString(ccb[2]));
                 }
             } else {
                 logger.warn("Ignoring unsupported message: " + m);
@@ -85,17 +86,21 @@ public class VersionCommandClass extends CommandClass {
     }
 
     @Override
-    public void queueStartupMessages(byte nodeId, DataQueue queue) {
-        queue.queueDataFrame(createGet(nodeId));
+    public void queueStartupMessages(byte nodeId, NodeContext context) {
+        // get the device version
+        context.queueDataFrame(createGetv1(nodeId));
 
-        for (CommandClass commandClass : queue.getCommandClasses()) {
+        // check each command class the node has...
+        for (CommandClass commandClass : context.getCommandClasses()) {
+            // if this library supports more than one version of the command class, query for the version the
+            // device supports
             if (commandClass.getMaxSupportedVersion() > 1) {
-                queue.queueDataFrame(createCommandClassGet(nodeId, commandClass.getId()));
+                context.queueDataFrame(createCommandClassGetv1(nodeId, commandClass.getId()));
             }
         }
     }
 
-    static public DataFrame createGet(byte nodeId) {
+    static public DataFrame createGetv1(byte nodeId) {
         return createSendDataFrame(
             "VERSION_GET",
             nodeId,
@@ -107,7 +112,7 @@ public class VersionCommandClass extends CommandClass {
         );
     }
 
-    static public DataFrame createCommandClassGet(byte nodeId, byte commandClass) {
+    static public DataFrame createCommandClassGetv1(byte nodeId, byte commandClass) {
         return createSendDataFrame(
             "VERSION_COMMAND_CLASS_GET",
             nodeId,

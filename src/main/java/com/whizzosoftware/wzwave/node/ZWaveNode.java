@@ -24,7 +24,7 @@ import java.util.Map;
  *
  * @author Dan Noguerol
  */
-abstract public class ZWaveNode implements DataQueue {
+abstract public class ZWaveNode implements NodeContext {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private byte nodeId;
@@ -42,9 +42,11 @@ abstract public class ZWaveNode implements DataQueue {
      * Indicates whether the Version command class has sent its startup messages
      */
     private boolean versionStartupMessagesSent;
+    private NodeListener listener;
 
-    public ZWaveNode(byte nodeId, NodeProtocolInfo info) {
+    public ZWaveNode(byte nodeId, NodeProtocolInfo info, NodeListener listener) {
         this.nodeId = nodeId;
+        this.listener = listener;
         setState(State.NodeInfo);
 
         basicDeviceClass = info.getBasicDeviceClass();
@@ -87,6 +89,10 @@ abstract public class ZWaveNode implements DataQueue {
         return commandClassMap.containsKey(commandClassId);
     }
 
+    public Collection<CommandClass> getCommandClasses() {
+        return commandClassMap.values();
+    }
+
     public CommandClass getCommandClass(byte commandClassId) {
         return commandClassMap.get(commandClassId);
     }
@@ -98,14 +104,14 @@ abstract public class ZWaveNode implements DataQueue {
         }
     }
 
-    public Collection<CommandClass> getCommandClasses() {
-        return commandClassMap.values();
-    }
-
     protected void setState(State state) {
-        logger.debug("Node " + getNodeId() + " changing to state: {}", state);
+        logger.debug("Node {} changing to state: {}", getNodeId(), state);
         this.state = state;
         this.stateRetries = 0;
+
+        if (state == State.Started && listener != null) {
+            listener.onNodeStarted(this);
+        }
     }
 
     abstract protected void refresh(boolean deferIfNotListening);
@@ -116,6 +122,10 @@ abstract public class ZWaveNode implements DataQueue {
 
     public int getWakeupQueueCount() {
         return wakeupQueue.size();
+    }
+
+    public boolean hasPendingTransaction() {
+        return (lastSentData != null);
     }
 
     /**
@@ -139,7 +149,7 @@ abstract public class ZWaveNode implements DataQueue {
             for (CommandClass cc : commandClassMap.values()) {
                 // queue all command class startup messages
                 // note: if the Version command class hasn't queued its startup messages at this point, allow it to
-                //       do so -- otherwise, we prevent it from occurring twice
+                //       do so -- otherwise, prevent it from occurring twice
                 if (cc.getId() != VersionCommandClass.ID || !versionStartupMessagesSent) {
                     cc.queueStartupMessages(getNodeId(), this);
                 }
@@ -148,12 +158,12 @@ abstract public class ZWaveNode implements DataQueue {
         }
 
         // if we aren't waiting on a message response and there's a new request message queued, send it
-        if (lastSentData == null && writeQueue.size() > 0) {
+        if (!hasPendingTransaction() && getWriteQueueCount() > 0) {
             DataFrame d = writeQueue.pop();
             logger.trace("Sending data frame to controller: {}", d);
             controller.sendDataFrame(d);
             lastSentData = d;
-        } else if (lastSentData == null && writeQueue.size() == 0) {
+        } else if (!hasPendingTransaction() && getWriteQueueCount() == 0) {
             if (state == State.RetrieveVersionCompleted) {
                 setState(State.RetrieveStatePending);
             } else if (state == State.RetrieveStateCompleted) {

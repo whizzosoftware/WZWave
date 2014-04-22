@@ -72,7 +72,7 @@ public class SerialZWaveControllerTest {
         SerialZWaveController c = new SerialZWaveController(new MockSerialChannel(), wd, null);
         long sendTime = System.currentTimeMillis();
 
-        c.sendDataFrame(BinarySwitchCommandClass.createSet((byte) 0x02, true));
+        c.sendDataFrame(BinarySwitchCommandClass.createSetv1((byte) 0x02, true));
         c.process(System.currentTimeMillis());
         assertEquals(1, wd.getFrameCount());
         c.process(System.currentTimeMillis());
@@ -95,7 +95,7 @@ public class SerialZWaveControllerTest {
         assertEquals(1, wd.getFrameCount());
 
         // queue up and process another message
-        DataFrame request2 = BinarySwitchCommandClass.createGet((byte) 0x02);
+        DataFrame request2 = BinarySwitchCommandClass.createGetv1((byte) 0x02);
         c.sendDataFrame(request2);
         c.process(System.currentTimeMillis());
         // make sure it wasn't sent

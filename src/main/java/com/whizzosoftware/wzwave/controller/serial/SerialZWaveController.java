@@ -8,7 +8,9 @@
 package com.whizzosoftware.wzwave.controller.serial;
 
 import com.whizzosoftware.wzwave.commandclass.BinarySwitchCommandClass;
+import com.whizzosoftware.wzwave.commandclass.MultiInstanceCommandClass;
 import com.whizzosoftware.wzwave.controller.*;
+import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.ZWaveNode;
 import com.whizzosoftware.wzwave.node.ZWaveNodeFactory;
 import com.whizzosoftware.wzwave.frame.*;
@@ -25,7 +27,7 @@ import java.util.*;
  *
  * @author Dan Noguerol
  */
-public class SerialZWaveController implements Runnable, ZWaveController, FrameListener {
+public class SerialZWaveController implements Runnable, ZWaveController, FrameListener, NodeListener {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private SerialChannel serialChannel;
@@ -201,6 +203,14 @@ public class SerialZWaveController implements Runnable, ZWaveController, FrameLi
         readQueue.add(frame);
     }
 
+    @Override
+    public void onNodeStarted(ZWaveNode node) {
+        // when a node moves to the "started" state, alert listeners that it's ready to be added
+        if (listener != null) {
+            listener.onZWaveNodeAdded(node);
+        }
+    }
+
     synchronized public void process(long now) {
         // process any new data frames that were received
         if (readQueue.size() > 0) {
@@ -254,9 +264,6 @@ public class SerialZWaveController implements Runnable, ZWaveController, FrameLi
             logger.debug("Created node [" + node.getNodeId() + "]: " + node);
             nodes.add(node);
             nodeMap.put(node.getNodeId(), node);
-            if (listener != null) {
-                listener.onZWaveNodeAdded(node);
-            }
             return true;
         }
         return false;
@@ -336,7 +343,7 @@ public class SerialZWaveController implements Runnable, ZWaveController, FrameLi
         }
         if (nodeId != null) {
             logger.debug("Received protocol info for node " + nodeId);
-            if (!createNode(ZWaveNodeFactory.createNode(nodeId, nodeProtocolInfo))) {
+            if (!createNode(ZWaveNodeFactory.createNode(nodeId, nodeProtocolInfo, this))) {
                 logger.error("Unable to create node: " + nodeProtocolInfo);
             }
         } else {

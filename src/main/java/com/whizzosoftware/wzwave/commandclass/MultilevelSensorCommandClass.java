@@ -8,6 +8,7 @@
 package com.whizzosoftware.wzwave.commandclass;
 
 import com.whizzosoftware.wzwave.frame.DataFrame;
+import com.whizzosoftware.wzwave.node.NodeContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,16 +38,16 @@ public class MultilevelSensorCommandClass extends CommandClass {
     }
 
     @Override
-    public void onDataFrame(DataFrame m, DataQueue queue) {
+    public void onDataFrame(DataFrame m, NodeContext context) {
         logger.debug("onDataFrame()");
     }
 
     @Override
-    public void queueStartupMessages(byte nodeId, DataQueue queue) {
-        queue.queueDataFrame(createGet(nodeId));
+    public void queueStartupMessages(byte nodeId, NodeContext context) {
+        context.queueDataFrame(createGetv1(nodeId));
     }
 
-    static public DataFrame createGet(byte nodeId) {
+    static public DataFrame createGetv1(byte nodeId) {
         return createSendDataFrame("SENSOR_MULTILEVEL_GET", nodeId, new byte[]{MultilevelSensorCommandClass.ID, SENSOR_MULTILEVEL_GET}, true);
     }
 }

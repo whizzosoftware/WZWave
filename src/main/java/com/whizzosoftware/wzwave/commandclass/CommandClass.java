@@ -9,6 +9,7 @@ package com.whizzosoftware.wzwave.commandclass;
 
 import com.whizzosoftware.wzwave.frame.DataFrame;
 import com.whizzosoftware.wzwave.frame.SendData;
+import com.whizzosoftware.wzwave.node.NodeContext;
 
 /**
  * Abstract base class for all Command classes
@@ -63,18 +64,18 @@ abstract public class CommandClass {
      * Callback for a DataFrame being received for this command class.
      *
      * @param dataFrame the data frame
-     * @param queue the DataQueue to use when processing the data frame
+     * @param context the NodeContext for the new data frame
      */
-    abstract public void onDataFrame(DataFrame dataFrame, DataQueue queue);
+    abstract public void onDataFrame(DataFrame dataFrame, NodeContext context);
 
     /**
      * Give the command class the opportunity to queue up any data frames it
      * needs to send at startup time (e.g. to request it's current state)
      *
      * @param nodeId the destination node ID
-     * @param queue the DataQueue to use when adding data frames
+     * @param context the NodeContext to use when queueing additional data frames, etc.
      */
-    abstract public void queueStartupMessages(byte nodeId, DataQueue queue);
+    abstract public void queueStartupMessages(byte nodeId, NodeContext context);
 
     /**
      * Convenience method for creating SendData frames

@@ -24,42 +24,42 @@ import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
  */
 public class ZWaveNodeFactory {
 
-    public static ZWaveNode createNode(byte nodeId, NodeProtocolInfo info) {
+    public static ZWaveNode createNode(byte nodeId, NodeProtocolInfo info, NodeListener listener) {
         switch (info.getGenericDeviceClass()) {
 
             case StaticController.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     case PCController.ID:
-                        return new PCController(nodeId, info);
+                        return new PCController(nodeId, info, listener);
                     default:
-                        return new StaticController(nodeId, info);
+                        return new StaticController(nodeId, info, listener);
                 }
             }
 
             case BinarySensor.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     case RoutingBinarySensor.ID:
-                        return new RoutingBinarySensor(nodeId, info);
+                        return new RoutingBinarySensor(nodeId, info, listener);
                     default:
-                        return new BinarySensor(nodeId, info);
+                        return new BinarySensor(nodeId, info, listener);
                 }
             }
 
             case BinarySwitch.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     case BinaryPowerSwitch.ID:
-                        return new BinaryPowerSwitch(nodeId, info);
+                        return new BinaryPowerSwitch(nodeId, info, listener);
                     default:
-                        return new BinarySwitch(nodeId, info);
+                        return new BinarySwitch(nodeId, info, listener);
                 }
             }
 
             case MultilevelSwitch.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     case MultilevelPowerSwitch.ID:
-                        return new MultilevelPowerSwitch(nodeId, info);
+                        return new MultilevelPowerSwitch(nodeId, info, listener);
                     default:
-                        return new MultilevelSwitch(nodeId, info);
+                        return new MultilevelSwitch(nodeId, info, listener);
                 }
             }
 

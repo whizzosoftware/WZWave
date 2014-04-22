@@ -5,19 +5,27 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
-package com.whizzosoftware.wzwave.commandclass;
+package com.whizzosoftware.wzwave.node;
 
+import com.whizzosoftware.wzwave.commandclass.CommandClass;
 import com.whizzosoftware.wzwave.frame.DataFrame;
 
 import java.util.Collection;
 
 /**
- * An interface passed to command classes to allow them to send data frames. This makes
+ * An interface passed to command classes to allow them to interact with their node. This makes
  * unit testing a lot easier.
  *
  * @author Dan Noguerol
  */
-public interface DataQueue {
+public interface NodeContext {
+    /**
+     * Returns the node ID.
+     *
+     * @return a node ID
+     */
+    public byte getNodeId();
+
     /**
      * Queue a data frame for sending.
      *

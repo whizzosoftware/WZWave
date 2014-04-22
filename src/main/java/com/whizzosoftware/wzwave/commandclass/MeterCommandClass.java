@@ -9,6 +9,7 @@ package com.whizzosoftware.wzwave.commandclass;
 
 import com.whizzosoftware.wzwave.frame.ApplicationCommand;
 import com.whizzosoftware.wzwave.frame.DataFrame;
+import com.whizzosoftware.wzwave.node.NodeContext;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,16 +26,23 @@ public class MeterCommandClass extends CommandClass {
 
     public static final byte ID = 0x32;
 
-    public static final byte SCALE_KWH = 0x00;
-    public static final byte SCALE_KVAH = 0x01;
-    public static final byte SCALE_W = 0x02;
-    public static final byte SCALE_PULSES = 0x03;
-    public static final byte SCALE_V = 0x04;
-    public static final byte SCALE_A = 0x05;
-    public static final byte SCALE_POWER_FACTOR = 0x06;
+    public static final byte SCALE_ELECTRIC_KWH = 0x00;
+    public static final byte SCALE_ELECTRIC_KVAH = 0x01;
+    public static final byte SCALE_ELECTRIC_W = 0x02;
+    public static final byte SCALE_ELECTRIC_PULSES = 0x03;
+    public static final byte SCALE_GAS_CUBIC_M = 0x00;
+    public static final byte SCALE_GAS_CUBIC_FT = 0x01;
+    public static final byte SCALE_GAS_PULSES = 0x03;
+    public static final byte SCALE_WATER_CUBIC_M = 0x00;
+    public static final byte SCALE_WATER_CUBIC_FT = 0x01;
+    public static final byte SCALE_WATER_US_GAL = 0x02;
+    public static final byte SCALE_WATER_PULSES = 0x03;
 
     private static final byte METER_GET = 0x01;
     private static final byte METER_REPORT = 0x02;
+    private static final byte METER_SUPPORTED_GET = 0x03;
+    private static final byte METER_SUPPORTED_REPORT = 0x04;
+    private static final byte METER_RESET = 0x05;
 
     private MeterType type;
     private Double currentValue;
@@ -49,6 +57,11 @@ public class MeterCommandClass extends CommandClass {
     @Override
     public String getName() {
         return "COMMAND_CLASS_METER";
+    }
+
+    @Override
+    public int getMaxSupportedVersion() {
+        return 2;
     }
 
     public MeterType getMeterType() {
@@ -68,41 +81,14 @@ public class MeterCommandClass extends CommandClass {
     }
 
     @Override
-    public void onDataFrame(DataFrame m, DataQueue queue) {
+    public void onDataFrame(DataFrame m, NodeContext context) {
         if (m instanceof ApplicationCommand) {
             ApplicationCommand cmd = (ApplicationCommand)m;
             byte[] ccb = cmd.getCommandClassBytes();
 
             if (ccb[1] == METER_REPORT) {
-                // meter type
-                switch (ccb[2] & 0x1f) {
-                    case 1:
-                        type = MeterType.Electric;
-                        break;
-                    case 2:
-                        type = MeterType.Gas;
-                        break;
-                    case 3:
-                        type = MeterType.Water;
-                        break;
-                }
-
-                logger.debug("Received {} meter report: {}", type, ByteUtil.createString(ccb, ccb.length));
-
-                // determine precision, scale and size
-                int precision = (ccb[3] >> 5) & 0x03;
-                int scale = (ccb[3] >> 3) & 0x03; // accumulated (0x00) or instant measured (0x02)
-                int size = ccb[3] & 0x07;
-                logger.trace("precision: {}, size: {}, scale: {}", precision, size, scale);
-
-                // determine current value
-                currentValue = parseValue(ccb, 4, size, precision);
-                logger.debug("Current value is {}kWh", currentValue);
-
-                // determine previous value
-                previousValue = parseValue(ccb, 6 + size, size, precision);
-                delta = ((ccb[size+4] << 8) & 0xFF00) | (ccb[size+5] & 0xFF);
-                logger.debug("Previous value was {}kWh received {} seconds ago", previousValue, delta);
+                logger.debug("Received meter report: {}", ByteUtil.createString(ccb, ccb.length));
+                parseMeterReport(ccb, getVersion());
             } else {
                 logger.warn("Ignoring unsupported message: {}", m);
             }
@@ -112,21 +98,58 @@ public class MeterCommandClass extends CommandClass {
     }
 
     @Override
-    public void queueStartupMessages(byte nodeId, DataQueue queue) {
-        queue.queueDataFrame(createGet(nodeId));
-    }
-
-    private double parseValue(byte[] b, int start, int length, int precision) {
-        double value = 0.0;
-        for (int i=start; i < start+length; i++) {
-            int shift = 8 * ((length - (i - start)) - 1);
-            value += b[i] << shift;
+    public void queueStartupMessages(byte nodeId, NodeContext context) {
+        if (getVersion() == 1) {
+            context.queueDataFrame(createGetv1(nodeId));
+        } else {
+            context.queueDataFrame(createGetv2(nodeId, (byte)0x00));
         }
-        return new BigDecimal(value).movePointLeft(precision).doubleValue();
     }
 
-    static public DataFrame createGet(byte nodeId) {
-        return createSendDataFrame("METER_GET", nodeId, new byte[] {MeterCommandClass.ID, METER_GET, 0x00}, true);
+    private void parseMeterReport(byte[] ccb, int version) {
+        // read meter type
+        int meterType = ccb[2];
+        if (version == 2) {
+            meterType = ccb[2] & 0x1F;
+        }
+        switch (meterType) {
+            case 1:
+                type = MeterType.Electric;
+                break;
+            case 2:
+                type = MeterType.Gas;
+                break;
+            case 3:
+                type = MeterType.Water;
+                break;
+        }
+
+        // read precision, scale and size
+        int precision = (ccb[3] >> 5) & 0x07;
+        int scale = (ccb[3] >> 3) & 0x03;
+        int size = ccb[3] & 0x07;
+        logger.debug("{} meter precision: {}, size: {}, scale: {}", type, precision, size, scale);
+
+        // determine current value
+        currentValue = ByteUtil.parseValue(ccb, 4, size, precision);
+        logger.debug("Current value is {}", currentValue);
+
+        if (version == 2) {
+            // read previous value
+            previousValue = ByteUtil.parseValue(ccb, 6 + size, size, precision);
+            // read delta
+            delta = ((ccb[size + 4] << 8) & 0xFF00) | (ccb[size + 5] & 0xFF);
+            logger.debug("Previous value was {} received {} seconds ago", previousValue, delta);
+        }
+    }
+
+    static public DataFrame createGetv1(byte nodeId) {
+        return createSendDataFrame("METER_GET", nodeId, new byte[] {MeterCommandClass.ID, METER_GET}, true);
+    }
+
+    static public DataFrame createGetv2(byte nodeId, byte scale) {
+        byte b = (byte)((scale << 3) & 0x18);
+        return createSendDataFrame("METER_GET", nodeId, new byte[] {MeterCommandClass.ID, METER_GET, b}, true);
     }
 
     public enum MeterType {

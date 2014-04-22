@@ -9,6 +9,7 @@ package com.whizzosoftware.wzwave.commandclass;
 
 import com.whizzosoftware.wzwave.frame.DataFrame;
 import com.whizzosoftware.wzwave.frame.ApplicationCommand;
+import com.whizzosoftware.wzwave.node.NodeContext;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,7 @@ public class MultilevelSwitchCommandClass extends CommandClass {
     }
 
     @Override
-    public void onDataFrame(DataFrame m, DataQueue queue) {
+    public void onDataFrame(DataFrame m, NodeContext context) {
         if (m instanceof ApplicationCommand) {
             ApplicationCommand cmd = (ApplicationCommand)m;
             byte[] ccb = cmd.getCommandClassBytes();
@@ -64,15 +65,15 @@ public class MultilevelSwitchCommandClass extends CommandClass {
     }
 
     @Override
-    public void queueStartupMessages(byte nodeId, DataQueue queue) {
-        queue.queueDataFrame(createGet(nodeId));
+    public void queueStartupMessages(byte nodeId, NodeContext context) {
+        context.queueDataFrame(createGetv1(nodeId));
     }
 
-    static public DataFrame createSet(byte nodeId, byte level) {
+    static public DataFrame createSetv1(byte nodeId, byte level) {
         return createSendDataFrame("SWITCH_MULTILEVEL_SET", nodeId, new byte[]{MultilevelSwitchCommandClass.ID, SWITCH_MULTILEVEL_SET, level}, false);
     }
 
-    static public DataFrame createGet(byte nodeId) {
+    static public DataFrame createGetv1(byte nodeId) {
         return createSendDataFrame("SWITCH_MULTILEVEL_GET", nodeId, new byte[]{MultilevelSwitchCommandClass.ID, SWITCH_MULTILEVEL_GET}, true);
     }
 }
