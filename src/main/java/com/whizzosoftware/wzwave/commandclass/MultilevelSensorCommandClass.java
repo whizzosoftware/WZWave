@@ -38,7 +38,7 @@ public class MultilevelSensorCommandClass extends CommandClass {
     }
 
     @Override
-    public void onDataFrame(DataFrame m, NodeContext context) {
+    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
         logger.debug("onDataFrame()");
     }
 

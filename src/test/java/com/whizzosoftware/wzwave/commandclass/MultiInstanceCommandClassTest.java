@@ -9,7 +9,7 @@ public class MultiInstanceCommandClassTest {
     @Test
     public void testCommandEncapsulation() {
         DataFrame cmd = BinarySwitchCommandClass.createSetv1((byte)22, true);
-        DataFrame ecmd = MultiInstanceCommandClass.createMultiChannelCmdEncapv2((byte)1, (byte)3, (SendData)cmd);
+        DataFrame ecmd = MultiInstanceCommandClass.createMultiChannelCmdEncapv2((byte)1, (byte)3, cmd, true);
         byte[] data = ecmd.getBytes();
         assertEquals(16, data.length);
         assertEquals(0x01, data[0]); // SOF

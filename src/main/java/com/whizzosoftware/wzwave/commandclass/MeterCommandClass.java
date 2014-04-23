@@ -7,14 +7,11 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.commandclass;
 
-import com.whizzosoftware.wzwave.frame.ApplicationCommand;
 import com.whizzosoftware.wzwave.frame.DataFrame;
 import com.whizzosoftware.wzwave.node.NodeContext;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.math.BigDecimal;
 
 /**
  * Meter command class
@@ -81,19 +78,12 @@ public class MeterCommandClass extends CommandClass {
     }
 
     @Override
-    public void onDataFrame(DataFrame m, NodeContext context) {
-        if (m instanceof ApplicationCommand) {
-            ApplicationCommand cmd = (ApplicationCommand)m;
-            byte[] ccb = cmd.getCommandClassBytes();
-
-            if (ccb[1] == METER_REPORT) {
-                logger.debug("Received meter report: {}", ByteUtil.createString(ccb, ccb.length));
-                parseMeterReport(ccb, getVersion());
-            } else {
-                logger.warn("Ignoring unsupported message: {}", m);
-            }
+    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+        if (ccb[startIndex+1] == METER_REPORT) {
+            logger.debug("Received meter report: {}", ByteUtil.createString(ccb, ccb.length));
+            parseMeterReport(ccb, startIndex, getVersion());
         } else {
-            logger.error("Received unexpected message: {}", m);
+            logger.warn("Ignoring unsupported command: {}", ByteUtil.createString(ccb[1]));
         }
     }
 
@@ -106,11 +96,11 @@ public class MeterCommandClass extends CommandClass {
         }
     }
 
-    private void parseMeterReport(byte[] ccb, int version) {
+    private void parseMeterReport(byte[] ccb, int startIndex, int version) {
         // read meter type
-        int meterType = ccb[2];
+        int meterType = ccb[startIndex+2];
         if (version == 2) {
-            meterType = ccb[2] & 0x1F;
+            meterType = ccb[startIndex+2] & 0x1F;
         }
         switch (meterType) {
             case 1:
@@ -125,20 +115,20 @@ public class MeterCommandClass extends CommandClass {
         }
 
         // read precision, scale and size
-        int precision = (ccb[3] >> 5) & 0x07;
-        int scale = (ccb[3] >> 3) & 0x03;
-        int size = ccb[3] & 0x07;
+        int precision = (ccb[startIndex+3] >> 5) & 0x07;
+        int scale = (ccb[startIndex+3] >> 3) & 0x03;
+        int size = ccb[startIndex+3] & 0x07;
         logger.debug("{} meter precision: {}, size: {}, scale: {}", type, precision, size, scale);
 
         // determine current value
-        currentValue = ByteUtil.parseValue(ccb, 4, size, precision);
+        currentValue = ByteUtil.parseValue(ccb, startIndex + 4, size, precision);
         logger.debug("Current value is {}", currentValue);
 
         if (version == 2) {
             // read previous value
-            previousValue = ByteUtil.parseValue(ccb, 6 + size, size, precision);
+            previousValue = ByteUtil.parseValue(ccb, startIndex + 6 + size, size, precision);
             // read delta
-            delta = ((ccb[size + 4] << 8) & 0xFF00) | (ccb[size + 5] & 0xFF);
+            delta = ((ccb[startIndex + size + 4] << 8) & 0xFF00) | (ccb[startIndex + size + 5] & 0xFF);
             logger.debug("Previous value was {} received {} seconds ago", previousValue, delta);
         }
     }

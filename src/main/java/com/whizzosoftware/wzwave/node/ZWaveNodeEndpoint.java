@@ -72,4 +72,8 @@ public class ZWaveNodeEndpoint {
     public Collection<CommandClass> getCommandClasses() {
         return commandClassMap.values();
     }
+
+    public CommandClass getCommandClass(byte id) {
+        return commandClassMap.get(id);
+    }
 }

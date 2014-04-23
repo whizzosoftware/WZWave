@@ -189,7 +189,7 @@ abstract public class ZWaveNode implements NodeContext {
                 if (cc instanceof BasicCommandClass) {
                     cc = performBasicCommandClassMapping((BasicCommandClass)cc);
                 }
-                cc.onDataFrame(dataFrame, this);
+                cc.onApplicationCommand(((ApplicationCommand)dataFrame).getCommandClassBytes(), 0, this);
             } else {
                 logger.error("Received message for unsupported command class ID: {}", ByteUtil.createString(commandClassId));
             }

@@ -25,9 +25,13 @@ public class ByteUtil {
     }
 
     static public String createString(byte[] bytes, int length) {
+        return createString(bytes, 0, length);
+    }
+
+    static public String createString(byte[] bytes, int startIndex, int length) {
         char[] hexChars = new char[length * 5];
         int v;
-        for (int j=0; j < length; j++) {
+        for (int j=startIndex; j < length; j++) {
             v = bytes[j] & 0xFF;
             hexChars[j * 5] = '0';
             hexChars[j * 5 + 1] = 'x';

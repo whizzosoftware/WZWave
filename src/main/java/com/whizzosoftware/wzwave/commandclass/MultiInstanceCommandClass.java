@@ -7,11 +7,12 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.commandclass;
 
-import com.whizzosoftware.wzwave.frame.ApplicationCommand;
 import com.whizzosoftware.wzwave.frame.DataFrame;
 import com.whizzosoftware.wzwave.frame.SendData;
+import com.whizzosoftware.wzwave.node.MultiChannelEncapsulatingNodeContext;
 import com.whizzosoftware.wzwave.node.NodeContext;
 import com.whizzosoftware.wzwave.node.ZWaveNodeEndpoint;
+import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,33 +84,27 @@ public class MultiInstanceCommandClass extends CommandClass {
     }
 
     @Override
-    public void onDataFrame(DataFrame m, NodeContext context) {
-        if (m instanceof ApplicationCommand) {
-            ApplicationCommand cmd = (ApplicationCommand)m;
-            byte[] ccb = cmd.getCommandClassBytes();
-            switch (ccb[1]) {
-                case MULTI_INSTANCE_REPORT: // v1
-                    processMultiInstanceReport();
-                    break;
+    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+        switch (ccb[startIndex+1]) {
+            case MULTI_INSTANCE_REPORT: // v1
+                processMultiInstanceReport();
+                break;
 
-                case MULTI_CHANNEL_END_POINT_REPORT: // v2
-                    processMultiChannelEndpointReport(ccb, context);
-                    break;
+            case MULTI_CHANNEL_END_POINT_REPORT: // v2
+                processMultiChannelEndpointReport(ccb, startIndex, context);
+                break;
 
-                case MULTI_CHANNEL_CAPABILITY_REPORT: // v2
-                    processMultiChannelCapabilityReport(ccb, context);
-                    break;
+            case MULTI_CHANNEL_CAPABILITY_REPORT: // v2
+                processMultiChannelCapabilityReport(ccb, startIndex, context);
+                break;
 
-                case MULTI_CHANNEL_CMD_ENCAP: // v2
-                    processMultiChannelCommandEncapsulation(ccb, context);
-                    break;
+            case MULTI_CHANNEL_CMD_ENCAP: // v2
+                processMultiChannelCommandEncapsulation(ccb, startIndex, context);
+                break;
 
-                default:
-                    logger.warn("Ignoring unsupported message: " + m);
-                    break;
-            }
-        } else {
-            logger.error("Received unexpected message: " + m);
+            default:
+                logger.warn("Ignoring unsupported command: {}", ByteUtil.createString(ccb[startIndex+1]));
+                break;
         }
     }
 
@@ -129,25 +124,25 @@ public class MultiInstanceCommandClass extends CommandClass {
         logger.debug("Received multi instance report -- not currently supported");
     }
 
-    protected void processMultiChannelEndpointReport(byte[] ccb, NodeContext context) {
-        this.endpointCount = ccb[3] & 0x3F;
-        this.endpointsIdentical = ((ccb[2] & 0x40) > 0);
+    protected void processMultiChannelEndpointReport(byte[] ccb, int startIndex, NodeContext context) {
+        this.endpointCount = ccb[startIndex+3] & 0x3F;
+        this.endpointsIdentical = ((ccb[startIndex+2] & 0x40) > 0);
 
         if (endpointsIdentical) {
             // if the node reports all endpoints are identical, we simply query the first one for its
             // capabilities
             logger.debug(
-                    "Node {} has {} identical endpoints; querying for endpoint 1 capability",
-                    context.getNodeId(),
-                    endpointCount
+                "Node {} has {} identical endpoints; querying for endpoint 1 capability",
+                context.getNodeId(),
+                endpointCount
             );
             context.queueDataFrame(createMultiChannelCapabilityGetv2(context.getNodeId(), (byte) 0x01));
         } else {
             // if the node reports all endpoints are NOT identical, query each endpoint individually
             logger.debug(
-                    "Node {} has {} non-identical endpoints; querying each endpoint",
-                    context.getNodeId(),
-                    endpointCount
+                "Node {} has {} non-identical endpoints; querying each endpoint",
+                context.getNodeId(),
+                endpointCount
             );
             for (int i=1; i <= endpointCount; i++) {
                 context.queueDataFrame(createMultiChannelCapabilityGetv2(context.getNodeId(), (byte) i));
@@ -155,39 +150,48 @@ public class MultiInstanceCommandClass extends CommandClass {
         }
     }
 
-    protected void processMultiChannelCapabilityReport(byte[] ccb, NodeContext context) {
-        byte endpoint = ccb[2];
+    protected void processMultiChannelCommandEncapsulation(byte[] ccb, int startIndex, NodeContext context) {
+        logger.debug("Got multi channel cmd encap response: src {}, dst {}", ByteUtil.createString(ccb[startIndex+2]), ByteUtil.createString(ccb[startIndex+3]));
+        byte num = ccb[startIndex+2];
+        byte cmdClass = ccb[startIndex+4];
+        ZWaveNodeEndpoint endpoint = endpointMap.get(num);
+        MultiChannelEncapsulatingNodeContext context2 = new MultiChannelEncapsulatingNodeContext(endpoint.getNumber(), context);
+        CommandClass cc = endpoint.getCommandClass(cmdClass);
+        cc.onApplicationCommand(ccb, startIndex+4, context2);
+    }
+
+    protected void processMultiChannelCapabilityReport(byte[] ccb, int startIndex, NodeContext context) {
+        byte endpoint = ccb[startIndex+2];
         logger.debug("Received multi channel capability report for endpoint {}", endpoint);
 
         if (endpointsIdentical) {
             // if endpoints are identical, use the same information for all of them
             for (int i=1; i <= endpointCount; i++) {
-                createNewEndpoint((byte)i, ccb);
+                createNewEndpoint((byte)i, ccb, startIndex, context);
             }
         } else {
             // otherwise, create an endpoint for just the number we received
-            createNewEndpoint(endpoint, ccb);
+            createNewEndpoint(endpoint, ccb, startIndex, context);
         }
     }
 
-    protected void createNewEndpoint(byte number, byte[] ccb) {
-        byte genericDeviceClass = ccb[3];
-        byte specificDeviceClass = ccb[4];
+    protected void createNewEndpoint(byte number, byte[] ccb, int startIndex, NodeContext context) {
+        byte genericDeviceClass = ccb[startIndex+3];
+        byte specificDeviceClass = ccb[startIndex+4];
+
         ZWaveNodeEndpoint ep = new ZWaveNodeEndpoint(number, genericDeviceClass, specificDeviceClass);
-        for (int x=5; x < ccb.length; x++) {
+        MultiChannelEncapsulatingNodeContext context2 = new MultiChannelEncapsulatingNodeContext(number, context);
+
+        for (int x=startIndex+5; x < ccb.length; x++) {
             CommandClass cc = CommandClassFactory.createCommandClass(ccb[x]);
             if (cc != null) {
                 ep.addCommandClass(cc);
+                cc.queueStartupMessages(context.getNodeId(), context2);
             } else {
                 logger.warn("Endpoint reported unknown command class: {}", ccb[x]);
             }
         }
         endpointMap.put(number, ep);
-    }
-
-    protected void processMultiChannelCommandEncapsulation(byte[] ccb, NodeContext context) {
-        // TODO
-        logger.debug("Got multi channel cmd encap response");
     }
 
     /**
@@ -251,21 +255,26 @@ public class MultiInstanceCommandClass extends CommandClass {
         );
     }
 
-    static public DataFrame createMultiChannelCmdEncapv2(byte sourceEndpoint, byte destEndpoint, SendData command) {
-        byte[] data = command.getSendData();
+    static public DataFrame createMultiChannelCmdEncapv2(byte sourceEndpoint, byte destEndpoint, DataFrame command, boolean responseExpected) {
+        if (command instanceof SendData) {
+            SendData sd = (SendData)command;
+            byte[] data = sd.getSendData();
 
-        byte[] newData = new byte[data.length + 4];
-        newData[0] = MultiInstanceCommandClass.ID;
-        newData[1] = MULTI_CHANNEL_CMD_ENCAP;
-        newData[2] = sourceEndpoint;
-        newData[3] = destEndpoint;
-        System.arraycopy(data, 0, newData, 4, data.length);
+            byte[] newData = new byte[data.length + 4];
+            newData[0] = MultiInstanceCommandClass.ID;
+            newData[1] = MULTI_CHANNEL_CMD_ENCAP;
+            newData[2] = sourceEndpoint;
+            newData[3] = destEndpoint;
+            System.arraycopy(data, 0, newData, 4, data.length);
 
-        return createSendDataFrame(
-            "MULTI_CHANNEL_CMD_ENCAP",
-            command.getNodeId(),
-            newData,
-            false
-        );
+            return createSendDataFrame(
+                "MULTI_CHANNEL_CMD_ENCAP",
+                sd.getNodeId(),
+                newData,
+                responseExpected
+            );
+        } else {
+            return null;
+        }
     }
 }

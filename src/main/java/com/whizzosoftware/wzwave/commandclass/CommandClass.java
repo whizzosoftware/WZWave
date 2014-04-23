@@ -7,6 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.commandclass;
 
+import com.whizzosoftware.wzwave.frame.ApplicationCommand;
 import com.whizzosoftware.wzwave.frame.DataFrame;
 import com.whizzosoftware.wzwave.frame.SendData;
 import com.whizzosoftware.wzwave.node.NodeContext;
@@ -61,12 +62,13 @@ abstract public class CommandClass {
     abstract public String getName();
 
     /**
-     * Callback for a DataFrame being received for this command class.
+     * Callback for an Application Command being received for this command class.
      *
-     * @param dataFrame the data frame
+     * @param ccb the command class data
+     * @param startIndex the array index from which to start reading command class data
      * @param context the NodeContext for the new data frame
      */
-    abstract public void onDataFrame(DataFrame dataFrame, NodeContext context);
+    abstract public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context);
 
     /**
      * Give the command class the opportunity to queue up any data frames it

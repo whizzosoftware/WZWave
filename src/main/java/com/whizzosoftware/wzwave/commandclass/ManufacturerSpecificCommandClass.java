@@ -7,7 +7,6 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.commandclass;
 
-import com.whizzosoftware.wzwave.frame.ApplicationCommand;
 import com.whizzosoftware.wzwave.frame.DataFrame;
 import com.whizzosoftware.wzwave.product.ProductInfo;
 import com.whizzosoftware.wzwave.node.NodeContext;
@@ -46,19 +45,13 @@ public class ManufacturerSpecificCommandClass extends CommandClass {
     }
 
     @Override
-    public void onDataFrame(DataFrame m, NodeContext context) {
-        if (m instanceof ApplicationCommand) {
-            ApplicationCommand cmd = (ApplicationCommand)m;
-            byte[] ccb = cmd.getCommandClassBytes();
-            logger.debug("Manufacturer specific data: {}", ByteUtil.createString(ccb, ccb.length));
-            if (ccb[1] == MANUFACTURER_SPECIFIC_REPORT) {
-                productInfo = parseManufacturerSpecificData(ccb);
-                logger.debug("Received MANUFACTURER_SPECIFIC_REPORT: {}", productInfo);
-            } else {
-                logger.warn("Ignoring unsupported message: {}", m);
-            }
+    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+        logger.debug("Manufacturer specific data: {}", ByteUtil.createString(ccb, startIndex, ccb.length));
+        if (ccb[startIndex+1] == MANUFACTURER_SPECIFIC_REPORT) {
+            productInfo = parseManufacturerSpecificData(ccb, startIndex);
+            logger.debug("Received MANUFACTURER_SPECIFIC_REPORT: {}", productInfo);
         } else {
-            logger.error("Received unexpected message: {}", m);
+            logger.warn("Ignoring unsupported command: {}", ByteUtil.createString(ccb[startIndex+1]));
         }
     }
 
@@ -67,11 +60,11 @@ public class ManufacturerSpecificCommandClass extends CommandClass {
         context.queueDataFrame(createGetv1(nodeId));
     }
 
-    public ProductInfo parseManufacturerSpecificData(byte[] ccb) {
+    public ProductInfo parseManufacturerSpecificData(byte[] ccb, int startIndex) {
         return ProductRegistry.lookupProduct(
-                ByteUtil.convertTwoBytesToInt(ccb[2], ccb[3]),
-                ByteUtil.convertTwoBytesToInt(ccb[4], ccb[5]),
-                ByteUtil.convertTwoBytesToInt(ccb[6], ccb[7])
+                ByteUtil.convertTwoBytesToInt(ccb[startIndex+2], ccb[startIndex+3]),
+                ByteUtil.convertTwoBytesToInt(ccb[startIndex+4], ccb[startIndex+5]),
+                ByteUtil.convertTwoBytesToInt(ccb[startIndex+6], ccb[startIndex+7])
         );
     }
 

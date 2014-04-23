@@ -8,7 +8,6 @@
 package com.whizzosoftware.wzwave.commandclass;
 
 import com.whizzosoftware.wzwave.frame.DataFrame;
-import com.whizzosoftware.wzwave.frame.ApplicationCommand;
 import com.whizzosoftware.wzwave.node.NodeContext;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
@@ -45,27 +44,21 @@ public class BinarySensorCommandClass extends CommandClass {
     }
 
     @Override
-    public void onDataFrame(DataFrame m, NodeContext context) {
-        if (m instanceof ApplicationCommand) {
-            ApplicationCommand cmd = (ApplicationCommand)m;
-            byte[] ccb = cmd.getCommandClassBytes();
-            // some devices (e.g. Everspring SM103) seem to use SENSOR_BINARY_SET rather than SENSOR_BINARY_REPORT
-            // when sending unsolicited updates
-            if (ccb[1] == SENSOR_BINARY_REPORT || ccb[1] == SENSOR_BINARY_SET) {
-                if (ccb[2] == 0x00) {
-                    isIdle = true;
-                    logger.debug("Received updated isIdle (true)");
-                } else if (ccb[2] == 0xFF || ccb[2] == 0x63) {
-                    isIdle = false;
-                    logger.debug("Received updated isIdle (false)");
-                } else {
-                    logger.warn("Ignoring invalid report value: " + ByteUtil.createString(ccb[2]));
-                }
+    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+        // some devices (e.g. Everspring SM103) seem to use SENSOR_BINARY_SET rather than SENSOR_BINARY_REPORT
+        // when sending unsolicited updates
+        if (ccb[startIndex+1] == SENSOR_BINARY_REPORT || ccb[startIndex+1] == SENSOR_BINARY_SET) {
+            if (ccb[startIndex+2] == 0x00) {
+                isIdle = true;
+                logger.debug("Received updated isIdle (true)");
+            } else if (ccb[startIndex+2] == 0xFF || ccb[startIndex+2] == 0x63) {
+                isIdle = false;
+                logger.debug("Received updated isIdle (false)");
             } else {
-                logger.warn("Ignoring unsupported message: " + m);
+                logger.warn("Ignoring invalid report value: {}", ByteUtil.createString(ccb[startIndex+2]));
             }
         } else {
-            logger.error("Received unexpected message: " + m);
+            logger.warn("Ignoring unsupported command: {}", ByteUtil.createString(ccb[startIndex+1]));
         }
     }
 

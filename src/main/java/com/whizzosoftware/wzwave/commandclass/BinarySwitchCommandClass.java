@@ -8,7 +8,6 @@
 package com.whizzosoftware.wzwave.commandclass;
 
 import com.whizzosoftware.wzwave.frame.DataFrame;
-import com.whizzosoftware.wzwave.frame.ApplicationCommand;
 import com.whizzosoftware.wzwave.node.NodeContext;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
@@ -45,25 +44,19 @@ public class BinarySwitchCommandClass extends CommandClass {
     }
 
     @Override
-    public void onDataFrame(DataFrame m, NodeContext context) {
-        if (m instanceof ApplicationCommand) {
-            ApplicationCommand cmd = (ApplicationCommand)m;
-            byte[] ccb = cmd.getCommandClassBytes();
-            if (ccb[1] == SWITCH_BINARY_REPORT) {
-                if (ccb[2] == 0x00) {
-                    isOn = false;
-                    logger.debug("Received updated isOn (false)");
-                } else if ((ccb[2] >= 0x01 && ccb[2] <= 0x63) || ccb[2] == (byte)0xFF) {
-                    isOn = true;
-                    logger.debug("Received updated isOn (true)");
-                } else {
-                    logger.error("Ignoring invalid report value: " + ByteUtil.createString(ccb[2]));
-                }
+    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+        if (ccb[startIndex+1] == SWITCH_BINARY_REPORT) {
+            if (ccb[startIndex+2] == 0x00) {
+                isOn = false;
+                logger.debug("Received updated isOn (false)");
+            } else if ((ccb[startIndex+2] >= 0x01 && ccb[startIndex+2] <= 0x63) || ccb[startIndex+2] == (byte)0xFF) {
+                isOn = true;
+                logger.debug("Received updated isOn (true)");
             } else {
-                logger.warn("Ignoring unsupported message: " + m);
+                logger.error("Ignoring invalid report value: {}", ByteUtil.createString(ccb[startIndex+2]));
             }
         } else {
-            logger.error("Received unexpected message: " + m);
+            logger.warn("Ignoring unsupported command: {}", ByteUtil.createString(ccb[startIndex+1]));
         }
     }
 

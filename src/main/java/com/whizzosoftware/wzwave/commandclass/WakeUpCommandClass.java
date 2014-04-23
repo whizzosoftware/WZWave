@@ -7,9 +7,8 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.commandclass;
 
-import com.whizzosoftware.wzwave.frame.DataFrame;
-import com.whizzosoftware.wzwave.frame.ApplicationCommand;
 import com.whizzosoftware.wzwave.node.NodeContext;
+import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,18 +39,12 @@ public class WakeUpCommandClass extends CommandClass {
     }
 
     @Override
-    public void onDataFrame(DataFrame m, NodeContext context) {
-        if (m instanceof ApplicationCommand) {
-            ApplicationCommand cmd = (ApplicationCommand)m;
-            byte[] ccb = cmd.getCommandClassBytes();
-            if (ccb[1] == WAKE_UP_NOTIFICATION) {
-                logger.debug("Received wake up notification; flushing wakeup command queue");
-                context.flushWakeupQueue();
-            } else {
-                logger.warn("Ignoring unsupported message: " + m);
-            }
+    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+        if (ccb[startIndex+1] == WAKE_UP_NOTIFICATION) {
+            logger.debug("Received wake up notification; flushing wakeup command queue");
+            context.flushWakeupQueue();
         } else {
-            logger.error("Received unexpected message: " + m);
+            logger.warn("Ignoring unsupported command: {}", ByteUtil.createString(ccb[startIndex+1]));
         }
     }
 

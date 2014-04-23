@@ -7,7 +7,6 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.commandclass;
 
-import com.whizzosoftware.wzwave.frame.ApplicationCommand;
 import com.whizzosoftware.wzwave.frame.DataFrame;
 import com.whizzosoftware.wzwave.node.NodeContext;
 import com.whizzosoftware.wzwave.util.ByteUtil;
@@ -45,20 +44,13 @@ public class BasicCommandClass extends CommandClass {
     }
 
     @Override
-    public void onDataFrame(DataFrame m, NodeContext context) {
-        if (m instanceof ApplicationCommand) {
-            ApplicationCommand cmd = (ApplicationCommand)m;
-            byte[] ccb = cmd.getCommandClassBytes();
-            if (ccb[1] == BASIC_REPORT || ccb[1] == BASIC_SET) {
-                value = ccb[2];
-                logger.debug("Received updated value: " + ByteUtil.createString(value));
-            } else {
-                logger.warn("Ignoring unsupported message: " + m);
-            }
+    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+        if (ccb[startIndex+1] == BASIC_REPORT || ccb[startIndex+1] == BASIC_SET) {
+            value = ccb[startIndex+2];
+            logger.debug("Received updated value: {}", ByteUtil.createString(value));
         } else {
-            logger.error("Received unexpected message: " + m);
+            logger.warn("Ignoring unsupported command: {}", ByteUtil.createString(ccb[startIndex+1]));
         }
-
     }
 
     @Override

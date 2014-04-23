@@ -8,7 +8,6 @@
 package com.whizzosoftware.wzwave.commandclass;
 
 import com.whizzosoftware.wzwave.frame.DataFrame;
-import com.whizzosoftware.wzwave.frame.ApplicationCommand;
 import com.whizzosoftware.wzwave.node.NodeContext;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
@@ -56,32 +55,26 @@ public class VersionCommandClass extends CommandClass {
     }
 
     @Override
-    public void onDataFrame(DataFrame m, NodeContext context) {
-        if (m instanceof ApplicationCommand) {
-            ApplicationCommand cmd = (ApplicationCommand)m;
-            byte[] ccb = cmd.getCommandClassBytes();
-            if (ccb[1] == VERSION_REPORT) {
-                int startIndex = 2;
-                library = String.format("%d", ccb[startIndex]);
-                protocol = String.format("%d.%2d", ccb[startIndex + 1], ccb[startIndex + 2]);
-                application = String.format("%d.%2d", ccb[startIndex + 3], ccb[startIndex + 4]);
-            } else if (ccb[1] == VERSION_COMMAND_CLASS_REPORT) {
-                CommandClass cc = context.getCommandClass(ccb[2]);
-                if (cc != null) {
-                    logger.debug(
-                        "Setting command class {} to version {}",
-                        cc.getName(),
-                        ByteUtil.createString(ccb[3])
-                    );
-                    cc.setVersion(ccb[3]);
-                } else {
-                    logger.error("Received version for unknown command class: {}", ByteUtil.createString(ccb[2]));
-                }
+    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+        if (ccb[startIndex+1] == VERSION_REPORT) {
+            int start = startIndex+2;
+            library = String.format("%d", ccb[start]);
+            protocol = String.format("%d.%2d", ccb[start + 1], ccb[start + 2]);
+            application = String.format("%d.%2d", ccb[start + 3], ccb[start + 4]);
+        } else if (ccb[1] == VERSION_COMMAND_CLASS_REPORT) {
+            CommandClass cc = context.getCommandClass(ccb[startIndex+2]);
+            if (cc != null) {
+                logger.debug(
+                    "Setting command class {} to version {}",
+                    cc.getName(),
+                    ByteUtil.createString(ccb[startIndex+3])
+                );
+                cc.setVersion(ccb[startIndex+3]);
             } else {
-                logger.warn("Ignoring unsupported message: " + m);
+                logger.error("Received version for unknown command class: {}", ByteUtil.createString(ccb[startIndex+2]));
             }
         } else {
-            logger.error("Received unexpected message: " + m);
+            logger.warn("Ignoring unsupported command: {}", ByteUtil.createString(ccb[startIndex+1]));
         }
     }
 
