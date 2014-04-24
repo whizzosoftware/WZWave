@@ -26,7 +26,7 @@ public class InitData extends DataFrame {
     private List<Byte> nodes = new ArrayList<Byte>();
 
     public InitData() {
-        super(Type.REQUEST, ID, null);
+        super(DataFrameType.REQUEST, ID, null);
     }
 
     public InitData(byte[] bytes) {

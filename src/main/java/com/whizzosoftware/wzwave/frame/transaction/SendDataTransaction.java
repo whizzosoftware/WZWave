@@ -7,10 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.frame.transaction;
 
-import com.whizzosoftware.wzwave.frame.ACK;
-import com.whizzosoftware.wzwave.frame.ApplicationCommand;
-import com.whizzosoftware.wzwave.frame.DataFrame;
-import com.whizzosoftware.wzwave.frame.Frame;
+import com.whizzosoftware.wzwave.frame.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +65,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
             case STATE_ACK_RECEIVED:
                 if (bs instanceof DataFrame) {
                     DataFrame response = (DataFrame)bs;
-                    if (response.getType() == DataFrame.Type.RESPONSE) {
+                    if (response.getType() == DataFrameType.RESPONSE) {
                         logger.debug("{} sent successfully", getStartFrame().getClass().getName());
                         state = STATE_RESPONSE_RECEIVED;
                     } else {
@@ -81,7 +78,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
 
             case STATE_RESPONSE_RECEIVED:
                 if (bs instanceof DataFrame) {
-                    if (((DataFrame)bs).getType() == DataFrame.Type.REQUEST) {
+                    if (((DataFrame)bs).getType() == DataFrameType.REQUEST) {
                         logger.debug("Response received for {}", getStartFrame().getClass().getName());
                         // if we shouldn't expect a response, the transaction is complete
                         if (!isResponseExpected) {

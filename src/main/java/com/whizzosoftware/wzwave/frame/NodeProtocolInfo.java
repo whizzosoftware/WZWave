@@ -31,12 +31,12 @@ public class NodeProtocolInfo extends DataFrame {
     private byte specificDeviceClass;
 
     public NodeProtocolInfo(byte nodeId) {
-        super(Type.REQUEST, ID, new byte[] { nodeId });
+        super(DataFrameType.REQUEST, ID, new byte[] { nodeId });
         this.nodeId = nodeId;
     }
 
     public NodeProtocolInfo(byte basicDeviceClass, byte genericDeviceClass, byte specificDeviceClass, boolean listening) {
-        super(Type.REQUEST, ID, null);
+        super(DataFrameType.REQUEST, ID, null);
 
         this.basicDeviceClass = basicDeviceClass;
         this.genericDeviceClass = genericDeviceClass;
@@ -104,7 +104,7 @@ public class NodeProtocolInfo extends DataFrame {
 
     public String toString() {
         StringBuilder sb = new StringBuilder("NodeProtocolInfo[").append(nodeId).append("]");
-        if (getType() == Type.RESPONSE) {
+        if (getType() == DataFrameType.RESPONSE) {
             sb.append("(Basic=").append(ByteUtil.createString(basicDeviceClass)).append(",");
             sb.append("Generic=").append(ByteUtil.createString(genericDeviceClass)).append(",");
             sb.append("Specific=").append(ByteUtil.createString(specificDeviceClass)).append(")");

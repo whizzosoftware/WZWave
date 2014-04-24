@@ -50,6 +50,13 @@ public interface ZWaveController {
     public byte getNodeId();
 
     /**
+     * Returns the controller's Z-Wave library version
+     *
+     * @return the version String
+     */
+    public String getLibraryVersion();
+
+    /**
      * Returns the collection of nodes this controller knows about.
      *
      * @return a Collection of nodes

@@ -11,6 +11,7 @@ import com.whizzosoftware.wzwave.commandclass.BasicCommandClass;
 import com.whizzosoftware.wzwave.commandclass.BinarySwitchCommandClass;
 import com.whizzosoftware.wzwave.commandclass.CommandClass;
 import com.whizzosoftware.wzwave.node.NodeListener;
+import com.whizzosoftware.wzwave.node.ZWaveEndpoint;
 import com.whizzosoftware.wzwave.node.ZWaveNode;
 import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
 import org.slf4j.Logger;
@@ -43,8 +44,8 @@ public class BinarySwitch extends ZWaveNode {
         queueDataFrame(BinarySwitchCommandClass.createGetv1(getNodeId()), deferIfNotListening);
     }
 
-    public Boolean isOn() {
-        BinarySwitchCommandClass cc = (BinarySwitchCommandClass)getCommandClass(BinarySwitchCommandClass.ID);
+    static public Boolean isOn(ZWaveEndpoint endpoint) {
+        BinarySwitchCommandClass cc = (BinarySwitchCommandClass)endpoint.getCommandClass(BinarySwitchCommandClass.ID);
         if (cc != null) {
             return cc.isOn();
         } else {

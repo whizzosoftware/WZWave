@@ -77,7 +77,7 @@ public class RoutingBinarySensorTest {
         assertEquals(0, sensor.getWakeupQueueCount());
 
         // put into started state & verify messages in wakeup queue
-        sensor.setState(ZWaveNode.State.RetrieveStatePending);
+        sensor.setState(ZWaveNodeState.RetrieveStatePending);
         sensor.runLoop(null);
         assertEquals(2, sensor.getWakeupQueueCount());
 

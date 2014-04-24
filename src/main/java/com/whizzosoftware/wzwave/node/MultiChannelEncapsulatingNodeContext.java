@@ -16,7 +16,7 @@ import java.util.Collection;
 /**
  * A NodeContext implementation that wrappers another NodeContext but encapsulates all SendData frames in a
  * multi-instance command before queueing them. This is needed so that command classes within endpoints can
- * send their commands correctly.
+ * send their data correctly.
  *
  * @author Dan Noguerol
  */

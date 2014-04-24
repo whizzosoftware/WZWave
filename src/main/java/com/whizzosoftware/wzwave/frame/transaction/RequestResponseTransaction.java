@@ -9,6 +9,7 @@ package com.whizzosoftware.wzwave.frame.transaction;
 
 import com.whizzosoftware.wzwave.frame.ACK;
 import com.whizzosoftware.wzwave.frame.DataFrame;
+import com.whizzosoftware.wzwave.frame.DataFrameType;
 import com.whizzosoftware.wzwave.frame.Frame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,7 @@ public class RequestResponseTransaction extends AbstractDataFrameTransaction {
 
             case STATE_ACK_RECEIVED:
                 if (f instanceof DataFrame && f.getClass() == getStartFrame().getClass()) {
-                    if (((DataFrame)f).getType() == DataFrame.Type.RESPONSE) {
+                    if (((DataFrame)f).getType() == DataFrameType.RESPONSE) {
                         logger.debug("Received expected message response");
                         state = STATE_RESPONSE_RECEIVED;
                         finalFrame = ((DataFrame)f);

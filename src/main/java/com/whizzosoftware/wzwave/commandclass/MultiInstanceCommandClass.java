@@ -11,7 +11,7 @@ import com.whizzosoftware.wzwave.frame.DataFrame;
 import com.whizzosoftware.wzwave.frame.SendData;
 import com.whizzosoftware.wzwave.node.MultiChannelEncapsulatingNodeContext;
 import com.whizzosoftware.wzwave.node.NodeContext;
-import com.whizzosoftware.wzwave.node.ZWaveNodeEndpoint;
+import com.whizzosoftware.wzwave.node.ZWaveMultiChannelEndpoint;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ public class MultiInstanceCommandClass extends CommandClass {
     private static final byte MULTI_CHANNEL_END_POINT_FIND_REPORT = 0x0C;
     private static final byte MULTI_CHANNEL_CMD_ENCAP = 0x0D;
 
-    private Map<Byte, ZWaveNodeEndpoint> endpointMap = new HashMap<Byte, ZWaveNodeEndpoint>();
+    private Map<Byte, ZWaveMultiChannelEndpoint> endpointMap = new HashMap<Byte, ZWaveMultiChannelEndpoint>();
     private int endpointCount;
     private boolean endpointsIdentical;
 
@@ -68,7 +68,7 @@ public class MultiInstanceCommandClass extends CommandClass {
      *
      * @return a Collection of Endpoint instances
      */
-    public Collection<ZWaveNodeEndpoint> getEndpoints() {
+    public Collection<ZWaveMultiChannelEndpoint> getEndpoints() {
         return endpointMap.values();
     }
 
@@ -79,7 +79,7 @@ public class MultiInstanceCommandClass extends CommandClass {
      *
      * @return an Endpoint instance (or null if not found)
      */
-    public ZWaveNodeEndpoint getEndpoint(byte number) {
+    public ZWaveMultiChannelEndpoint getEndpoint(byte number) {
         return endpointMap.get(number);
     }
 
@@ -154,7 +154,7 @@ public class MultiInstanceCommandClass extends CommandClass {
         logger.debug("Got multi channel cmd encap response: src {}, dst {}", ByteUtil.createString(ccb[startIndex+2]), ByteUtil.createString(ccb[startIndex+3]));
         byte num = ccb[startIndex+2];
         byte cmdClass = ccb[startIndex+4];
-        ZWaveNodeEndpoint endpoint = endpointMap.get(num);
+        ZWaveMultiChannelEndpoint endpoint = endpointMap.get(num);
         MultiChannelEncapsulatingNodeContext context2 = new MultiChannelEncapsulatingNodeContext(endpoint.getNumber(), context);
         CommandClass cc = endpoint.getCommandClass(cmdClass);
         cc.onApplicationCommand(ccb, startIndex+4, context2);
@@ -179,13 +179,20 @@ public class MultiInstanceCommandClass extends CommandClass {
         byte genericDeviceClass = ccb[startIndex+3];
         byte specificDeviceClass = ccb[startIndex+4];
 
-        ZWaveNodeEndpoint ep = new ZWaveNodeEndpoint(number, genericDeviceClass, specificDeviceClass);
+        ZWaveMultiChannelEndpoint ep = new ZWaveMultiChannelEndpoint(context.getNodeId(), number, genericDeviceClass, specificDeviceClass);
         MultiChannelEncapsulatingNodeContext context2 = new MultiChannelEncapsulatingNodeContext(number, context);
 
         for (int x=startIndex+5; x < ccb.length; x++) {
             CommandClass cc = CommandClassFactory.createCommandClass(ccb[x]);
+
+            // assume that the parent node's command class version is the same as the command classes for all endpoints
+            CommandClass pcc = context.getCommandClass(ccb[x]);
+            if (pcc != null) {
+                cc.setVersion(pcc.getVersion());
+            }
+
             if (cc != null) {
-                ep.addCommandClass(cc);
+                ep.addCommandClass(cc.getId(), cc);
                 cc.queueStartupMessages(context.getNodeId(), context2);
             } else {
                 logger.warn("Endpoint reported unknown command class: {}", ccb[x]);

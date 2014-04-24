@@ -26,7 +26,7 @@ public class SendDataTest {
     @Test
     public void testMessageByteArrayConstructorWithRequest() {
         SendData sd = new SendData(new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x25, 0x02, 0x05, 0x08, -45});
-        assertEquals(DataFrame.Type.REQUEST, sd.getType());
+        assertEquals(DataFrameType.REQUEST, sd.getType());
         assertFalse(sd.hasRetVal());
         assertEquals((byte)0x06, sd.getNodeId());
         assertTrue(sd.hasCallbackId());
@@ -36,7 +36,7 @@ public class SendDataTest {
     @Test
     public void testMessageByteArrayConstructorWithRetval() {
         SendData sd = new SendData(new byte[] {0x01, 0x04, 0x01, 0x13, 0x01, (byte)0xE8});
-        assertEquals(DataFrame.Type.RESPONSE, sd.getType());
+        assertEquals(DataFrameType.RESPONSE, sd.getType());
         assertTrue(sd.hasRetVal());
         assertEquals((byte)0x01, (byte)sd.getRetVal());
     }

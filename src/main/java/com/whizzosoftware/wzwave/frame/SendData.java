@@ -34,7 +34,7 @@ public class SendData extends DataFrame {
     }
 
     public SendData(String name, byte nodeId, byte[] data, byte txOptions, byte callbackId, boolean isResponseExpected) {
-        super(Type.REQUEST, ID, null);
+        super(DataFrameType.REQUEST, ID, null);
 
         this.name = name;
         this.sendData = data;
@@ -91,11 +91,11 @@ public class SendData extends DataFrame {
 
     public String toString() {
         if (name != null) {
-            return "SendData(" + nodeId + ")[" + name + "]," + callbackId;
+            return "SendData(" + getNodeId() + ")[" + name + "]," + callbackId;
         } else if (sendData != null) {
-            return "SendData(" + nodeId + ")[" + ByteUtil.createString(sendData, sendData.length) + "]," + callbackId;
+            return "SendData(" + getNodeId() + ")[" + ByteUtil.createString(sendData, sendData.length) + "]," + callbackId;
         } else {
-            return "SendData(" + nodeId + ")";
+            return "SendData(" + getNodeId() + ")";
         }
     }
 

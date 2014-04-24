@@ -22,7 +22,7 @@ public class MemoryGetId extends DataFrame {
     private byte nodeId;
 
     public MemoryGetId() {
-        super(Type.REQUEST, ID, null);
+        super(DataFrameType.REQUEST, ID, null);
     }
 
     public MemoryGetId(byte[] bytes) {

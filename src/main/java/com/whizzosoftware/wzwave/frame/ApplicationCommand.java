@@ -22,7 +22,7 @@ public class ApplicationCommand extends DataFrame {
     private byte status;
     private byte[] commandClassBytes;
 
-    public ApplicationCommand(Type type, byte rxStatus, byte sourceNode, byte[] commandClassBytes) {
+    public ApplicationCommand(DataFrameType type, byte rxStatus, byte sourceNode, byte[] commandClassBytes) {
         super(type, ID, null);
 
         byte[] b = new byte[commandClassBytes.length + 2];
@@ -64,7 +64,7 @@ public class ApplicationCommand extends DataFrame {
     }
 
     public String toString() {
-        return "ApplicationCommand[" + nodeId + "]: " + ByteUtil.createString(commandClassBytes, commandClassBytes.length - 1);
+        return "ApplicationCommand[" + getNodeId() + "]: " + ByteUtil.createString(commandClassBytes, commandClassBytes.length - 1);
     }
 
     @Override

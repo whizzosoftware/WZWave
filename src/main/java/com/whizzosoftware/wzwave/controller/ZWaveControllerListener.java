@@ -7,7 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.controller;
 
-import com.whizzosoftware.wzwave.node.ZWaveNode;
+import com.whizzosoftware.wzwave.node.ZWaveEndpoint;
 
 /**
  * Listener interface for Z-Wave related events.
@@ -20,12 +20,12 @@ public interface ZWaveControllerListener {
      *
      * @param node the new Z-Wave node
      */
-    public void onZWaveNodeAdded(ZWaveNode node);
+    public void onZWaveNodeAdded(ZWaveEndpoint node);
 
     /**
      * Callback when an existing Z-Wave node is updated.
      *
      * @param node the updated Z-Wave node
      */
-    public void onZWaveNodeUpdate(ZWaveNode node);
+    public void onZWaveNodeUpdated(ZWaveEndpoint node);
 }

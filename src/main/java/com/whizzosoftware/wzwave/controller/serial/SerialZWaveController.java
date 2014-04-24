@@ -7,8 +7,6 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.controller.serial;
 
-import com.whizzosoftware.wzwave.commandclass.BinarySwitchCommandClass;
-import com.whizzosoftware.wzwave.commandclass.MultiInstanceCommandClass;
 import com.whizzosoftware.wzwave.controller.*;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.ZWaveNode;
@@ -366,7 +364,7 @@ public class SerialZWaveController implements Runnable, ZWaveController, FrameLi
         if (node != null) {
             node.onDataFrameReceived(this, applicationCommand, unsolicited);
             if (listener != null) {
-                listener.onZWaveNodeUpdate(node);
+                listener.onZWaveNodeUpdated(node);
             }
         } else {
             logger.error("Unable to find node " + applicationCommand.getNodeId());
@@ -392,7 +390,7 @@ public class SerialZWaveController implements Runnable, ZWaveController, FrameLi
             if (node != null) {
                 node.onDataFrameReceived(this, applicationUpdate, unsolicited);
                 if (listener != null) {
-                    listener.onZWaveNodeUpdate(node);
+                    listener.onZWaveNodeUpdated(node);
                 }
             } else {
                 logger.error("Unable to find node " + applicationUpdate.getNodeId());

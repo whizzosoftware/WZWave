@@ -14,29 +14,22 @@ import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
 
 /**
  * Abstract base class for all Z-Wave nodes.
  *
  * @author Dan Noguerol
  */
-abstract public class ZWaveNode implements NodeContext {
+abstract public class ZWaveNode extends ZWaveEndpoint implements NodeContext {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private byte nodeId;
     private Byte basicDeviceClass;
-    private Byte genericDeviceClass;
-    private Byte specificDeviceClass;
     private boolean listening;
-    private final Map<Byte,CommandClass> commandClassMap = new HashMap<Byte,CommandClass>();
     protected final LinkedList<DataFrame> writeQueue = new LinkedList<DataFrame>();
     private final LinkedList<DataFrame> wakeupQueue = new LinkedList<DataFrame>();
     protected DataFrame lastSentData;
-    private State state;
+    private ZWaveNodeState nodeState;
     private int stateRetries;
     /**
      * Indicates whether the Version command class has sent its startup messages
@@ -45,23 +38,18 @@ abstract public class ZWaveNode implements NodeContext {
     private NodeListener listener;
 
     public ZWaveNode(byte nodeId, NodeProtocolInfo info, NodeListener listener) {
-        this.nodeId = nodeId;
+        super(nodeId, info.getGenericDeviceClass(), info.getSpecificDeviceClass());
+
         this.listener = listener;
-        setState(State.NodeInfo);
+        setState(ZWaveNodeState.NodeInfo);
 
         basicDeviceClass = info.getBasicDeviceClass();
-        genericDeviceClass = info.getGenericDeviceClass();
-        specificDeviceClass = info.getSpecificDeviceClass();
         listening = info.isListening();
 
         // if the device is listening, request its node info
         if (listening) {
             queueDataFrame(new RequestNodeInfo(nodeId));
         }
-    }
-
-    public byte getNodeId() {
-        return nodeId;
     }
 
     protected void setListening(boolean listening) {
@@ -77,39 +65,12 @@ abstract public class ZWaveNode implements NodeContext {
         return basicDeviceClass;
     }
 
-    public Byte getGenericDeviceClass() {
-        return genericDeviceClass;
-    }
-
-    public Byte getSpecificDeviceClass() {
-        return specificDeviceClass;
-    }
-
-    public boolean hasCommandClass(byte commandClassId) {
-        return commandClassMap.containsKey(commandClassId);
-    }
-
-    public Collection<CommandClass> getCommandClasses() {
-        return commandClassMap.values();
-    }
-
-    public CommandClass getCommandClass(byte commandClassId) {
-        return commandClassMap.get(commandClassId);
-    }
-
-    protected void addCommandClass(byte commandClassId, CommandClass commandClass) {
-        if (!commandClassMap.containsKey(commandClassId)) {
-            logger.debug("Registering command class: {}", commandClass.getName());
-            commandClassMap.put(commandClassId, commandClass);
-        }
-    }
-
-    protected void setState(State state) {
-        logger.debug("Node {} changing to state: {}", getNodeId(), state);
-        this.state = state;
+    protected void setState(ZWaveNodeState nodeState) {
+        logger.debug("Node {} changing to state: {}", getNodeId(), nodeState);
+        this.nodeState = nodeState;
         this.stateRetries = 0;
 
-        if (state == State.Started && listener != null) {
+        if (nodeState == ZWaveNodeState.Started && listener != null) {
             listener.onNodeStarted(this);
         }
     }
@@ -137,16 +98,16 @@ abstract public class ZWaveNode implements NodeContext {
      */
     public void runLoop(SerialZWaveController controller) {
         // if the node is ready to retrieve command class versions, allow the command class to queue its messages
-        if (state == State.RetrieveVersionPending) {
-            CommandClass cc = commandClassMap.get(VersionCommandClass.ID);
+        if (nodeState == ZWaveNodeState.RetrieveVersionPending) {
+            CommandClass cc = getCommandClass(VersionCommandClass.ID);
             cc.queueStartupMessages(getNodeId(), this);
-            setState(State.RetrieveVersionCompleted);
+            setState(ZWaveNodeState.RetrieveVersionCompleted);
             versionStartupMessagesSent = true;
         }
 
         // if the node is ready to retrieve its state, queue all command class startup messages
-        if (state == State.RetrieveStatePending) {
-            for (CommandClass cc : commandClassMap.values()) {
+        if (nodeState == ZWaveNodeState.RetrieveStatePending) {
+            for (CommandClass cc : getCommandClasses()) {
                 // queue all command class startup messages
                 // note: if the Version command class hasn't queued its startup messages at this point, allow it to
                 //       do so -- otherwise, prevent it from occurring twice
@@ -154,7 +115,7 @@ abstract public class ZWaveNode implements NodeContext {
                     cc.queueStartupMessages(getNodeId(), this);
                 }
             }
-            setState(State.RetrieveStateCompleted);
+            setState(ZWaveNodeState.RetrieveStateCompleted);
         }
 
         // if we aren't waiting on a message response and there's a new request message queued, send it
@@ -164,10 +125,10 @@ abstract public class ZWaveNode implements NodeContext {
             controller.sendDataFrame(d);
             lastSentData = d;
         } else if (!hasPendingTransaction() && getWriteQueueCount() == 0) {
-            if (state == State.RetrieveVersionCompleted) {
-                setState(State.RetrieveStatePending);
-            } else if (state == State.RetrieveStateCompleted) {
-                setState(State.Started);
+            if (nodeState == ZWaveNodeState.RetrieveVersionCompleted) {
+                setState(ZWaveNodeState.RetrieveStatePending);
+            } else if (nodeState == ZWaveNodeState.RetrieveStateCompleted) {
+                setState(ZWaveNodeState.Started);
             }
         }
     }
@@ -247,24 +208,24 @@ abstract public class ZWaveNode implements NodeContext {
     }
 
     protected void processApplicationUpdate(ApplicationUpdate update, boolean unsolicited) {
-        switch (state) {
+        switch (nodeState) {
 
             case NodeInfo:
                 // if the application update failed to send, re-send it
                 if (update.didInfoRequestFail()) {
                     if (stateRetries < 1) {
                         logger.debug("Application update failed for node {}; will retry", getNodeId());
-                        queueDataFrame(new RequestNodeInfo(nodeId));
+                        queueDataFrame(new RequestNodeInfo(getNodeId()));
                         stateRetries++;
                     } else {
                         logger.debug("No node information provided after {} retries; moving to next state", stateRetries);
-                        setState(State.RetrieveStatePending);
+                        setState(ZWaveNodeState.RetrieveStatePending);
                     }
                 } else {
                     // check if there are optional command classes
                     byte[] commandClasses = update.getNodeInfo().getCommandClasses();
                     for (byte commandClassId : commandClasses) {
-                        if (!commandClassMap.containsKey(commandClassId)) {
+                        if (!hasCommandClass(commandClassId)) {
                             CommandClass cc = CommandClassFactory.createCommandClass(commandClassId);
                             if (cc != null) {
                                 addCommandClass(commandClassId, cc);
@@ -276,10 +237,10 @@ abstract public class ZWaveNode implements NodeContext {
                     // if this node has the Version command class, then we should retrieve version for information
                     // for all command classes it supports
                     if (getCommandClass(VersionCommandClass.ID) != null) {
-                        setState(State.RetrieveVersionPending);
+                        setState(ZWaveNodeState.RetrieveVersionPending);
                     // otherwise, we assume all command classes are version 1 and move on
                     } else {
-                        setState(State.RetrieveStatePending);
+                        setState(ZWaveNodeState.RetrieveStatePending);
                     }
                 }
                 break;
@@ -291,14 +252,5 @@ abstract public class ZWaveNode implements NodeContext {
                 refresh(false);
                 break;
         }
-    }
-
-    public enum State {
-        NodeInfo,
-        RetrieveVersionPending,
-        RetrieveVersionCompleted,
-        RetrieveStatePending,
-        RetrieveStateCompleted,
-        Started
     }
 }

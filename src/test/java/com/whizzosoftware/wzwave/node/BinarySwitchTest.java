@@ -54,7 +54,7 @@ public class BinarySwitchTest {
         assertTrue(listener.messages.get(0) instanceof ApplicationCommand);
         DataFrame m = (DataFrame)listener.messages.get(0);
         bs.onDataFrameReceived(null, m, false);
-        assertTrue(bs.isOn());
+        assertTrue(BinarySwitch.isOn(bs));
     }
 
     @Test
@@ -64,7 +64,7 @@ public class BinarySwitchTest {
 
         // assert that the new switch has the appropriate command class and its initial value is null (undefined)
         assertTrue(bs.hasCommandClass(BinarySwitchCommandClass.ID));
-        assertNull(bs.isOn());
+        assertNull(BinarySwitch.isOn(bs));
 
         // send a new SWITCH_BINARY_REPORT (value=0xFF) to node and verify COMMAND_CLASS_SWITCH_BINARY is updated properly
         MockFrameListener listener = new MockFrameListener();
@@ -74,7 +74,7 @@ public class BinarySwitchTest {
         assertTrue(listener.messages.get(0) instanceof ApplicationCommand);
         DataFrame m = (DataFrame)listener.messages.get(0);
         bs.onDataFrameReceived(null, m, false);
-        assertTrue(bs.isOn());
+        assertTrue(BinarySwitch.isOn(bs));
 
         // send a new SWITCH_BINARY_REPORT (off) to node and verify COMMAND_CLASS_SWITCH_BINARY is updated properly
         listener.clear();
@@ -83,6 +83,6 @@ public class BinarySwitchTest {
         assertTrue(listener.messages.get(0) instanceof ApplicationCommand);
         m = (DataFrame)listener.messages.get(0);
         bs.onDataFrameReceived(null, m, false);
-        assertFalse(bs.isOn());
+        assertFalse(BinarySwitch.isOn(bs));
     }
 }

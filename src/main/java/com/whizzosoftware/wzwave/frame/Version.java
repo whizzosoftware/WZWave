@@ -22,7 +22,7 @@ public class Version extends DataFrame {
     private byte libraryType;
 
     public Version() {
-        super(Type.REQUEST, ID, null);
+        super(DataFrameType.REQUEST, ID, null);
     }
 
     public Version(byte[] bytes) {

@@ -17,7 +17,7 @@ import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 abstract public class DataFrame extends Frame {
     public static final byte START_OF_FRAME = 0x01;
 
-    private Type type;
+    private DataFrameType type;
     private byte commandId;
     private byte[] data;
     private int sendCount;
@@ -35,7 +35,7 @@ abstract public class DataFrame extends Frame {
         if (frame[1] != frame.length - 2) {
             throw new RuntimeException("Data framing length error");
         }
-        this.type = (frame[2] == 0 ? Type.REQUEST : Type.RESPONSE);
+        this.type = (frame[2] == 0 ? DataFrameType.REQUEST : DataFrameType.RESPONSE);
         this.commandId = frame[3];
         this.data = new byte[frame.length - 2];
         System.arraycopy(frame, 4, this.data, 0, frame.length - 4);
@@ -48,13 +48,13 @@ abstract public class DataFrame extends Frame {
      * @param commandId the command ID
      * @param data the data (excluding the SOF, frame type, and commandId)
      */
-    public DataFrame(Type type, byte commandId, byte[] data) {
+    public DataFrame(DataFrameType type, byte commandId, byte[] data) {
         this.type = type;
         this.commandId = commandId;
         this.data = data;
     }
 
-    public Type getType() {
+    public DataFrameType getType() {
         return type;
     }
 
@@ -102,9 +102,4 @@ abstract public class DataFrame extends Frame {
     }
 
     abstract public DataFrameTransaction createTransaction(long startTime);
-
-    public enum Type {
-        REQUEST,
-        RESPONSE
-    }
 }

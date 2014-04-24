@@ -26,7 +26,7 @@ public class ApplicationUpdate extends DataFrame {
     private NodeInfo nodeInfo;
 
     public ApplicationUpdate() {
-        super(Type.REQUEST, ID, null);
+        super(DataFrameType.REQUEST, ID, null);
     }
 
     public ApplicationUpdate(byte[] data) {

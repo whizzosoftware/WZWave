@@ -22,7 +22,7 @@ public class RequestNodeInfo extends DataFrame {
     private Byte retVal;
 
     public RequestNodeInfo(byte nodeId) {
-        super(Type.REQUEST, ID, new byte[] {nodeId});
+        super(DataFrameType.REQUEST, ID, new byte[] {nodeId});
 
         this.nodeId = nodeId;
     }

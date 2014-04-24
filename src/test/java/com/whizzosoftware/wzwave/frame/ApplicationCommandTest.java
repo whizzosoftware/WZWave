@@ -7,7 +7,7 @@ import static org.junit.Assert.*;
 public class ApplicationCommandTest {
     @Test
     public void testExplicitConstructor() {
-        ApplicationCommand cmd = new ApplicationCommand(DataFrame.Type.REQUEST, (byte)0, (byte)6, new byte[] {0x25, 0x03, 0x00});
+        ApplicationCommand cmd = new ApplicationCommand(DataFrameType.REQUEST, (byte)0, (byte)6, new byte[] {0x25, 0x03, 0x00});
         byte[] b = cmd.getBytes();
         assertEquals(10, b.length);
         assertEquals((byte)0x01, b[0]);

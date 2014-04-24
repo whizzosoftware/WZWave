@@ -188,7 +188,7 @@ public class FrameParserTest {
         SendData sd = (SendData)cl.messages.get(0);
         assertTrue(sd.hasRetVal());
         assertEquals(Byte.valueOf((byte)0x01), sd.getRetVal());
-        assertEquals(DataFrame.Type.RESPONSE, sd.getType());
+        assertEquals(DataFrameType.RESPONSE, sd.getType());
     }
 
     @Test
@@ -201,7 +201,7 @@ public class FrameParserTest {
         SendData sd = (SendData)cl.messages.get(0);
         assertTrue(sd.hasCallbackId());
         assertEquals(Byte.valueOf((byte)0x02), sd.getCallbackId());
-        assertEquals(DataFrame.Type.REQUEST, sd.getType());
+        assertEquals(DataFrameType.REQUEST, sd.getType());
     }
 
     @Test
@@ -214,7 +214,7 @@ public class FrameParserTest {
         SendData sd = (SendData)cl.messages.get(0);
         assertTrue(sd.hasCallbackId());
         assertEquals(Byte.valueOf((byte)0x02), sd.getCallbackId());
-        assertEquals(DataFrame.Type.REQUEST, sd.getType());
+        assertEquals(DataFrameType.REQUEST, sd.getType());
     }
 
     @Test

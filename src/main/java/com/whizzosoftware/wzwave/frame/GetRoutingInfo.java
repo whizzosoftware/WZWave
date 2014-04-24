@@ -20,7 +20,7 @@ public class GetRoutingInfo extends DataFrame {
     private byte[] nodeMask = new byte[29];
 
     public GetRoutingInfo() {
-        super(Type.REQUEST, ID, null);
+        super(DataFrameType.REQUEST, ID, null);
     }
 
     public GetRoutingInfo(byte[] data) {
