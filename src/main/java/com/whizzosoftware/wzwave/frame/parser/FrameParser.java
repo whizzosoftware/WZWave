@@ -66,7 +66,7 @@ public class FrameParser {
                             case 0x15:
                                 frameListener.onNAK();
                                 break;
-                            case 0x16:
+                            case 0x18:
                                 frameListener.onCAN();
                                 break;
                             default:
