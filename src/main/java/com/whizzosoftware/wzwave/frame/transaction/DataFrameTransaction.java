@@ -31,7 +31,7 @@ public interface DataFrameTransaction {
      *
      * @param f the next frame
      */
-    public void addFrame(Frame f);
+    public void addFrame(Frame f, long now);
 
     public boolean shouldRetry(long now);
 
@@ -45,7 +45,7 @@ public interface DataFrameTransaction {
     public boolean hasError(long now);
 
     /**
-     * Identified whether the transaction is complete.
+     * Identifies whether the transaction is complete.
      *
      * @return a boolean
      */

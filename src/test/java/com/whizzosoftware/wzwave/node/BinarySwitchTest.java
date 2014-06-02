@@ -53,7 +53,7 @@ public class BinarySwitchTest {
         assertEquals(1, listener.messages.size());
         assertTrue(listener.messages.get(0) instanceof ApplicationCommand);
         DataFrame m = (DataFrame)listener.messages.get(0);
-        bs.onDataFrameReceived(null, m, false);
+        bs.onDataFrameReceived(m, false);
         assertTrue(BinarySwitch.isOn(bs));
     }
 
@@ -73,7 +73,7 @@ public class BinarySwitchTest {
         assertEquals(1, listener.messages.size());
         assertTrue(listener.messages.get(0) instanceof ApplicationCommand);
         DataFrame m = (DataFrame)listener.messages.get(0);
-        bs.onDataFrameReceived(null, m, false);
+        bs.onDataFrameReceived(m, false);
         assertTrue(BinarySwitch.isOn(bs));
 
         // send a new SWITCH_BINARY_REPORT (off) to node and verify COMMAND_CLASS_SWITCH_BINARY is updated properly
@@ -82,7 +82,41 @@ public class BinarySwitchTest {
         assertEquals(1, listener.messages.size());
         assertTrue(listener.messages.get(0) instanceof ApplicationCommand);
         m = (DataFrame)listener.messages.get(0);
-        bs.onDataFrameReceived(null, m, false);
+        bs.onDataFrameReceived(m, false);
         assertFalse(BinarySwitch.isOn(bs));
+    }
+
+    /**
+     * This tests that when a node that should be listening (according to its NodeInfo) fails to provide a response to
+     * RequestNodeInfo, that it's flagged as both started and inactive.
+     */
+    @Test
+    public void testListeningNodeStartupFailure() {
+        BinarySwitch bs = new BinarySwitch((byte)0x01, new NodeProtocolInfo((byte)0x04, (byte)0x10, (byte)0x01, true), null);
+        assertEquals(0, bs.getWakeupQueueCount());
+        assertEquals(1, bs.getWriteQueueCount());
+        assertNull(bs.isAvailable());
+
+        // simulate sending of RequestNodeInfo
+        assertTrue(bs.writeQueue.get(0) instanceof RequestNodeInfo);
+        bs.writeQueue.clear();
+        assertEquals(0, bs.getWriteQueueCount());
+        assertNull(bs.isAvailable());
+
+        // simulate receiving of failed RequestNodeInfo response
+        bs.onDataFrameReceived(new ApplicationUpdate(new byte[] {0x01, 0x06, 0x00, 0x49, (byte)0x81, 0x00, 0x00, 0x31}), false);
+        assertNull(bs.isAvailable());
+
+        // simulate sending of RequestNodeInfo first retry
+        assertTrue(bs.writeQueue.get(0) instanceof RequestNodeInfo);
+        bs.writeQueue.clear();
+        assertEquals(0, bs.getWriteQueueCount());
+        assertNull(bs.isAvailable());
+
+        // simulate receiving of failed RequestNodeInfo response
+        bs.onDataFrameReceived(new ApplicationUpdate(new byte[] {0x01, 0x06, 0x00, 0x49, (byte)0x81, 0x00, 0x00, 0x31}), false);
+
+        assertEquals(ZWaveNodeState.Started, bs.nodeState);
+        assertFalse(bs.isAvailable());
     }
 }

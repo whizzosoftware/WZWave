@@ -85,7 +85,7 @@ public class RoutingBinarySensorTest {
         MockFrameListener listener = new MockFrameListener();
         FrameParser parser = new FrameParser(listener);
         parser.addBytes(new byte[] {0x01, 0x08, 0x00, 0x04, 0x00, 0x09, 0x02, (byte)0x84, 0x07, 0x7B}, 10);
-        sensor.onDataFrameReceived(null, (DataFrame)listener.messages.get(0), true);
+        sensor.onDataFrameReceived((DataFrame)listener.messages.get(0), true);
 
         // check that wakeup queue has been purged & there are 2 messages in the write queue
         assertEquals(0, sensor.getWakeupQueueCount());

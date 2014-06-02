@@ -26,10 +26,11 @@ abstract public class ZWaveNode extends ZWaveEndpoint implements NodeContext {
 
     private Byte basicDeviceClass;
     private boolean listening;
+    private Boolean available;
     protected final LinkedList<DataFrame> writeQueue = new LinkedList<DataFrame>();
     private final LinkedList<DataFrame> wakeupQueue = new LinkedList<DataFrame>();
     protected DataFrame lastSentData;
-    private ZWaveNodeState nodeState;
+    protected ZWaveNodeState nodeState;
     private int stateRetries;
     /**
      * Indicates whether the Version command class has sent its startup messages
@@ -59,6 +60,14 @@ abstract public class ZWaveNode extends ZWaveEndpoint implements NodeContext {
         if (listening) {
             flushWakeupQueue();
         }
+    }
+
+    public Boolean isAvailable() {
+        return available;
+    }
+
+    public void setAvailable(boolean available) {
+        this.available = available;
     }
 
     public Byte getBasicDeviceClass() {
@@ -140,7 +149,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint implements NodeContext {
      *
      * @param dataFrame the data frame received
      */
-    public void onDataFrameReceived(SerialZWaveController controller, DataFrame dataFrame, boolean unsolicited) {
+    public void onDataFrameReceived(DataFrame dataFrame, boolean unsolicited) {
         if (dataFrame instanceof ApplicationCommand) {
             byte commandClassId = ((ApplicationCommand)dataFrame).getCommandClassId();
             CommandClass cc = getCommandClass(commandClassId);
@@ -218,8 +227,15 @@ abstract public class ZWaveNode extends ZWaveEndpoint implements NodeContext {
                         queueDataFrame(new RequestNodeInfo(getNodeId()));
                         stateRetries++;
                     } else {
-                        logger.debug("No node information provided after {} retries; moving to next state", stateRetries);
-                        setState(ZWaveNodeState.RetrieveStatePending);
+                        if (listening) {
+                            logger.debug("Node {} provided no node info after {} retries; should be listening so flagging as unavailable and started", getNodeId(), stateRetries);
+                            available = false;
+                            setState(ZWaveNodeState.Started);
+                        } else {
+                            logger.debug("Node {} provided no node info after {} retries; not flagged as listening so assuming it's asleep", getNodeId(), stateRetries);
+                            available = true;
+                            setState(ZWaveNodeState.Started);
+                        }
                     }
                 } else {
                     // check if there are optional command classes

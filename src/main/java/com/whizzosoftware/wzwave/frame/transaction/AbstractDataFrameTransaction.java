@@ -38,7 +38,7 @@ abstract public class AbstractDataFrameTransaction implements DataFrameTransacti
     }
 
     @Override
-    public void addFrame(Frame f) {
+    public void addFrame(Frame f, long now) {
         if (f instanceof NAK) {
             hasPendingNAK = true;
         }

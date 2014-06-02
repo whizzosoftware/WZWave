@@ -222,7 +222,7 @@ public class SerialZWaveController implements Runnable, ZWaveController, FrameLi
             // if we are in the context of a data frame transaction, add the new data frame to it
             if (hasCurrentRequestTransaction()) {
                 logger.debug("Received data frame within transaction context");
-                currentDataFrameTransaction.addFrame(frame);
+                currentDataFrameTransaction.addFrame(frame, now);
                 if (currentDataFrameTransaction.isComplete()) {
                     processData(currentDataFrameTransaction.getFinalData(), false);
                     logger.debug("*** Data frame transaction complete");
@@ -245,6 +245,8 @@ public class SerialZWaveController implements Runnable, ZWaveController, FrameLi
         if (hasCurrentRequestTransactionError(now)) {
             logger.debug("*** Data frame transaction error - aborting");
             logger.debug("");
+
+            // clear out the aborted transaction
             currentDataFrameTransaction = null;
         }
 
@@ -353,7 +355,7 @@ public class SerialZWaveController implements Runnable, ZWaveController, FrameLi
         byte nodeId = sendData.getNodeId();
         ZWaveNode node = nodeMap.get(nodeId);
         if (node != null) {
-            node.onDataFrameReceived(this, sendData, unsolicited);
+            node.onDataFrameReceived(sendData, unsolicited);
         } else {
             logger.error("Unable to find node " + nodeId);
         }
@@ -362,7 +364,7 @@ public class SerialZWaveController implements Runnable, ZWaveController, FrameLi
     private void processApplicationCommandHandler(ApplicationCommand applicationCommand, boolean unsolicited) {
         ZWaveNode node = nodeMap.get(applicationCommand.getNodeId());
         if (node != null) {
-            node.onDataFrameReceived(this, applicationCommand, unsolicited);
+            node.onDataFrameReceived(applicationCommand, unsolicited);
             if (listener != null) {
                 listener.onZWaveNodeUpdated(node);
             }
@@ -388,7 +390,7 @@ public class SerialZWaveController implements Runnable, ZWaveController, FrameLi
         if (nodeId != null) {
             ZWaveNode node = nodeMap.get(nodeId);
             if (node != null) {
-                node.onDataFrameReceived(this, applicationUpdate, unsolicited);
+                node.onDataFrameReceived(applicationUpdate, unsolicited);
                 if (listener != null) {
                     listener.onZWaveNodeUpdated(node);
                 }

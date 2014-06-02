@@ -40,8 +40,8 @@ public class RequestResponseRequestTransaction extends AbstractDataFrameTransact
     }
 
     @Override
-    public void addFrame(Frame bs) {
-        super.addFrame(bs);
+    public void addFrame(Frame bs, long now) {
+        super.addFrame(bs, now);
 
         switch (state) {
 

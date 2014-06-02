@@ -22,16 +22,16 @@ public class SendDataTransactionTest {
         SendDataTransaction t = new SendDataTransaction(startFrame, now, true);
         assertFalse(t.isComplete());
 
-        t.addFrame(new ACK());
+        t.addFrame(new ACK(), now);
         assertFalse(t.isComplete());
 
-        t.addFrame(new SendData(new byte[] {0x01, 0x04, 0x01, 0x13, 0x00, -45}));
+        t.addFrame(new SendData(new byte[] {0x01, 0x04, 0x01, 0x13, 0x00, -45}), now);
         assertFalse(t.isComplete());
 
-        t.addFrame(new SendData(new byte[] {0x01, 0x04, 0x00, 0x13, 0x00, -45}));
+        t.addFrame(new SendData(new byte[] {0x01, 0x04, 0x00, 0x13, 0x00, -45}), now);
         assertFalse(t.isComplete());
 
-        t.addFrame(new ApplicationCommand(DataFrameType.RESPONSE, (byte)0x00, (byte)0x01, new byte[] {0x00}));
+        t.addFrame(new ApplicationCommand(DataFrameType.RESPONSE, (byte)0x00, (byte)0x01, new byte[] {0x00}), now);
         assertTrue(t.isComplete());
     }
 
@@ -42,13 +42,33 @@ public class SendDataTransactionTest {
         SendDataTransaction t = new SendDataTransaction(startFrame, now, false);
         assertFalse(t.isComplete());
 
-        t.addFrame(new ACK());
+        t.addFrame(new ACK(), now);
         assertFalse(t.isComplete());
 
-        t.addFrame(new SendData(new byte[] {0x01, 0x04, 0x01, 0x13, 0x00, -45}));
+        t.addFrame(new SendData(new byte[] {0x01, 0x04, 0x01, 0x13, 0x00, -45}), now);
         assertFalse(t.isComplete());
 
-        t.addFrame(new SendData(new byte[] {0x01, 0x04, 0x00, 0x13, 0x00, -45}));
+        t.addFrame(new SendData(new byte[] {0x01, 0x04, 0x00, 0x13, 0x00, -45}), now);
         assertTrue(t.isComplete());
+    }
+
+    @Test
+    public void transactionWithExpectedResponseTimeout() {
+        long now = System.currentTimeMillis();
+        SendData startFrame = new SendData(new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x25, 0x02, 0x05, 0x08, -45});
+        SendDataTransaction t = new SendDataTransaction(startFrame, now, true);
+        assertFalse(t.isComplete());
+
+        t.addFrame(new ACK(), now);
+        assertFalse(t.isComplete());
+
+        t.addFrame(new SendData(new byte[] {0x01, 0x04, 0x01, 0x13, 0x00, -45}), now);
+        assertFalse(t.isComplete());
+
+        t.addFrame(new SendData(new byte[] {0x01, 0x04, 0x00, 0x13, 0x00, -45}), now);
+        assertFalse(t.isComplete());
+
+        assertFalse(t.hasError(now + 1000));
+        assertTrue(t.hasError(now + 2001));
     }
 }

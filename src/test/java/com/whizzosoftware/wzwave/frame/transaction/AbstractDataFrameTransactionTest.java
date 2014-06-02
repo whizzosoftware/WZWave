@@ -61,7 +61,7 @@ public class AbstractDataFrameTransactionTest {
         assertFalse(t.hasError(startTime));
 
         // receive first NAK
-        t.addFrame(new NAK());
+        t.addFrame(new NAK(), startTime);
         assertTrue(t.shouldRetry(startTime));
         assertFalse(t.hasError(startTime));
 
@@ -71,7 +71,7 @@ public class AbstractDataFrameTransactionTest {
         assertFalse(t.hasError(startTime));
 
         // receive second NAK
-        t.addFrame(new NAK());
+        t.addFrame(new NAK(), startTime);
         assertTrue(t.shouldRetry(startTime));
         assertFalse(t.hasError(startTime));
 
@@ -81,7 +81,7 @@ public class AbstractDataFrameTransactionTest {
         assertFalse(t.hasError(startTime));
 
         // receive third NAK
-        t.addFrame(new NAK());
+        t.addFrame(new NAK(), startTime);
         assertFalse(t.shouldRetry(startTime));
         assertTrue(t.hasError(startTime));
     }

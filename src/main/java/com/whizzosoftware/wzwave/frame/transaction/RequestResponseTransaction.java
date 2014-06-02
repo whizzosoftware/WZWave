@@ -38,8 +38,8 @@ public class RequestResponseTransaction extends AbstractDataFrameTransaction {
     }
 
     @Override
-    public void addFrame(Frame f) {
-        super.addFrame(f);
+    public void addFrame(Frame f, long now) {
+        super.addFrame(f, now);
 
         switch (state) {
             case STATE_REQUEST_SENT:

@@ -24,6 +24,8 @@ import org.slf4j.LoggerFactory;
 public class SendDataTransaction extends AbstractDataFrameTransaction {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    private static final long DEFAULT_RESPONSE_TIMEOUT = 2000;
+
     private static final int STATE_REQUEST_SENT = 1;
     private static final int STATE_ACK_RECEIVED = 2;
     private static final int STATE_RESPONSE_RECEIVED = 3;
@@ -33,6 +35,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
     private DataFrame finalFrame;
     private int state;
     private boolean isResponseExpected;
+    private long responseReceiveTime;
 
     /**
      * Constructor.
@@ -41,15 +44,19 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
      * @param startTime the time the start frame was sent
      * @param isResponseExpected indicates if a response is expected
      */
-    public SendDataTransaction(DataFrame startFrame, long startTime, boolean isResponseExpected) {
+    public SendDataTransaction(SendData startFrame, long startTime, boolean isResponseExpected) {
         super(startFrame, startTime);
         this.state = STATE_REQUEST_SENT;
         this.isResponseExpected = isResponseExpected;
     }
 
+    public Byte getNodeId() {
+        return ((SendData)getStartFrame()).getNodeId();
+    }
+
     @Override
-    public void addFrame(Frame bs) {
-        super.addFrame(bs);
+    public void addFrame(Frame bs, long now) {
+        super.addFrame(bs, now);
 
         switch (state) {
 
@@ -80,6 +87,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                 if (bs instanceof DataFrame) {
                     if (((DataFrame)bs).getType() == DataFrameType.REQUEST) {
                         logger.debug("Response received for {}", getStartFrame().getClass().getName());
+                        responseReceiveTime = now;
                         // if we shouldn't expect a response, the transaction is complete
                         if (!isResponseExpected) {
                             state = STATE_COMPLETE;
@@ -105,6 +113,15 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                 }
                 break;
         }
+    }
+
+    @Override
+    public boolean hasError(long now) {
+        // make sure we're not waiting more than 2 seconds for a response...
+        return state == STATE_REQUEST_RECEIVED &&
+            isResponseExpected &&
+            (now - responseReceiveTime > DEFAULT_RESPONSE_TIMEOUT) ||
+            super.hasError(now);
     }
 
     @Override
