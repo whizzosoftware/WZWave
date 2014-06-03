@@ -252,8 +252,8 @@ public class SerialZWaveController implements Runnable, ZWaveController, FrameLi
 
         // allow nodes to do processing
         if (!hasCurrentRequestTransaction()) {
-            for (ZWaveNode node : nodes) {
-                node.runLoop(this);
+            for (int i=0; i < nodes.size(); i++) {
+                nodes.get(i).runLoop(this);
             }
             transmitNextPendingData(now);
         }
