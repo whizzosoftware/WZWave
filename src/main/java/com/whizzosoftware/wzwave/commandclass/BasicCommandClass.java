@@ -21,9 +21,9 @@ import org.slf4j.LoggerFactory;
 public class BasicCommandClass extends CommandClass {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private static final byte BASIC_SET = 0x01;
-    private static final byte BASIC_GET = 0x02;
-    private static final byte BASIC_REPORT = 0x03;
+    public static final byte BASIC_SET = 0x01;
+    public static final byte BASIC_GET = 0x02;
+    public static final byte BASIC_REPORT = 0x03;
 
     public static final byte ID = (byte)0x20;
 
@@ -44,7 +44,7 @@ public class BasicCommandClass extends CommandClass {
     }
 
     @Override
-    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+    public void onApplicationCommand(NodeContext context, byte[] ccb, int startIndex) {
         if (ccb[startIndex+1] == BASIC_REPORT || ccb[startIndex+1] == BASIC_SET) {
             value = ccb[startIndex+2];
             logger.debug("Received updated value: {}", ByteUtil.createString(value));
@@ -54,8 +54,9 @@ public class BasicCommandClass extends CommandClass {
     }
 
     @Override
-    public void queueStartupMessages(byte nodeId, NodeContext context) {
-        context.queueDataFrame(createGetv1(nodeId));
+    public int queueStartupMessages(NodeContext context, byte nodeId) {
+        context.sendDataFrame(createGetv1(nodeId));
+        return 1;
     }
 
     static public DataFrame createSetv1(byte nodeId, byte value) {

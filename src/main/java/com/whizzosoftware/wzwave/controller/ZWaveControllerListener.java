@@ -28,4 +28,6 @@ public interface ZWaveControllerListener {
      * @param node the updated Z-Wave node
      */
     public void onZWaveNodeUpdated(ZWaveEndpoint node);
+
+    public void onZWaveConnectionFailure(Throwable t);
 }

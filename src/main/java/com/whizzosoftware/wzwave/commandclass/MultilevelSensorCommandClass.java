@@ -38,13 +38,14 @@ public class MultilevelSensorCommandClass extends CommandClass {
     }
 
     @Override
-    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+    public void onApplicationCommand(NodeContext context, byte[] ccb, int startIndex) {
         logger.debug("onDataFrame()");
     }
 
     @Override
-    public void queueStartupMessages(byte nodeId, NodeContext context) {
-        context.queueDataFrame(createGetv1(nodeId));
+    public int queueStartupMessages(NodeContext context, byte nodeId) {
+        context.sendDataFrame(createGetv1(nodeId));
+        return 1;
     }
 
     static public DataFrame createGetv1(byte nodeId) {

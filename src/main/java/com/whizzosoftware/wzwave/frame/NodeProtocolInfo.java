@@ -10,6 +10,7 @@ package com.whizzosoftware.wzwave.frame;
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import com.whizzosoftware.wzwave.frame.transaction.RequestResponseTransaction;
 import com.whizzosoftware.wzwave.util.ByteUtil;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Retrieves the information frame for a specific node.
@@ -44,26 +45,33 @@ public class NodeProtocolInfo extends DataFrame {
         this.listening = listening;
     }
 
-    public NodeProtocolInfo(byte[] bytes) {
-        super(bytes);
+    public NodeProtocolInfo(ByteBuf buffer) {
+        super(buffer);
+
+        byte b4 = buffer.readByte();
+        byte b5 = buffer.readByte();
+        byte b6 = buffer.readByte();
+        byte b7 = buffer.readByte();
+        byte b8 = buffer.readByte();
+        byte b9 = buffer.readByte();
 
         // capabilities
-        listening = ((bytes[4] & 0x80 ) != 0);
-        beaming = ((bytes[5] & 0x10) != 0);
-        routing = ((bytes[4] & 0x40 ) != 0);
+        listening = ((b4 & 0x80 ) != 0);
+        beaming = ((b5 & 0x10) != 0);
+        routing = ((b4 & 0x40 ) != 0);
 
         maxBaudRate = 9600;
-        if ((bytes[4] & 0x38) == 0x10) {
+        if ((b4 & 0x38) == 0x10) {
             maxBaudRate = 40000;
         }
 
-        version = (bytes[4] & 0x07) + 1;
-        security = ((bytes[5] & 0x01) != 0);
+        version = (b4 & 0x07) + 1;
+        security = ((b5 & 0x01) != 0);
 
         // device classes
-        basicDeviceClass = bytes[7];
-        genericDeviceClass = bytes[8];
-        specificDeviceClass = bytes[9];
+        basicDeviceClass = b7;
+        genericDeviceClass = b8;
+        specificDeviceClass = b9;
     }
 
     public boolean isListening() {

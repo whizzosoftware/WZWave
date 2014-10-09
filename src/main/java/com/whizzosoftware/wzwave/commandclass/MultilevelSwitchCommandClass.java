@@ -44,7 +44,7 @@ public class MultilevelSwitchCommandClass extends CommandClass {
     }
 
     @Override
-    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+    public void onApplicationCommand(NodeContext context, byte[] ccb, int startIndex) {
         if (ccb[startIndex+1] == SWITCH_MULTILEVEL_REPORT) {
             if ((ccb[startIndex+2] >= 0x00 && ccb[startIndex+2] <= 0x63) || ccb[startIndex+2] == 0xFF) {
                 level = ccb[startIndex+2];
@@ -58,8 +58,9 @@ public class MultilevelSwitchCommandClass extends CommandClass {
     }
 
     @Override
-    public void queueStartupMessages(byte nodeId, NodeContext context) {
-        context.queueDataFrame(createGetv1(nodeId));
+    public int queueStartupMessages(NodeContext context, byte nodeId) {
+        context.sendDataFrame(createGetv1(nodeId));
+        return 1;
     }
 
     static public DataFrame createSetv1(byte nodeId, byte level) {

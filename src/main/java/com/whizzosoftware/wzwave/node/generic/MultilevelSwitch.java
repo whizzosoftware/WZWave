@@ -9,6 +9,7 @@ package com.whizzosoftware.wzwave.node.generic;
 
 import com.whizzosoftware.wzwave.commandclass.BasicCommandClass;
 import com.whizzosoftware.wzwave.commandclass.MultilevelSwitchCommandClass;
+import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.ZWaveNode;
 import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
@@ -21,8 +22,8 @@ import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
 public class MultilevelSwitch extends ZWaveNode {
     public static final byte ID = 0x11;
 
-    public MultilevelSwitch(byte nodeId, NodeProtocolInfo info, NodeListener listener) {
-        super(nodeId, info, listener);
+    public MultilevelSwitch(ZWaveControllerContext context, byte nodeId, NodeProtocolInfo info, NodeListener listener) {
+        super(context, nodeId, info, listener);
 
         addCommandClass(BasicCommandClass.ID, new BasicCommandClass());
         addCommandClass(MultilevelSwitchCommandClass.ID, new MultilevelSwitchCommandClass());
@@ -30,7 +31,7 @@ public class MultilevelSwitch extends ZWaveNode {
 
     @Override
     protected void refresh(boolean deferIfNotListening) {
-        queueDataFrame(MultilevelSwitchCommandClass.createGetv1(getNodeId()));
+//        queueDataFrame(MultilevelSwitchCommandClass.createGetv1(getNodeId()));
     }
 
     public Byte getLevel() {

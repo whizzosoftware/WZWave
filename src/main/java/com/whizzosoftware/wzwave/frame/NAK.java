@@ -13,7 +13,7 @@ package com.whizzosoftware.wzwave.frame;
  * @author Dan Noguerol
  */
 public class NAK extends Frame {
-    public static final byte ID = 0x06;
+    public static final byte ID = 0x15;
 
     @Override
     public byte[] getBytes() {

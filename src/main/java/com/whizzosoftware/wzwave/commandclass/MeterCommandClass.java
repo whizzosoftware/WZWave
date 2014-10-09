@@ -78,7 +78,7 @@ public class MeterCommandClass extends CommandClass {
     }
 
     @Override
-    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+    public void onApplicationCommand(NodeContext context, byte[] ccb, int startIndex) {
         if (ccb[startIndex+1] == METER_REPORT) {
             logger.debug("Received meter report: {}", ByteUtil.createString(ccb, ccb.length));
             parseMeterReport(ccb, startIndex, getVersion());
@@ -88,12 +88,13 @@ public class MeterCommandClass extends CommandClass {
     }
 
     @Override
-    public void queueStartupMessages(byte nodeId, NodeContext context) {
+    public int queueStartupMessages(NodeContext context, byte nodeId) {
         if (getVersion() == 1) {
-            context.queueDataFrame(createGetv1(nodeId));
+            context.sendDataFrame(createGetv1(nodeId));
         } else {
-            context.queueDataFrame(createGetv2(nodeId, (byte)0x00));
+            context.sendDataFrame(createGetv2(nodeId, (byte) 0x00));
         }
+        return 1;
     }
 
     private void parseMeterReport(byte[] ccb, int startIndex, int version) {

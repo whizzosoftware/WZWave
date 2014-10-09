@@ -44,7 +44,7 @@ public class BinarySensorCommandClass extends CommandClass {
     }
 
     @Override
-    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+    public void onApplicationCommand(NodeContext context, byte[] ccb, int startIndex) {
         // some devices (e.g. Everspring SM103) seem to use SENSOR_BINARY_SET rather than SENSOR_BINARY_REPORT
         // when sending unsolicited updates
         if (ccb[startIndex+1] == SENSOR_BINARY_REPORT || ccb[startIndex+1] == SENSOR_BINARY_SET) {
@@ -63,8 +63,9 @@ public class BinarySensorCommandClass extends CommandClass {
     }
 
     @Override
-    public void queueStartupMessages(byte nodeId, NodeContext context) {
-        context.queueDataFrame(createGetv1(nodeId));
+    public int queueStartupMessages(NodeContext context, byte nodeId) {
+        context.sendDataFrame(createGetv1(nodeId));
+        return 1;
     }
 
     static public DataFrame createGetv1(byte nodeId) {

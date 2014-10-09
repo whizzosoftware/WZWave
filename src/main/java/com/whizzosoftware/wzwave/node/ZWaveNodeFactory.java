@@ -7,6 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.node;
 
+import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.node.generic.BinarySensor;
 import com.whizzosoftware.wzwave.node.generic.BinarySwitch;
 import com.whizzosoftware.wzwave.node.generic.MultilevelSwitch;
@@ -24,47 +25,47 @@ import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
  */
 public class ZWaveNodeFactory {
 
-    public static ZWaveNode createNode(byte nodeId, NodeProtocolInfo info, NodeListener listener) {
+    public static ZWaveNode createNode(ZWaveControllerContext context, byte nodeId, NodeProtocolInfo info, NodeListener listener) throws NodeCreationException {
         switch (info.getGenericDeviceClass()) {
 
             case StaticController.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     case PCController.ID:
-                        return new PCController(nodeId, info, listener);
+                        return new PCController(context, nodeId, info, listener);
                     default:
-                        return new StaticController(nodeId, info, listener);
+                        return new StaticController(context, nodeId, info, listener);
                 }
             }
 
             case BinarySensor.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     case RoutingBinarySensor.ID:
-                        return new RoutingBinarySensor(nodeId, info, listener);
+                        return new RoutingBinarySensor(context, nodeId, info, listener);
                     default:
-                        return new BinarySensor(nodeId, info, listener);
+                        return new BinarySensor(context, nodeId, info, listener);
                 }
             }
 
             case BinarySwitch.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     case BinaryPowerSwitch.ID:
-                        return new BinaryPowerSwitch(nodeId, info, listener);
+                        return new BinaryPowerSwitch(context, nodeId, info, listener);
                     default:
-                        return new BinarySwitch(nodeId, info, listener);
+                        return new BinarySwitch(context, nodeId, info, listener);
                 }
             }
 
             case MultilevelSwitch.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     case MultilevelPowerSwitch.ID:
-                        return new MultilevelPowerSwitch(nodeId, info, listener);
+                        return new MultilevelPowerSwitch(context, nodeId, info, listener);
                     default:
-                        return new MultilevelSwitch(nodeId, info, listener);
+                        return new MultilevelSwitch(context, nodeId, info, listener);
                 }
             }
 
             default:
-                return null;
+                throw new NodeCreationException("Unable to create node due to unknown generic device class: " + info.getGenericDeviceClass());
         }
     }
 }

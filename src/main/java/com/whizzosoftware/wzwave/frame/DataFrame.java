@@ -8,6 +8,7 @@
 package com.whizzosoftware.wzwave.frame;
 
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Abstract base class for all data frames.
@@ -17,6 +18,7 @@ import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 abstract public class DataFrame extends Frame {
     public static final byte START_OF_FRAME = 0x01;
 
+    protected int dataFrameLength;
     private DataFrameType type;
     private byte commandId;
     private byte[] data;
@@ -26,19 +28,18 @@ abstract public class DataFrame extends Frame {
     /**
      * Constructor
      *
-     * @param frame full data frame starting with 0x01 (SOF) and ending with data frame checksum
+     * @param buffer the readable byte buffer
      */
-    public DataFrame(byte[] frame) {
-        if (frame[0] != START_OF_FRAME) {
+    public DataFrame(ByteBuf buffer) {
+        if (buffer.readByte() != START_OF_FRAME) {
             throw new RuntimeException("Data frame parsing error: no SOF");
         }
-        if (frame[1] != frame.length - 2) {
+        this.dataFrameLength = buffer.readByte();
+        if (buffer.readableBytes() < dataFrameLength) {
             throw new RuntimeException("Data framing length error");
         }
-        this.type = (frame[2] == 0 ? DataFrameType.REQUEST : DataFrameType.RESPONSE);
-        this.commandId = frame[3];
-        this.data = new byte[frame.length - 2];
-        System.arraycopy(frame, 4, this.data, 0, frame.length - 4);
+        this.type = (buffer.readByte() == 0 ? DataFrameType.REQUEST : DataFrameType.RESPONSE);
+        this.commandId = buffer.readByte();
     }
 
     /**

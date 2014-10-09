@@ -9,6 +9,7 @@ package com.whizzosoftware.wzwave.frame;
 
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import com.whizzosoftware.wzwave.frame.transaction.RequestResponseTransaction;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Retrieves the home ID and node ID from a controller.
@@ -25,11 +26,11 @@ public class MemoryGetId extends DataFrame {
         super(DataFrameType.REQUEST, ID, null);
     }
 
-    public MemoryGetId(byte[] bytes) {
-        super(bytes);
+    public MemoryGetId(ByteBuf buffer) {
+        super(buffer);
 
-        homeId = (((int)bytes[4]) << 24) | (((int)bytes[5]) << 16) | (((int)bytes[6]) << 8) | ((int)bytes[7]);
-        nodeId = bytes[8];
+        homeId = (((int)buffer.readByte()) << 24) | (((int)buffer.readByte()) << 16) | (((int)buffer.readByte()) << 8) | ((int)buffer.readByte());
+        nodeId = buffer.readByte();
     }
 
     public int getHomeId() {

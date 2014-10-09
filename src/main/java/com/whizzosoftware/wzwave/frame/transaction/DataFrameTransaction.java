@@ -57,5 +57,5 @@ public interface DataFrameTransaction {
      *
      * @return a DataFrame
      */
-    public DataFrame getFinalData();
+    public DataFrame getFinalFrame();
 }

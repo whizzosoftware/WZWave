@@ -21,9 +21,9 @@ import org.slf4j.LoggerFactory;
 public class BinarySwitchCommandClass extends CommandClass {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private static final byte SWITCH_BINARY_SET = 0x01;
-    private static final byte SWITCH_BINARY_GET = 0x02;
-    private static final byte SWITCH_BINARY_REPORT = 0x03;
+    public static final byte SWITCH_BINARY_SET = 0x01;
+    public static final byte SWITCH_BINARY_GET = 0x02;
+    public static final byte SWITCH_BINARY_REPORT = 0x03;
 
     public static final byte ID = 0x25;
 
@@ -44,7 +44,7 @@ public class BinarySwitchCommandClass extends CommandClass {
     }
 
     @Override
-    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+    public void onApplicationCommand(NodeContext context, byte[] ccb, int startIndex) {
         if (ccb[startIndex+1] == SWITCH_BINARY_REPORT) {
             if (ccb[startIndex+2] == 0x00) {
                 isOn = false;
@@ -61,8 +61,9 @@ public class BinarySwitchCommandClass extends CommandClass {
     }
 
     @Override
-    public void queueStartupMessages(byte nodeId, NodeContext context) {
-        context.queueDataFrame(createGetv1(nodeId));
+    public int queueStartupMessages(NodeContext context, byte nodeId) {
+        context.sendDataFrame(createGetv1(nodeId));
+        return 1;
     }
 
     static public DataFrame createGetv1(byte nodeId) {

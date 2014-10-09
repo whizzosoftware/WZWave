@@ -7,6 +7,8 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.node;
 
+import io.netty.buffer.ByteBuf;
+
 /**
  * Encapsulates Z-Wave node information.
  *
@@ -18,16 +20,19 @@ public class NodeInfo {
     private byte specificDeviceClass;
     private byte[] commandClasses;
 
-    public NodeInfo(byte[] data) {
-        this(data, 0);
+    public NodeInfo(byte basicDeviceClass, byte genericDeviceClass, byte specificDeviceClass, byte[] commandClasses) {
+        this.basicDeviceClass = basicDeviceClass;
+        this.genericDeviceClass = genericDeviceClass;
+        this.specificDeviceClass = specificDeviceClass;
+        this.commandClasses = commandClasses;
     }
 
-    public NodeInfo(byte[] data, int start) {
-        basicDeviceClass = data[start+1];
-        genericDeviceClass = data[start+2];
-        specificDeviceClass = data[start+3];
-        commandClasses = new byte[data[start] - 3];
-        System.arraycopy(data, start+4, commandClasses, 0, data[start] - 3);
+    public NodeInfo(ByteBuf buffer, int nodeInfoLength) {
+        buffer.readByte();
+        basicDeviceClass = buffer.readByte();
+        genericDeviceClass = buffer.readByte();
+        specificDeviceClass = buffer.readByte();
+        commandClasses = buffer.readBytes(nodeInfoLength - 3).array();
     }
 
     public byte getBasicDeviceClass() {

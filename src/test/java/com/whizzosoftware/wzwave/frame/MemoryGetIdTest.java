@@ -7,6 +7,8 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.frame;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -25,7 +27,10 @@ public class MemoryGetIdTest {
 
     @Test
     public void testResponseConstructor() {
-        MemoryGetId mgid = new MemoryGetId(new byte[] {0x01, 0x08, 0x01, 0x20, 0x01, 0x6a, 0x2d, (byte)0xec, 0x01, 0x7d});
+        byte[] b = new byte[] {0x01, 0x08, 0x01, 0x20, 0x01, 0x6a, 0x2d, (byte)0xec, 0x01, 0x7d};
+        ByteBuf buffer = Unpooled.wrappedBuffer(b);
+        MemoryGetId mgid = new MemoryGetId(buffer);
+        assertEquals(1, buffer.readableBytes());
         assertEquals(-20, mgid.getHomeId()); // TODO
         assertEquals(0x01, mgid.getNodeId());
     }

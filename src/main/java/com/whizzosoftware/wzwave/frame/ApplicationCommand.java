@@ -9,6 +9,7 @@ package com.whizzosoftware.wzwave.frame;
 
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import com.whizzosoftware.wzwave.util.ByteUtil;
+import io.netty.buffer.ByteBuf;
 
 /**
  * An application command data frame.
@@ -36,15 +37,14 @@ public class ApplicationCommand extends DataFrame {
         this.commandClassBytes = commandClassBytes;
     }
 
-    public ApplicationCommand(byte[] data) {
-        super(data);
+    public ApplicationCommand(ByteBuf buffer) {
+        super(buffer);
 
-        this.status = data[4];
-        this.nodeId = data[5];
+        this.status = buffer.readByte();
+        this.nodeId = buffer.readByte();
 
-        byte cmdLength = data[6];
-        commandClassBytes = new byte[cmdLength];
-        System.arraycopy(data, 7, commandClassBytes, 0, cmdLength);
+        byte cmdLength = buffer.readByte();
+        commandClassBytes = buffer.readBytes(cmdLength).array();
     }
 
     public byte getNodeId() {

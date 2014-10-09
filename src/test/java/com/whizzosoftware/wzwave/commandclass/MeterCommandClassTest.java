@@ -52,7 +52,7 @@ public class MeterCommandClassTest {
         byte[] ccb = {0x01, 0x14, 0x00, 0x04, 0x00, 0x11, 0x0E, 0x32, 0x02, 0x21, 0x64, 0x00, 0x00, 0x00, 0x0c, 0x00, (byte)0x82, 0x00, 0x00, 0x00, 0x02, (byte)0xe4};
         MeterCommandClass cc = new MeterCommandClass();
         cc.setVersion(2);
-        cc.onApplicationCommand(ccb, 7, null);
+        cc.onApplicationCommand(null, ccb, 7);
 
         assertEquals(MeterCommandClass.MeterType.Electric, cc.getMeterType());
         assertEquals((Integer)130, cc.getDelta());

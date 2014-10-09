@@ -8,6 +8,7 @@
 package com.whizzosoftware.wzwave.frame;
 
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
+import io.netty.buffer.ByteBuf;
 
 /**
  * A get routing info data frame.
@@ -17,16 +18,15 @@ import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 public class GetRoutingInfo extends DataFrame {
     public static final byte ID = (byte)0x80;
 
-    private byte[] nodeMask = new byte[29];
+    private byte[] nodeMask;
 
     public GetRoutingInfo() {
         super(DataFrameType.REQUEST, ID, null);
     }
 
-    public GetRoutingInfo(byte[] data) {
-        super(data);
-
-        System.arraycopy(data, 4, nodeMask, 0, 29);
+    public GetRoutingInfo(ByteBuf buffer) {
+        super(buffer);
+        nodeMask = buffer.readBytes(29).array();
     }
 
     public byte[] getNodeMask() {

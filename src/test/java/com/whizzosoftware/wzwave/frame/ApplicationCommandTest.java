@@ -8,6 +8,8 @@
 package com.whizzosoftware.wzwave.frame;
 
 import com.whizzosoftware.wzwave.commandclass.BinarySwitchCommandClass;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -32,7 +34,9 @@ public class ApplicationCommandTest {
     @Test
     public void testByteArrayConstructor() {
         byte[] b1 = {0x01,0x09,0x00,0x04,0x00,0x06,0x03,0x25,0x03,0x00,-45};
-        ApplicationCommand cmd = new ApplicationCommand(b1);
+        ByteBuf buffer = Unpooled.wrappedBuffer(b1);
+        ApplicationCommand cmd = new ApplicationCommand(buffer);
+        assertEquals(1, buffer.readableBytes());
         assertEquals(0, cmd.getStatus());
         assertEquals(6, cmd.getNodeId());
         assertEquals(BinarySwitchCommandClass.ID, cmd.getCommandClassId());

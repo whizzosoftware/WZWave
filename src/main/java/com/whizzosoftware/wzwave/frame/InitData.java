@@ -9,6 +9,7 @@ package com.whizzosoftware.wzwave.frame;
 
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import com.whizzosoftware.wzwave.frame.transaction.RequestResponseTransaction;
+import io.netty.buffer.ByteBuf;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,26 +24,44 @@ public class InitData extends DataFrame {
 
     private static final int NODE_BITMASK_SIZE = 29;
 
+    private byte version;
+    private byte capabilities;
     private List<Byte> nodes = new ArrayList<Byte>();
 
     public InitData() {
         super(DataFrameType.REQUEST, ID, null);
     }
 
-    public InitData(byte[] bytes) {
-        super(bytes);
+    public InitData(ByteBuf buffer) {
+        super(buffer);
 
-        if (bytes[6] == NODE_BITMASK_SIZE) {
+        this.version = buffer.readByte();
+        this.capabilities = buffer.readByte();
+
+        // read the node information form the bit mask
+        if (buffer.readByte() == NODE_BITMASK_SIZE) {
             // 29 bytes * 8 bits == 232 == the number of possible nodes in the network
             for (int i=0; i < NODE_BITMASK_SIZE; i++) {
+                byte b = buffer.readByte();
                 for (int j=0; j < 8; j++) {
                     byte nodeId = (byte)((i*8)+j+1);
-                    if ((bytes[i+7] & (0x01 << j)) > 0) {
+                    if ((b & (0x01 << j)) > 0) {
                         nodes.add(nodeId);
                     }
                 }
             }
         }
+
+        buffer.readByte(); // unsure what this is
+        buffer.readByte(); // unsure what this is
+    }
+
+    public byte getVersion() {
+        return version;
+    }
+
+    public byte getCapabilities() {
+        return capabilities;
     }
 
     public List<Byte> getNodes() {

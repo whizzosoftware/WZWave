@@ -9,6 +9,7 @@ package com.whizzosoftware.wzwave.frame;
 
 import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
+import io.netty.buffer.ByteBuf;
 
 /**
  * An application update data frame.
@@ -21,7 +22,7 @@ public class ApplicationUpdate extends DataFrame {
     public static final byte UPDATE_STATE_NODE_INFO_REQ_FAILED = (byte)0x81;
     public static final byte UPDATE_STATE_NODE_INFO_RECEIVED = (byte)0x84;
 
-    private byte nodeId;
+    private Byte nodeId;
     private byte state;
     private NodeInfo nodeInfo;
 
@@ -29,17 +30,34 @@ public class ApplicationUpdate extends DataFrame {
         super(DataFrameType.REQUEST, ID, null);
     }
 
-    public ApplicationUpdate(byte[] data) {
-        super(data);
-        state = data[4];
+    public ApplicationUpdate(DataFrameType type, byte state, byte nodeId) {
+        this(type, state, nodeId, null);
+    }
+
+    public ApplicationUpdate(DataFrameType type, byte state, byte nodeId, NodeInfo nodeInfo) {
+        super(type, ID, null);
+        this.state = state;
+        this.nodeId = nodeId;
+        this.nodeInfo = nodeInfo;
+    }
+
+    public ApplicationUpdate(ByteBuf buffer) {
+        super(buffer);
+        state = buffer.readByte();
+        this.nodeId = buffer.readByte();
         if (state == UPDATE_STATE_NODE_INFO_RECEIVED) {
-            this.nodeId = data[5];
-            nodeInfo = new NodeInfo(data, 6);
+            nodeInfo = new NodeInfo(buffer, dataFrameLength - 6);
+        } else {
+            buffer.readByte(); // read 0 length
         }
     }
 
-    public byte getNodeId() {
+    public Byte getNodeId() {
         return nodeId;
+    }
+
+    public void setNodeId(Byte nodeId) {
+        this.nodeId = nodeId;
     }
 
     public byte getState() {

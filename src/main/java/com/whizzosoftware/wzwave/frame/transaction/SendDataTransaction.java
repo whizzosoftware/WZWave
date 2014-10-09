@@ -130,7 +130,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
     }
 
     @Override
-    public DataFrame getFinalData() {
+    public DataFrame getFinalFrame() {
         return finalFrame;
     }
 }

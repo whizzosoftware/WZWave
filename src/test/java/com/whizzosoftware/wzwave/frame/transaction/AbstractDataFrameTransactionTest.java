@@ -97,7 +97,7 @@ public class AbstractDataFrameTransactionTest {
         }
 
         @Override
-        public DataFrame getFinalData() {
+        public DataFrame getFinalFrame() {
             return null;
         }
     }

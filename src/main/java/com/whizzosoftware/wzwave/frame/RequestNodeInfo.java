@@ -9,6 +9,7 @@ package com.whizzosoftware.wzwave.frame;
 
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import com.whizzosoftware.wzwave.frame.transaction.RequestNodeInfoTransaction;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Requests information about a particular node.
@@ -27,9 +28,9 @@ public class RequestNodeInfo extends DataFrame {
         this.nodeId = nodeId;
     }
 
-    public RequestNodeInfo(byte[] data) {
-        super(data);
-        retVal = data[4];
+    public RequestNodeInfo(ByteBuf buffer) {
+        super(buffer);
+        retVal = buffer.readByte();
     }
 
     public Byte getNodeId() {

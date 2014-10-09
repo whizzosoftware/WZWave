@@ -95,7 +95,7 @@ public class RequestResponseRequestTransaction extends AbstractDataFrameTransact
     }
 
     @Override
-    public DataFrame getFinalData() {
+    public DataFrame getFinalFrame() {
         return finalFrame;
     }
 

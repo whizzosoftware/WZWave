@@ -7,6 +7,8 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.frame;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -27,7 +29,10 @@ public class NodeProtocolInfoTest {
 
     @Test
     public void testResponseConstructor() {
-        NodeProtocolInfo npi = new NodeProtocolInfo(new byte[] {0x01, 0x09, 0x01, 0x41, (byte)0x92, 0x16, 0x00, 0x02, 0x02, 0x01, 0x33});
+        byte[] b = new byte[] {0x01, 0x09, 0x01, 0x41, (byte)0x92, 0x16, 0x00, 0x02, 0x02, 0x01, 0x33};
+        ByteBuf buffer = Unpooled.wrappedBuffer(b);
+        NodeProtocolInfo npi = new NodeProtocolInfo(buffer);
+        assertEquals(1, buffer.readableBytes());
         assertTrue(npi.isListening());
         assertTrue(npi.isBeaming());
         assertFalse(npi.isRouting());

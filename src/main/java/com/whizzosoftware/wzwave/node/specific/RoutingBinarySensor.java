@@ -8,6 +8,7 @@
 package com.whizzosoftware.wzwave.node.specific;
 
 import com.whizzosoftware.wzwave.commandclass.WakeUpCommandClass;
+import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.generic.BinarySensor;
 import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
@@ -24,8 +25,8 @@ public class RoutingBinarySensor extends BinarySensor {
 
     private static final Logger logger = LoggerFactory.getLogger(RoutingBinarySensor.class);
 
-    public RoutingBinarySensor(byte nodeId, NodeProtocolInfo info, NodeListener listener) {
-        super(nodeId, info, listener);
+    public RoutingBinarySensor(ZWaveControllerContext context, byte nodeId, NodeProtocolInfo info, NodeListener listener) {
+        super(context, nodeId, info, listener);
 
         addCommandClass(WakeUpCommandClass.ID, new WakeUpCommandClass());
     }

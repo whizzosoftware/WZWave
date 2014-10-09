@@ -10,6 +10,7 @@ package com.whizzosoftware.wzwave.frame;
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import com.whizzosoftware.wzwave.frame.transaction.SendDataTransaction;
 import com.whizzosoftware.wzwave.util.ByteUtil;
+import io.netty.buffer.ByteBuf;
 
 /**
  * A data frame used to send arbitrary data between nodes.
@@ -50,18 +51,19 @@ public class SendData extends DataFrame {
         setData(b);
     }
 
-    public SendData(byte[] data) {
-        super(data);
-        if (data.length == 6) {
-            this.retVal = data[4];
-        } else if (data.length == 7) {
-            this.callbackId = data[4];
-            this.tx = data[5];
-        } else if (data.length > 7) {
-            this.nodeId = data[4];
-            byte dataLength = data[5];
-            this.tx = data[dataLength + 6];
-            this.callbackId = data[dataLength + 7];
+    public SendData(ByteBuf buffer) {
+        super(buffer);
+        if (dataFrameLength == 4) {
+            this.retVal = buffer.readByte();
+        } else if (dataFrameLength == 5) {
+            this.callbackId = buffer.readByte();
+            this.tx = buffer.readByte();
+        } else if (dataFrameLength > 5) {
+            this.nodeId = buffer.readByte();
+            byte dataLength = buffer.readByte();
+            this.sendData = buffer.readBytes(dataLength).array();
+            this.tx = buffer.readByte();
+            this.callbackId = buffer.readByte();
         }
     }
 
@@ -83,6 +85,10 @@ public class SendData extends DataFrame {
 
     public Byte getCallbackId() {
         return callbackId;
+    }
+
+    public Byte getTx() {
+        return tx;
     }
 
     public byte[] getSendData() {

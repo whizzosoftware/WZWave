@@ -10,6 +10,7 @@ package com.whizzosoftware.wzwave.node.generic;
 import com.whizzosoftware.wzwave.commandclass.BasicCommandClass;
 import com.whizzosoftware.wzwave.commandclass.BinarySwitchCommandClass;
 import com.whizzosoftware.wzwave.commandclass.CommandClass;
+import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.ZWaveEndpoint;
 import com.whizzosoftware.wzwave.node.ZWaveNode;
@@ -27,8 +28,8 @@ public class BinarySwitch extends ZWaveNode {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public BinarySwitch(byte nodeId, NodeProtocolInfo info, NodeListener listener) {
-        super(nodeId, info, listener);
+    public BinarySwitch(ZWaveControllerContext context, byte nodeId, NodeProtocolInfo info, NodeListener listener) {
+        super(context, nodeId, info, listener);
 
         addCommandClass(BasicCommandClass.ID, new BasicCommandClass());
         addCommandClass(BinarySwitchCommandClass.ID, new BinarySwitchCommandClass());
@@ -41,7 +42,8 @@ public class BinarySwitch extends ZWaveNode {
 
     @Override
     protected void refresh(boolean deferIfNotListening) {
-        queueDataFrame(BinarySwitchCommandClass.createGetv1(getNodeId()), deferIfNotListening);
+        // TODO
+//        sendDataFrame(BinarySwitchCommandClass.createGetv1(getNodeId()), deferIfNotListening);
     }
 
     static public Boolean isOn(ZWaveEndpoint endpoint) {

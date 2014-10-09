@@ -1,120 +1,167 @@
 package com.whizzosoftware.wzwave.node;
 
-import com.whizzosoftware.wzwave.MockFrameListener;
-import com.whizzosoftware.wzwave.commandclass.BinarySwitchCommandClass;
-import com.whizzosoftware.wzwave.controller.MockSerialChannel;
-import com.whizzosoftware.wzwave.controller.MockZWaveControllerWriteDelegate;
-import com.whizzosoftware.wzwave.controller.serial.SerialZWaveController;
-import com.whizzosoftware.wzwave.node.generic.BinarySwitch;
-import com.whizzosoftware.wzwave.frame.*;
-import com.whizzosoftware.wzwave.frame.parser.FrameParser;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
+
+import com.whizzosoftware.wzwave.commandclass.BasicCommandClass;
+import com.whizzosoftware.wzwave.commandclass.BinarySwitchCommandClass;
+import com.whizzosoftware.wzwave.commandclass.VersionCommandClass;
+import com.whizzosoftware.wzwave.controller.MockZWaveControllerContext;
+import com.whizzosoftware.wzwave.node.generic.BinarySwitch;
+import com.whizzosoftware.wzwave.frame.*;
+import com.whizzosoftware.wzwave.node.specific.BinaryPowerSwitch;
 
 public class BinarySwitchTest {
     @Test
     public void testStart() {
         // create new binary switch
         // make sure it's set to listening to startup commands don't go to wakeup queue
-        BinarySwitch bs = new BinarySwitch((byte)0x01, new NodeProtocolInfo((byte)0x04, (byte)0x10, (byte)0x01, true), null);
+        MockZWaveControllerContext context = new MockZWaveControllerContext();
+        BinarySwitch bs = new BinarySwitch(
+            context,
+            (byte)0x01,
+            new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID, true),
+            null
+        );
+
         assertEquals(0, bs.getWakeupQueueCount());
-        assertEquals(1, bs.getWriteQueueCount());
-        assertTrue(bs.writeQueue.get(0) instanceof RequestNodeInfo);
-    }
+        assertEquals(1, context.getSentFrameCount());
+        assertTrue(context.getSentFrames().get(0) instanceof RequestNodeInfo);
+        context.clearSentFrames();
 
-    @Test
-    public void testListeningNodeReceivesRequestNodeInfo() {
-        MockZWaveControllerWriteDelegate delegate = new MockZWaveControllerWriteDelegate();
-        SerialZWaveController controller = new SerialZWaveController(new MockSerialChannel(), delegate, null);
+        // response with two command classes
+        bs.onDataFrameReceived(context, new ApplicationUpdate(
+            DataFrameType.REQUEST,
+            ApplicationUpdate.UPDATE_STATE_NODE_INFO_RECEIVED,
+            (byte)0x01,
+            new NodeInfo(
+                BasicDeviceClasses.ROUTING_SLAVE,
+                BinarySwitch.ID,
+                BinaryPowerSwitch.ID,
+                new byte[] {VersionCommandClass.ID}
+            )
+        ));
+        assertEquals(ZWaveNodeState.RetrieveVersionCompleted, bs.getState());
 
-        // discover a routing binary sensor
-        BinarySwitch bswitch = new BinarySwitch((byte)0x01, new NodeProtocolInfo((byte)0x04, (byte)0x10, (byte)0x01, true), null);
-        controller.createNode(bswitch);
-        controller.process(System.currentTimeMillis());
+        // verify that two version requests were made
+        assertEquals(1, context.getSentFrameCount());
+        assertTrue(context.getSentFrames().get(0) instanceof SendData);
+        assertEquals((byte) 0x86, ((SendData) context.getSentFrames().get(0)).getSendData()[0]);
 
-        assertEquals(1, delegate.getFrameCount());
-        assertTrue(delegate.getFrameList().get(0) instanceof RequestNodeInfo);
+        context.clearSentFrames();
+
+        // respond with first version response (node)
+        bs.onDataFrameReceived(context, new ApplicationCommand(
+            DataFrameType.REQUEST,
+            (byte)0x00,
+            (byte)0x29,
+            new byte[] {(byte)0x86, 0x12, 0x03, 0x03, 0x43, 0x01, 0x01}
+        ));
+        assertEquals("1. 1", ((VersionCommandClass)bs.getCommandClass(VersionCommandClass.ID)).getApplication());
+        assertEquals("3", ((VersionCommandClass)bs.getCommandClass(VersionCommandClass.ID)).getLibrary());
+        assertEquals("3.67", ((VersionCommandClass)bs.getCommandClass(VersionCommandClass.ID)).getProtocol());
+
+        assertEquals(ZWaveNodeState.RetrieveStateCompleted, bs.getState());
+        assertEquals(2, context.getSentFrameCount());
+        context.clearSentFrames();
+
+        // respond with basic get response
+        bs.onDataFrameReceived(context, new ApplicationCommand(
+                DataFrameType.REQUEST,
+                (byte)0x00,
+                (byte)0x29,
+                new byte[] {BasicCommandClass.ID, BasicCommandClass.BASIC_REPORT, (byte)0xff}
+        ));
+
+        assertEquals(ZWaveNodeState.RetrieveStateCompleted, bs.getState());
+        assertEquals(0, context.getSentFrameCount());
+
+        // respond with switch binary get response
+        bs.onDataFrameReceived(context, new ApplicationCommand(
+                DataFrameType.REQUEST,
+                (byte)0x00,
+                (byte)0x29,
+                new byte[] {BinarySwitchCommandClass.ID, BinarySwitchCommandClass.SWITCH_BINARY_REPORT, (byte)0xff}
+        ));
+
+        assertEquals(ZWaveNodeState.Started, bs.getState());
+        assertEquals(0, context.getSentFrameCount());
     }
 
     @Test
     public void testBasicReportMapping() {
+        MockZWaveControllerContext context = new MockZWaveControllerContext();
+
         // create new binary switch
-        BinarySwitch bs = new BinarySwitch((byte)0x01, new NodeProtocolInfo((byte)0x04, (byte)0x10, (byte)0x01, false), null);
+        BinarySwitch bs = new BinarySwitch(
+            context,
+            (byte)0x01,
+            new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID, false),
+            null
+        );
 
         // assert that the new switch has the appropriate command classes and its initial values are null (undefined)
         assertTrue(bs.hasCommandClass(BinarySwitchCommandClass.ID));
 
         // since BASIC_REPORT is supposed to get mapped to SWITCH_BINARY_REPORT, send a new SWITCH_BINARY_REPORT (value=0xFF)
         // message to node and verify COMMAND_CLASS_SWITCH_BINARY is updated properly
-        MockFrameListener listener = new MockFrameListener();
-        FrameParser parser = new FrameParser(listener);
-        parser.addBytes(new byte[] {0x01, 0x09, 0x00, 0x04, 0x00, 0x02, 0x03, 0x20, 0x03, (byte)0xFF, (byte)0xD5}, 11);
-        assertEquals(1, listener.messages.size());
-        assertTrue(listener.messages.get(0) instanceof ApplicationCommand);
-        DataFrame m = (DataFrame)listener.messages.get(0);
-        bs.onDataFrameReceived(m, false);
+        bs.onDataFrameReceived(context, new ApplicationCommand(DataFrameType.REQUEST, (byte)0x00, (byte)0x02, new byte[] {BasicCommandClass.ID, BasicCommandClass.BASIC_REPORT, (byte)0xFF}));
+
         assertTrue(BinarySwitch.isOn(bs));
     }
 
     @Test
     public void testBinarySwitchReport() {
+        MockZWaveControllerContext context = new MockZWaveControllerContext();
+
         // create new binary switch
-        BinarySwitch bs = new BinarySwitch((byte)0x01, new NodeProtocolInfo((byte)0x04, (byte)0x10, (byte)0x01, false), null);
+        BinarySwitch bs = new BinarySwitch(
+            context,
+            (byte)0x01,
+            new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID, false),
+            null
+        );
 
         // assert that the new switch has the appropriate command class and its initial value is null (undefined)
         assertTrue(bs.hasCommandClass(BinarySwitchCommandClass.ID));
         assertNull(BinarySwitch.isOn(bs));
 
         // send a new SWITCH_BINARY_REPORT (value=0xFF) to node and verify COMMAND_CLASS_SWITCH_BINARY is updated properly
-        MockFrameListener listener = new MockFrameListener();
-        FrameParser parser = new FrameParser(listener);
-        parser.addBytes(new byte[] {0x01, 0x09, 0x00, 0x04, 0x00, 0x02, 0x03, 0x25, 0x03, (byte)0xFF, (byte)0xD5}, 11);
-        assertEquals(1, listener.messages.size());
-        assertTrue(listener.messages.get(0) instanceof ApplicationCommand);
-        DataFrame m = (DataFrame)listener.messages.get(0);
-        bs.onDataFrameReceived(m, false);
+        bs.onDataFrameReceived(context, new ApplicationCommand(DataFrameType.REQUEST, (byte)0x00, (byte)0x02, new byte[] {BinarySwitchCommandClass.ID, BinarySwitchCommandClass.SWITCH_BINARY_REPORT, (byte)0xFF}));
         assertTrue(BinarySwitch.isOn(bs));
 
         // send a new SWITCH_BINARY_REPORT (off) to node and verify COMMAND_CLASS_SWITCH_BINARY is updated properly
-        listener.clear();
-        parser.addBytes(new byte[]{0x01, 0x09, 0x00, 0x04, 0x00, 0x02, 0x03, 0x25, 0x03, (byte) 0x00, (byte) 0xD5}, 11);
-        assertEquals(1, listener.messages.size());
-        assertTrue(listener.messages.get(0) instanceof ApplicationCommand);
-        m = (DataFrame)listener.messages.get(0);
-        bs.onDataFrameReceived(m, false);
+        bs.onDataFrameReceived(context, new ApplicationCommand(DataFrameType.REQUEST, (byte) 0x00, (byte) 0x02, new byte[]{BinarySwitchCommandClass.ID, BinarySwitchCommandClass.SWITCH_BINARY_REPORT, (byte) 0x00}));
         assertFalse(BinarySwitch.isOn(bs));
     }
 
-    /**
-     * This tests that when a node that should be listening (according to its NodeInfo) fails to provide a response to
-     * RequestNodeInfo, that it's flagged as both started and inactive.
-     */
     @Test
     public void testListeningNodeStartupFailure() {
-        BinarySwitch bs = new BinarySwitch((byte)0x01, new NodeProtocolInfo((byte)0x04, (byte)0x10, (byte)0x01, true), null);
+        // This tests that when a node that should be listening (according to its NodeInfo) fails to provide a response to
+        // RequestNodeInfo, that it's flagged as both started and inactive.
+        MockZWaveControllerContext context = new MockZWaveControllerContext();
+        BinarySwitch bs = new BinarySwitch(
+            context,
+            (byte)0x01,
+            new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID, true),
+            null
+        );
         assertEquals(0, bs.getWakeupQueueCount());
-        assertEquals(1, bs.getWriteQueueCount());
-        assertNull(bs.isAvailable());
-
-        // simulate sending of RequestNodeInfo
-        assertTrue(bs.writeQueue.get(0) instanceof RequestNodeInfo);
-        bs.writeQueue.clear();
-        assertEquals(0, bs.getWriteQueueCount());
+        assertEquals(1, context.getSentFrameCount());
+        assertTrue(context.getSentFrames().get(0) instanceof RequestNodeInfo);
         assertNull(bs.isAvailable());
 
         // simulate receiving of failed RequestNodeInfo response
-        bs.onDataFrameReceived(new ApplicationUpdate(new byte[] {0x01, 0x06, 0x00, 0x49, (byte)0x81, 0x00, 0x00, 0x31}), false);
+        bs.onDataFrameReceived(context, new ApplicationUpdate(DataFrameType.RESPONSE, ApplicationUpdate.UPDATE_STATE_NODE_INFO_REQ_FAILED, (byte)0x00));
         assertNull(bs.isAvailable());
 
-        // simulate sending of RequestNodeInfo first retry
-        assertTrue(bs.writeQueue.get(0) instanceof RequestNodeInfo);
-        bs.writeQueue.clear();
-        assertEquals(0, bs.getWriteQueueCount());
-        assertNull(bs.isAvailable());
+        // assert that a retry was sent
+        assertEquals(2, context.getSentFrameCount());
+        assertTrue(context.getSentFrames().get(1) instanceof RequestNodeInfo);
 
         // simulate receiving of failed RequestNodeInfo response
-        bs.onDataFrameReceived(new ApplicationUpdate(new byte[] {0x01, 0x06, 0x00, 0x49, (byte)0x81, 0x00, 0x00, 0x31}), false);
+        bs.onDataFrameReceived(context, new ApplicationUpdate(DataFrameType.RESPONSE, ApplicationUpdate.UPDATE_STATE_NODE_INFO_REQ_FAILED, (byte)0x00));
 
         assertEquals(ZWaveNodeState.Started, bs.nodeState);
         assertFalse(bs.isAvailable());

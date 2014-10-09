@@ -9,6 +9,7 @@ package com.whizzosoftware.wzwave.frame;
 
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import com.whizzosoftware.wzwave.frame.transaction.RequestResponseTransaction;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Message for retrieving version information.
@@ -25,10 +26,10 @@ public class Version extends DataFrame {
         super(DataFrameType.REQUEST, ID, null);
     }
 
-    public Version(byte[] bytes) {
-        super(bytes);
-        libraryVersion = new String(bytes, 4, 12);
-        libraryType = bytes[bytes.length - 2];
+    public Version(ByteBuf buffer) {
+        super(buffer);
+        libraryVersion = new String(buffer.readBytes(12).array());
+        libraryType = buffer.readByte();
     }
 
     public String getLibraryVersion() {

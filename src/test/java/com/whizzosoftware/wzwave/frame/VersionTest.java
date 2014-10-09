@@ -7,6 +7,8 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.frame;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -25,7 +27,10 @@ public class VersionTest {
 
     @Test
     public void testResponseConstructor() {
-        Version v = new Version(new byte[] {0x01, 0x10, 0x01, 0x15, 0x5a, 0x2d, 0x57, 0x61, 0x76, 0x65, 0x20, 0x32, 0x2e, 0x37, 0x38, 0x00, 0x01, (byte)0x9b});
+        byte[] b = new byte[] {0x01, 0x10, 0x01, 0x15, 0x5a, 0x2d, 0x57, 0x61, 0x76, 0x65, 0x20, 0x32, 0x2e, 0x37, 0x38, 0x00, 0x01, (byte)0x9b};
+        ByteBuf buffer = Unpooled.wrappedBuffer(b);
+        Version v = new Version(buffer);
+        assertEquals(1, buffer.readableBytes());
         assertEquals("Z-Wave 2.78\u0000", v.getLibraryVersion());
         assertEquals(0x01, v.getLibraryType());
     }

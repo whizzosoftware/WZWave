@@ -8,6 +8,8 @@
 package com.whizzosoftware.wzwave.node;
 
 import com.whizzosoftware.wzwave.commandclass.CommandClass;
+import com.whizzosoftware.wzwave.controller.ZWaveController;
+import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.frame.DataFrame;
 
 import java.util.Collection;
@@ -30,7 +32,7 @@ public interface NodeContext {
      *
      * @param d the data frame
      */
-    public void queueDataFrame(DataFrame d);
+    public void sendDataFrame(DataFrame d);
 
     /**
      * Forces any data frames that have accumulated while the node was considered asleep

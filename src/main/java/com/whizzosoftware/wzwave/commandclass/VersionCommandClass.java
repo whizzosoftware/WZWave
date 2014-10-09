@@ -55,12 +55,13 @@ public class VersionCommandClass extends CommandClass {
     }
 
     @Override
-    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+    public void onApplicationCommand(NodeContext context, byte[] ccb, int startIndex) {
         if (ccb[startIndex+1] == VERSION_REPORT) {
             int start = startIndex+2;
             library = String.format("%d", ccb[start]);
             protocol = String.format("%d.%2d", ccb[start + 1], ccb[start + 2]);
             application = String.format("%d.%2d", ccb[start + 3], ccb[start + 4]);
+            logger.debug("Node {} uses library {}, protocol {} and application {}", context.getNodeId(), library, protocol, application);
         } else if (ccb[1] == VERSION_COMMAND_CLASS_REPORT) {
             CommandClass cc = context.getCommandClass(ccb[startIndex+2]);
             if (cc != null) {
@@ -79,18 +80,23 @@ public class VersionCommandClass extends CommandClass {
     }
 
     @Override
-    public void queueStartupMessages(byte nodeId, NodeContext context) {
+    public int queueStartupMessages(NodeContext context, byte nodeId) {
+        int count = 1;
+
         // get the device version
-        context.queueDataFrame(createGetv1(nodeId));
+        context.sendDataFrame(createGetv1(nodeId));
 
         // check each command class the node has...
         for (CommandClass commandClass : context.getCommandClasses()) {
             // if this library supports more than one version of the command class, query for the version the
             // device supports
             if (commandClass.getMaxSupportedVersion() > 1) {
-                context.queueDataFrame(createCommandClassGetv1(nodeId, commandClass.getId()));
+                context.sendDataFrame(createCommandClassGetv1(nodeId, commandClass.getId()));
+                count++;
             }
         }
+
+        return count;
     }
 
     static public DataFrame createGetv1(byte nodeId) {

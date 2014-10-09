@@ -8,6 +8,7 @@
 package com.whizzosoftware.wzwave.util;
 
 import com.whizzosoftware.wzwave.frame.Frame;
+import io.netty.buffer.ByteBuf;
 
 import java.math.BigDecimal;
 

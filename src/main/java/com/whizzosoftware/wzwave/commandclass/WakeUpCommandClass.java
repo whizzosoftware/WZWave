@@ -39,7 +39,7 @@ public class WakeUpCommandClass extends CommandClass {
     }
 
     @Override
-    public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context) {
+    public void onApplicationCommand(NodeContext context, byte[] ccb, int startIndex) {
         if (ccb[startIndex+1] == WAKE_UP_NOTIFICATION) {
             logger.debug("Received wake up notification; flushing wakeup command queue");
             context.flushWakeupQueue();
@@ -49,6 +49,7 @@ public class WakeUpCommandClass extends CommandClass {
     }
 
     @Override
-    public void queueStartupMessages(byte nodeId, NodeContext context) {
+    public int queueStartupMessages(NodeContext context, byte nodeId) {
+        return 0;
     }
 }

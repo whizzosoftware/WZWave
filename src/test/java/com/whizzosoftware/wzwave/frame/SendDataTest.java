@@ -7,8 +7,8 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.frame;
 
-import com.whizzosoftware.wzwave.MockFrameListener;
-import com.whizzosoftware.wzwave.frame.parser.FrameParser;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -32,7 +32,10 @@ public class SendDataTest {
 
     @Test
     public void testMessageByteArrayConstructorWithRequest() {
-        SendData sd = new SendData(new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x25, 0x02, 0x05, 0x08, -45});
+        byte[] b = new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x25, 0x02, 0x05, 0x08, -45};
+        ByteBuf buffer = Unpooled.wrappedBuffer(b);
+        SendData sd = new SendData(buffer);
+        assertEquals(1, buffer.readableBytes());
         assertEquals(DataFrameType.REQUEST, sd.getType());
         assertFalse(sd.hasRetVal());
         assertEquals((byte)0x06, sd.getNodeId());
@@ -42,19 +45,12 @@ public class SendDataTest {
 
     @Test
     public void testMessageByteArrayConstructorWithRetval() {
-        SendData sd = new SendData(new byte[] {0x01, 0x04, 0x01, 0x13, 0x01, (byte)0xE8});
+        byte[] b = new byte[] {0x01, 0x04, 0x01, 0x13, 0x01, (byte)0xE8};
+        ByteBuf buffer = Unpooled.wrappedBuffer(b);
+        SendData sd = new SendData(buffer);
+        assertEquals(1, buffer.readableBytes());
         assertEquals(DataFrameType.RESPONSE, sd.getType());
         assertTrue(sd.hasRetVal());
         assertEquals((byte)0x01, (byte)sd.getRetVal());
-    }
-
-    @Test
-    public void testFuncCallback() {
-        MockFrameListener listener = new MockFrameListener();
-        FrameParser parser = new FrameParser(listener);
-        parser.addBytes(new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x25, 0x02, 0x05, 0x01, (byte)0xC2}, 11);
-        parser.addBytes(new byte[] {0x01, 0x04, 0x01, 0x13, 0x01, (byte)0xE8}, 6);
-        parser.addBytes(new byte[] {0x01, 0x05, 0x00, 0x13, 0x01, 0x00, (byte)0xE8}, 7);
-        assertEquals(3, listener.messages.size());
     }
 }

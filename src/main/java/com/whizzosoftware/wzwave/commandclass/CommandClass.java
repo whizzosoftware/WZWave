@@ -63,20 +63,22 @@ abstract public class CommandClass {
     /**
      * Callback for an Application Command being received for this command class.
      *
+     * @param context the NodeContext for the new data frame
      * @param ccb the command class data
      * @param startIndex the array index from which to start reading command class data
-     * @param context the NodeContext for the new data frame
      */
-    abstract public void onApplicationCommand(byte[] ccb, int startIndex, NodeContext context);
+    abstract public void onApplicationCommand(NodeContext context, byte[] ccb, int startIndex);
 
     /**
      * Give the command class the opportunity to queue up any data frames it
      * needs to send at startup time (e.g. to request it's current state)
      *
-     * @param nodeId the destination node ID
      * @param context the NodeContext to use when queueing additional data frames, etc.
+     * @param nodeId the destination node ID
+     *
+     * @return the number of messages queued
      */
-    abstract public void queueStartupMessages(byte nodeId, NodeContext context);
+    abstract public int queueStartupMessages(NodeContext context, byte nodeId);
 
     /**
      * Convenience method for creating SendData frames

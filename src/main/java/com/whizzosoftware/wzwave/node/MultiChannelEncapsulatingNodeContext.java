@@ -35,12 +35,12 @@ public class MultiChannelEncapsulatingNodeContext implements NodeContext {
     }
 
     @Override
-    public void queueDataFrame(DataFrame d) {
+    public void sendDataFrame(DataFrame d) {
         DataFrame ed = MultiInstanceCommandClass.createMultiChannelCmdEncapv2((byte)0, destEndpoint, d, true);
         if (ed == null) {
             ed = d;
         }
-        context.queueDataFrame(ed);
+        context.sendDataFrame(ed);
     }
 
     @Override
