@@ -15,8 +15,8 @@ package com.whizzosoftware.wzwave.node;
 public enum ZWaveNodeState {
     NodeInfo,
     RetrieveVersionPending,
-    RetrieveVersionCompleted,
+    RetrieveVersionSent,
     RetrieveStatePending,
-    RetrieveStateCompleted,
+    RetrieveStateSent,
     Started
 }

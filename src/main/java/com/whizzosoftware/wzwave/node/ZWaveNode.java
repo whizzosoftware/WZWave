@@ -92,7 +92,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
             case RetrieveVersionPending:
                 CommandClass cc = getCommandClass(VersionCommandClass.ID);
                 pendingVersionResponses = cc.queueStartupMessages(new WrapperedNodeContext(context, this), getNodeId());
-                setState(context, ZWaveNodeState.RetrieveVersionCompleted);
+                setState(context, ZWaveNodeState.RetrieveVersionSent);
                 versionStartupMessagesSent = true;
                 break;
             case RetrieveStatePending:
@@ -105,7 +105,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
                         pendingStatusResponses += ccc.queueStartupMessages(new WrapperedNodeContext(context, this), getNodeId());
                     }
                 }
-                setState(context, ZWaveNodeState.RetrieveStateCompleted);
+                setState(context, ZWaveNodeState.RetrieveStateSent);
                 break;
             case Started:
                 if (listener != null) {
@@ -142,14 +142,14 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
 
                 // if we received a VersionCommandClass and we've got pending responses, decrement the pending count
                 // and change to next state if we've received all pending responses
-                if (cc instanceof VersionCommandClass && nodeState == ZWaveNodeState.RetrieveVersionCompleted) {
+                if (cc instanceof VersionCommandClass && nodeState == ZWaveNodeState.RetrieveVersionSent) {
                     pendingVersionResponses--;
                     if (pendingVersionResponses <= 0) {
                         setState(context, ZWaveNodeState.RetrieveStatePending);
                     }
                 // if we're waiting on state responses, decrement the pending count and change to next state if
                 // we've received all pending responses
-                } else if (nodeState == ZWaveNodeState.RetrieveStateCompleted) {
+                } else if (nodeState == ZWaveNodeState.RetrieveStateSent) {
                     pendingStatusResponses--;
                     if (pendingStatusResponses <= 0) {
                         setState(context, ZWaveNodeState.Started);
@@ -196,6 +196,9 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
         if (listening || !deferIfNotListening) {
             logger.debug("Queueing data frame for write: {}", frame);
             context.sendDataFrame(frame);
+            if (nodeState == ZWaveNodeState.RetrieveStateSent) {
+                pendingStatusResponses++;
+            }
         } else {
             logger.debug("Queueing data frame for next wakeup: {}", frame);
             wakeupQueue.add(frame);

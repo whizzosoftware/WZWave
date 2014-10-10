@@ -17,7 +17,7 @@ import com.whizzosoftware.wzwave.node.NodeContext;
  * @author Dan Noguerol
  */
 abstract public class CommandClass {
-    private int version = 1;
+    private int version = 1; // always assume version 1 unless told otherwise
 
     /**
      * Returns the command class version

@@ -42,7 +42,7 @@ public class BinarySwitchTest {
                 new byte[] {VersionCommandClass.ID}
             )
         ));
-        assertEquals(ZWaveNodeState.RetrieveVersionCompleted, bs.getState());
+        assertEquals(ZWaveNodeState.RetrieveVersionSent, bs.getState());
 
         // verify that two version requests were made
         assertEquals(1, context.getSentFrameCount());
@@ -62,7 +62,7 @@ public class BinarySwitchTest {
         assertEquals("3", ((VersionCommandClass)bs.getCommandClass(VersionCommandClass.ID)).getLibrary());
         assertEquals("3.67", ((VersionCommandClass)bs.getCommandClass(VersionCommandClass.ID)).getProtocol());
 
-        assertEquals(ZWaveNodeState.RetrieveStateCompleted, bs.getState());
+        assertEquals(ZWaveNodeState.RetrieveStateSent, bs.getState());
         assertEquals(2, context.getSentFrameCount());
         context.clearSentFrames();
 
@@ -74,7 +74,7 @@ public class BinarySwitchTest {
                 new byte[] {BasicCommandClass.ID, BasicCommandClass.BASIC_REPORT, (byte)0xff}
         ));
 
-        assertEquals(ZWaveNodeState.RetrieveStateCompleted, bs.getState());
+        assertEquals(ZWaveNodeState.RetrieveStateSent, bs.getState());
         assertEquals(0, context.getSentFrameCount());
 
         // respond with switch binary get response

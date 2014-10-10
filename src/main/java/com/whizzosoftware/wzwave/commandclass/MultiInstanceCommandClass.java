@@ -31,18 +31,20 @@ public class MultiInstanceCommandClass extends CommandClass {
     public static final byte ID = 0x60;
 
     // version 1
-    private static final byte MULTI_INSTANCE_GET = 0x04;
-    private static final byte MULTI_INSTANCE_REPORT = 0x05;
-    private static final byte MULTI_INSTANCE_CMD_ENCAP = 0x06;
+    public static final byte MULTI_INSTANCE_GET = 0x04;
+    public static final byte MULTI_INSTANCE_REPORT = 0x05;
+    public static final byte MULTI_INSTANCE_CMD_ENCAP = 0x06;
 
     // version 2
-    private static final byte MULTI_CHANNEL_END_POINT_GET = 0x07;
-    private static final byte MULTI_CHANNEL_END_POINT_REPORT = 0x08;
-    private static final byte MULTI_CHANNEL_CAPABILITY_GET = 0x09;
-    private static final byte MULTI_CHANNEL_CAPABILITY_REPORT = 0x0A;
-    private static final byte MULTI_CHANNEL_END_POINT_FIND = 0x0B;
-    private static final byte MULTI_CHANNEL_END_POINT_FIND_REPORT = 0x0C;
-    private static final byte MULTI_CHANNEL_CMD_ENCAP = 0x0D;
+    public static final byte MULTI_CHANNEL_END_POINT_GET = 0x07;
+    public static final byte MULTI_CHANNEL_END_POINT_REPORT = 0x08;
+    public static final byte MULTI_CHANNEL_CAPABILITY_GET = 0x09;
+    public static final byte MULTI_CHANNEL_CAPABILITY_REPORT = 0x0A;
+    public static final byte MULTI_CHANNEL_END_POINT_FIND = 0x0B;
+    public static final byte MULTI_CHANNEL_END_POINT_FIND_REPORT = 0x0C;
+    public static final byte MULTI_CHANNEL_CMD_ENCAP = 0x0D;
+
+    public static final byte IDENTICAL_ENDPOINTS = 0x40;
 
     private Map<Byte, ZWaveMultiChannelEndpoint> endpointMap = new HashMap<Byte, ZWaveMultiChannelEndpoint>();
     private int endpointCount;
@@ -130,7 +132,7 @@ public class MultiInstanceCommandClass extends CommandClass {
 
     protected void processMultiChannelEndpointReport(NodeContext context, byte[] ccb, int startIndex) {
         this.endpointCount = ccb[startIndex+3] & 0x3F;
-        this.endpointsIdentical = ((ccb[startIndex+2] & 0x40) > 0);
+        this.endpointsIdentical = ((ccb[startIndex+2] & IDENTICAL_ENDPOINTS) > 0);
 
         if (endpointsIdentical) {
             // if the node reports all endpoints are identical, we simply query the first one for its
