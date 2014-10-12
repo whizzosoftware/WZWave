@@ -20,11 +20,25 @@ import com.whizzosoftware.wzwave.frame.Frame;
  */
 public interface DataFrameTransaction {
     /**
+     * Get the globally unique ID for this transaction.
+     *
+     * @return a String
+     */
+    public String getId();
+
+    /**
      * Returns the first frame of the transaction.
      *
      * @return a DataFrame
      */
     public DataFrame getStartFrame();
+
+    /**
+     * The transaction timeout interval.
+     *
+     * @return an interval in milliseconds
+     */
+    public long getTimeout();
 
     /**
      * Add a Frame to the transaction.

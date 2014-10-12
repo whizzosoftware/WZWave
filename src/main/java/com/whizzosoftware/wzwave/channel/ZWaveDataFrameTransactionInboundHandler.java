@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * Copyright (c) 2013 Whizzo Software, LLC.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *******************************************************************************/
 package com.whizzosoftware.wzwave.channel;
 
 import com.whizzosoftware.wzwave.frame.ApplicationUpdate;
@@ -8,16 +15,32 @@ import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
+import io.netty.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Handler for all Z-Wave frame transactions. Responsible for tracking the state of the current transaction
+ * including successes, failures and timeouts.
+ *
+ * @author Dan Noguerol
+ */
 public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(ZWaveDataFrameTransactionInboundHandler.class);
 
     private static final int MAX_SEND_COUNT = 2;
 
+    private ChannelHandlerContext handlerContext;
     private DataFrameTransaction currentDataFrameTransaction;
     private boolean processingTransactionCompletion = false;
+    private ScheduledFuture timeoutFuture;
+
+    @Override
+    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+        this.handlerContext = ctx;
+    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
@@ -28,6 +51,11 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
 
                 if (currentDataFrameTransaction.addFrame(frame)) {
                     if (currentDataFrameTransaction.isComplete()) {
+                        // cancel the timeout callback
+                        if (timeoutFuture != null) {
+                            timeoutFuture.cancel(true);
+                            timeoutFuture = null;
+                        }
 
                         // flag that we're in the process of completing a frame transaction so that any code that checks
                         // will know that the transaction isn't quite done yet
@@ -53,13 +81,7 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
                             }
 
                         } else {
-                            DataFrame startFrame = currentDataFrameTransaction.getStartFrame();
-                            if (startFrame.getSendCount() < MAX_SEND_COUNT) {
-                                logger.debug("Transaction has failed - resending initial request");
-                                ctx.channel().writeAndFlush(startFrame);
-                            } else {
-                                logger.debug("Transaction has failed and has exceeded max resends - aborting");
-                            }
+                            attemptResend(ctx);
                         }
 
                         // clear the current transaction
@@ -85,6 +107,13 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
                 logger.trace("Received frame outside of transaction context: {}", frame);
                 ctx.fireChannelRead(msg);
             }
+        } else if (msg instanceof TransactionTimeout) {
+            // if a timeout is received for the current transaction, attempt to resend; otherwise ignore it
+            TransactionTimeout tt = (TransactionTimeout)msg;
+            if (tt.getId().equals(currentDataFrameTransaction.getId())) {
+                logger.trace("Transaction timed out");
+                attemptResend(ctx);
+            }
         }
     }
 
@@ -94,6 +123,21 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
             currentDataFrameTransaction = frame.createTransaction();
             if (currentDataFrameTransaction != null) {
                 logger.trace("*** Data frame transaction started for {}", frame);
+
+                // start timeout
+                if (handlerContext != null && handlerContext.executor() != null) {
+                    timeoutFuture = handlerContext.executor().schedule(
+                            new TransactionTimeout(
+                                    currentDataFrameTransaction.getId(),
+                                    handlerContext,
+                                    this
+                            ),
+                            currentDataFrameTransaction.getTimeout(),
+                            TimeUnit.MILLISECONDS
+                    );
+                } else {
+                    logger.warn("Unable to schedule transaction timeout callback");
+                }
             }
         } else {
             logger.trace("Wrote a data frame with a current transaction: {}", frame);
@@ -102,5 +146,15 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
 
     public boolean hasCurrentRequestTransaction() {
         return (processingTransactionCompletion || (currentDataFrameTransaction != null && !currentDataFrameTransaction.isComplete()));
+    }
+
+    protected void attemptResend(ChannelHandlerContext ctx) {
+        DataFrame startFrame = currentDataFrameTransaction.getStartFrame();
+        if (startFrame.getSendCount() < MAX_SEND_COUNT) {
+            logger.debug("Transaction has failed - resending initial request");
+            ctx.channel().writeAndFlush(startFrame);
+        } else {
+            logger.debug("Transaction has failed and has exceeded max resends - aborting");
+        }
     }
 }

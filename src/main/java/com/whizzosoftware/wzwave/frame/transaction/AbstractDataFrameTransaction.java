@@ -13,6 +13,8 @@ import com.whizzosoftware.wzwave.frame.NAK;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
+
 /**
  * Abstract base class for all DataFrameTransaction implementations.
  *
@@ -21,11 +23,20 @@ import org.slf4j.LoggerFactory;
 abstract public class AbstractDataFrameTransaction implements DataFrameTransaction {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    private String id = UUID.randomUUID().toString();
     private DataFrame startFrame;
     private boolean hasError;
 
     public AbstractDataFrameTransaction(DataFrame startFrame) {
         this.startFrame = startFrame;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public long getTimeout() {
+        return 2000;
     }
 
     public DataFrame getStartFrame() {

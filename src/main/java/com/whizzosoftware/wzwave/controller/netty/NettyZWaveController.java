@@ -1,3 +1,10 @@
+/*******************************************************************************
+ * Copyright (c) 2013 Whizzo Software, LLC.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *******************************************************************************/
 package com.whizzosoftware.wzwave.controller.netty;
 
 import com.whizzosoftware.wzwave.channel.*;
@@ -22,6 +29,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+/**
+ * A Netty implementation of a ZWaveController.
+ *
+ * @author Dan Noguerol
+ */
 public class NettyZWaveController implements ZWaveController, ZWaveControllerContext, ZWaveControllerListener, ZWaveChannelListener, NodeListener {
     private static final Logger logger = LoggerFactory.getLogger(NettyZWaveController.class);
 
