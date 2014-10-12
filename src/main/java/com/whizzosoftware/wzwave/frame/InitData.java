@@ -9,6 +9,7 @@ package com.whizzosoftware.wzwave.frame;
 
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import com.whizzosoftware.wzwave.frame.transaction.RequestResponseTransaction;
+import com.whizzosoftware.wzwave.util.ByteUtil;
 import io.netty.buffer.ByteBuf;
 
 import java.util.ArrayList;
@@ -69,7 +70,22 @@ public class InitData extends DataFrame {
     }
 
     @Override
-    public DataFrameTransaction createTransaction(long startTime) {
-        return new RequestResponseTransaction(this, startTime);
+    public DataFrameTransaction createTransaction() {
+        return new RequestResponseTransaction(this);
+    }
+
+    public String toString() {
+        if (getType() == DataFrameType.REQUEST) {
+            return "ZW_INIT_DATA";
+        } else {
+            StringBuilder sb = new StringBuilder("ZW_INIT_DATA");
+            if (nodes.size() > 0) {
+                sb.append(": nodes ");
+                for (Byte b : nodes) {
+                    sb.append(ByteUtil.createString(b)).append(" ");
+                }
+            }
+            return sb.toString();
+        }
     }
 }

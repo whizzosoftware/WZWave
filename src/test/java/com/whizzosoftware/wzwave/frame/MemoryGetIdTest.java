@@ -31,7 +31,7 @@ public class MemoryGetIdTest {
         ByteBuf buffer = Unpooled.wrappedBuffer(b);
         MemoryGetId mgid = new MemoryGetId(buffer);
         assertEquals(1, buffer.readableBytes());
-        assertEquals(-20, mgid.getHomeId()); // TODO
-        assertEquals(0x01, mgid.getNodeId());
+        assertEquals(-20, (int)mgid.getHomeId()); // TODO
+        assertEquals(0x01, (byte)mgid.getNodeId());
     }
 }

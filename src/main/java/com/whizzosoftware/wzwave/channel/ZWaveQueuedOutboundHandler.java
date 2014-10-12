@@ -24,17 +24,18 @@ public class ZWaveQueuedOutboundHandler extends ChannelOutboundHandlerAdapter {
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        logger.debug("write: " + msg);
+        logger.trace("write: " + msg);
         if (msg instanceof DataFrame) {
             ZWaveDataFrameTransactionInboundHandler transactionHandler = (ZWaveDataFrameTransactionInboundHandler)ctx.pipeline().get("transaction");
             if (transactionHandler != null) {
                 DataFrame frame = (DataFrame) msg;
                 if (transactionHandler.hasCurrentRequestTransaction()) {
-                    logger.debug("Queueing data frame: " + frame + "; current queue size: " + pendingQueue.size());
+                    logger.trace("Queueing data frame: " + frame + "; current queue size: " + pendingQueue.size());
                     pendingQueue.add(frame);
                 } else {
-                    logger.debug("No transaction detected, sending data frame: {}", frame);
+                    logger.trace("No transaction detected, sending data frame: {}", frame);
                     ctx.writeAndFlush(msg, promise);
+                    frame.incremenentSendCount();
                     transactionHandler.onDataFrameWrite(frame);
                 }
             } else {
@@ -50,11 +51,12 @@ public class ZWaveQueuedOutboundHandler extends ChannelOutboundHandlerAdapter {
         ZWaveDataFrameTransactionInboundHandler transactionHandler = (ZWaveDataFrameTransactionInboundHandler)context.pipeline().get("transaction");
         if (pendingQueue.size() > 0) {
             DataFrame frame = pendingQueue.pop();
-            logger.debug("Sending next queued data frame: {}", frame);
+            logger.trace("Sending next queued data frame: {}", frame);
             context.writeAndFlush(frame);
+            frame.incremenentSendCount();
             transactionHandler.onDataFrameWrite(frame);
         } else {
-            logger.debug("No pending data frames to send");
+            logger.trace("No pending data frames to send");
         }
     }
 }

@@ -26,6 +26,12 @@ public class Version extends DataFrame {
         super(DataFrameType.REQUEST, ID, null);
     }
 
+    public Version(String libraryVersion, byte libraryType) {
+        super(DataFrameType.RESPONSE, ID, null);
+        this.libraryVersion = libraryVersion;
+        this.libraryType = libraryType;
+    }
+
     public Version(ByteBuf buffer) {
         super(buffer);
         libraryVersion = new String(buffer.readBytes(12).array());
@@ -41,7 +47,15 @@ public class Version extends DataFrame {
     }
 
     @Override
-    public DataFrameTransaction createTransaction(long startTime) {
-        return new RequestResponseTransaction(this, startTime);
+    public DataFrameTransaction createTransaction() {
+        return new RequestResponseTransaction(this);
+    }
+
+    public String toString() {
+        String s = "ZW_VERSION";
+        if (libraryVersion != null) {
+            s += "[" + libraryVersion + "]";
+        }
+        return s;
     }
 }

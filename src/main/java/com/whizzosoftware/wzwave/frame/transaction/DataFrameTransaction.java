@@ -30,19 +30,17 @@ public interface DataFrameTransaction {
      * Add a Frame to the transaction.
      *
      * @param f the next frame
+     *
+     * @return indicates whether the frame was consumed by the transaction
      */
-    public void addFrame(Frame f, long now);
-
-    public boolean shouldRetry(long now);
-
-    public void incrementRetryCount(long now);
+    public boolean addFrame(Frame f);
 
     /**
      * Indicates whether the transaction is in an error state.
      *
      * @return a boolean
      */
-    public boolean hasError(long now);
+    public boolean hasError();
 
     /**
      * Identifies whether the transaction is complete.

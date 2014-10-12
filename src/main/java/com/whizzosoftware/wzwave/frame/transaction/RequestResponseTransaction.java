@@ -7,10 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.frame.transaction;
 
-import com.whizzosoftware.wzwave.frame.ACK;
-import com.whizzosoftware.wzwave.frame.DataFrame;
-import com.whizzosoftware.wzwave.frame.DataFrameType;
-import com.whizzosoftware.wzwave.frame.Frame;
+import com.whizzosoftware.wzwave.frame.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,36 +24,42 @@ public class RequestResponseTransaction extends AbstractDataFrameTransaction {
 
     private static final int STATE_REQUEST_SENT = 1;
     private static final int STATE_ACK_RECEIVED = 2;
-    private static final int STATE_RESPONSE_RECEIVED = 3;
+    private static final int STATE_COMPLETE = 3;
 
     private DataFrame finalFrame;
     private int state;
 
-    public RequestResponseTransaction(DataFrame startFrame, long sendTime) {
-        super(startFrame, sendTime);
+    public RequestResponseTransaction(DataFrame startFrame) {
+        super(startFrame);
         this.state = STATE_REQUEST_SENT;
     }
 
     @Override
-    public void addFrame(Frame f, long now) {
-        super.addFrame(f, now);
-
+    public boolean addFrame(Frame f) {
         switch (state) {
             case STATE_REQUEST_SENT:
                 if (f instanceof ACK) {
-                    logger.debug("Received ACK as expected");
+                    logger.trace("Received ACK as expected");
                     state = STATE_ACK_RECEIVED;
+                    return true;
+                } else if (f instanceof CAN) {
+                    setError("Received CAN; will re-send");
+                    return true;
                 } else {
                     logger.error("Received unexpected frame for STATE_REQUEST_SENT: " + f);
                 }
                 break;
 
             case STATE_ACK_RECEIVED:
-                if (f instanceof DataFrame && f.getClass() == getStartFrame().getClass()) {
+                if (f instanceof CAN) {
+                    setError("Received CAN; will re-send");
+                    return true;
+                } else if (f instanceof DataFrame && f.getClass() == getStartFrame().getClass()) {
                     if (((DataFrame)f).getType() == DataFrameType.RESPONSE) {
-                        logger.debug("Received expected message response");
-                        state = STATE_RESPONSE_RECEIVED;
+                        logger.trace("Received expected message response");
+                        state = STATE_COMPLETE;
                         finalFrame = ((DataFrame)f);
+                        return true;
                     } else {
                         setError("Expected frame received but does not appear to be a response: " + f);
                     }
@@ -65,11 +68,13 @@ public class RequestResponseTransaction extends AbstractDataFrameTransaction {
                 }
                 break;
         }
+
+        return false;
     }
 
     @Override
     public boolean isComplete() {
-        return (state == STATE_RESPONSE_RECEIVED);
+        return (state == STATE_COMPLETE || hasError());
     }
 
     @Override

@@ -103,8 +103,8 @@ public class ZWaveFrameDecoderTest {
         assertEquals(1, out.size());
         assertTrue(out.get(0) instanceof MemoryGetId);
         MemoryGetId mgid = (MemoryGetId)out.get(0);
-        assertEquals(-20, mgid.getHomeId());
-        assertEquals((byte)1, mgid.getNodeId());
+        assertEquals(-20, (int)mgid.getHomeId());
+        assertEquals((byte)1, (byte)mgid.getNodeId());
         // TODO
     }
 

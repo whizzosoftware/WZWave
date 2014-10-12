@@ -30,6 +30,10 @@ public class StaticController extends ZWaveNode {
 
     @Override
     protected void refresh(boolean deferIfNotListening) {
+    }
 
+    @Override
+    protected boolean shouldSendRequestNodeInfo() {
+        return false;
     }
 }

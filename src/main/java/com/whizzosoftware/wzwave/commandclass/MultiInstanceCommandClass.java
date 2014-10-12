@@ -137,7 +137,7 @@ public class MultiInstanceCommandClass extends CommandClass {
         if (endpointsIdentical) {
             // if the node reports all endpoints are identical, we simply query the first one for its
             // capabilities
-            logger.debug(
+            logger.trace(
                 "Node {} has {} identical endpoints; querying for endpoint 1 capability",
                 context.getNodeId(),
                 endpointCount
@@ -145,7 +145,7 @@ public class MultiInstanceCommandClass extends CommandClass {
             context.sendDataFrame(createMultiChannelCapabilityGetv2(context.getNodeId(), (byte) 0x01));
         } else {
             // if the node reports all endpoints are NOT identical, query each endpoint individually
-            logger.debug(
+            logger.trace(
                 "Node {} has {} non-identical endpoints; querying each endpoint",
                 context.getNodeId(),
                 endpointCount
@@ -157,7 +157,7 @@ public class MultiInstanceCommandClass extends CommandClass {
     }
 
     protected void processMultiChannelCommandEncapsulation(NodeContext context, byte[] ccb, int startIndex) {
-        logger.debug("Got multi channel cmd encap response: src {}, dst {}", ByteUtil.createString(ccb[startIndex+2]), ByteUtil.createString(ccb[startIndex+3]));
+        logger.trace("Got multi channel cmd encap response: src {}, dst {}", ByteUtil.createString(ccb[startIndex+2]), ByteUtil.createString(ccb[startIndex+3]));
         byte num = ccb[startIndex+2];
         byte cmdClass = ccb[startIndex+4];
         ZWaveMultiChannelEndpoint endpoint = endpointMap.get(num);
@@ -182,29 +182,33 @@ public class MultiInstanceCommandClass extends CommandClass {
     }
 
     protected void createNewEndpoint(NodeContext context, byte number, byte[] ccb, int startIndex) {
-        byte genericDeviceClass = ccb[startIndex+3];
-        byte specificDeviceClass = ccb[startIndex+4];
+        if (ccb.length > startIndex + 4) {
+            byte genericDeviceClass = ccb[startIndex + 3];
+            byte specificDeviceClass = ccb[startIndex + 4];
 
-        ZWaveMultiChannelEndpoint ep = new ZWaveMultiChannelEndpoint(context.getNodeId(), number, genericDeviceClass, specificDeviceClass);
-        MultiChannelEncapsulatingNodeContext context2 = new MultiChannelEncapsulatingNodeContext(number, context);
+            ZWaveMultiChannelEndpoint ep = new ZWaveMultiChannelEndpoint(context.getNodeId(), number, genericDeviceClass, specificDeviceClass);
+            MultiChannelEncapsulatingNodeContext context2 = new MultiChannelEncapsulatingNodeContext(number, context);
 
-        for (int x=startIndex+5; x < ccb.length; x++) {
-            CommandClass cc = CommandClassFactory.createCommandClass(ccb[x]);
+            for (int x = startIndex + 5; x < ccb.length; x++) {
+                CommandClass cc = CommandClassFactory.createCommandClass(ccb[x]);
 
-            // assume that the parent node's command class version is the same as the command classes for all endpoints
-            CommandClass pcc = context.getCommandClass(ccb[x]);
-            if (pcc != null) {
-                cc.setVersion(pcc.getVersion());
+                // assume that the parent node's command class version is the same as the command classes for all endpoints
+                CommandClass pcc = context.getCommandClass(ccb[x]);
+                if (pcc != null) {
+                    cc.setVersion(pcc.getVersion());
+                }
+
+                if (cc != null) {
+                    ep.addCommandClass(cc.getId(), cc);
+                    cc.queueStartupMessages(context2, context.getNodeId());
+                } else {
+                    logger.warn("Endpoint reported unknown command class: {}", ccb[x]);
+                }
             }
-
-            if (cc != null) {
-                ep.addCommandClass(cc.getId(), cc);
-                cc.queueStartupMessages(context2, context.getNodeId());
-            } else {
-                logger.warn("Endpoint reported unknown command class: {}", ccb[x]);
-            }
+            endpointMap.put(number, ep);
+        } else {
+            logger.error("Didn't receive any command class data for endpoint; ignoring it");
         }
-        endpointMap.put(number, ep);
     }
 
     /**

@@ -16,8 +16,8 @@ import com.whizzosoftware.wzwave.frame.RequestNodeInfo;
  * @author Dan Noguerol
  */
 public class RequestNodeInfoTransaction extends RequestResponseRequestTransaction {
-    public RequestNodeInfoTransaction(DataFrame startFrame, long startTime) {
-        super(startFrame, startTime);
+    public RequestNodeInfoTransaction(DataFrame startFrame) {
+        super(startFrame);
     }
 
     protected boolean wasSendSuccessful(DataFrame dataFrame) {

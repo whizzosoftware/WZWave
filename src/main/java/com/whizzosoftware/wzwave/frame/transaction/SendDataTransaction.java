@@ -24,8 +24,6 @@ import org.slf4j.LoggerFactory;
 public class SendDataTransaction extends AbstractDataFrameTransaction {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private static final long DEFAULT_RESPONSE_TIMEOUT = 2000;
-
     private static final int STATE_REQUEST_SENT = 1;
     private static final int STATE_ACK_RECEIVED = 2;
     private static final int STATE_RESPONSE_RECEIVED = 3;
@@ -35,17 +33,15 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
     private DataFrame finalFrame;
     private int state;
     private boolean isResponseExpected;
-    private long responseReceiveTime;
 
     /**
      * Constructor.
      *
      * @param startFrame the frame that started the transaction
-     * @param startTime the time the start frame was sent
      * @param isResponseExpected indicates if a response is expected
      */
-    public SendDataTransaction(SendData startFrame, long startTime, boolean isResponseExpected) {
-        super(startFrame, startTime);
+    public SendDataTransaction(SendData startFrame, boolean isResponseExpected) {
+        super(startFrame);
         this.state = STATE_REQUEST_SENT;
         this.isResponseExpected = isResponseExpected;
     }
@@ -55,39 +51,46 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
     }
 
     @Override
-    public void addFrame(Frame bs, long now) {
-        super.addFrame(bs, now);
-
+    public boolean addFrame(Frame bs) {
         switch (state) {
 
             case STATE_REQUEST_SENT:
                 if (bs instanceof ACK) {
-                    logger.debug("Received ACK as expected");
+                    logger.trace("Received ACK as expected");
                     state = STATE_ACK_RECEIVED;
+                    return true;
+                } else if (bs instanceof CAN) {
+                    setError("Received CAN; will re-send");
+                    return true;
                 } else {
-                    setError("Received unexpected frame for STATE_REQUEST_SENT: " + bs);
+                    logger.warn("Received unexpected frame for STATE_REQUEST_SENT: " + bs);
                 }
                 break;
 
             case STATE_ACK_RECEIVED:
-                if (bs instanceof DataFrame) {
-                    DataFrame response = (DataFrame)bs;
-                    if (response.getType() == DataFrameType.RESPONSE) {
-                        logger.debug("{} sent successfully", getStartFrame().getClass().getName());
+                if (bs instanceof CAN) {
+                    setError("Received CAN; will re-send");
+                    return true;
+                } else if (bs instanceof SendData) {
+                    if (((SendData)bs).getType() == DataFrameType.RESPONSE) {
+                        logger.trace("{} sent successfully", getStartFrame().getClass().getName());
                         state = STATE_RESPONSE_RECEIVED;
+                        return true;
                     } else {
                         setError("Received frame but doesn't appear to be a response: " + bs);
                     }
                 } else {
-                    setError("Received unexpected frame for STATE_ACK_RECEIVED");
+                    logger.warn("Received unexpected frame for STATE_ACK_RECEIVED");
                 }
                 break;
 
             case STATE_RESPONSE_RECEIVED:
-                if (bs instanceof DataFrame) {
+                if (bs instanceof CAN) {
+                    setError("Received CAN; will re-send");
+                    return true;
+                } else if (bs instanceof DataFrame) {
                     if (((DataFrame)bs).getType() == DataFrameType.REQUEST) {
-                        logger.debug("Response received for {}", getStartFrame().getClass().getName());
-                        responseReceiveTime = now;
+                        logger.trace("Response received for {}", getStartFrame().getClass().getName());
                         // if we shouldn't expect a response, the transaction is complete
                         if (!isResponseExpected) {
                             state = STATE_COMPLETE;
@@ -95,38 +98,36 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                         } else {
                             state = STATE_REQUEST_RECEIVED;
                         }
+                        return true;
                     } else {
                         setError("Received data frame but doesn't appear to be a request: " + bs);
                     }
                 } else {
-                    setError("Received unexpected frame for STATE_RETVAL_RECEIVED");
+                    logger.warn("Received unexpected frame for STATE_RETVAL_RECEIVED");
                 }
                 break;
 
             case STATE_REQUEST_RECEIVED:
-                if (bs instanceof ApplicationCommand) {
-                    logger.debug("Application command received for {}", getStartFrame().getClass().getName());
+                if (bs instanceof CAN) {
+                    setError("Received CAN; will re-send");
+                    return true;
+                } else if (bs instanceof ApplicationCommand) {
+                    logger.trace("Application command received for {}", getStartFrame().getClass().getName());
                     state = STATE_COMPLETE;
                     finalFrame = (DataFrame)bs;
+                    return true;
                 } else {
-                    setError("Received unexpected frame for STATE_REQUEST_RECEIVED");
+                    logger.warn("Received unexpected frame for STATE_REQUEST_RECEIVED");
                 }
                 break;
         }
-    }
 
-    @Override
-    public boolean hasError(long now) {
-        // make sure we're not waiting more than 2 seconds for a response...
-        return state == STATE_REQUEST_RECEIVED &&
-            isResponseExpected &&
-            (now - responseReceiveTime > DEFAULT_RESPONSE_TIMEOUT) ||
-            super.hasError(now);
+        return false;
     }
 
     @Override
     public boolean isComplete() {
-        return (state == STATE_COMPLETE);
+        return (state == STATE_COMPLETE || hasError());
     }
 
     @Override

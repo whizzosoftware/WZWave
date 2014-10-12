@@ -97,16 +97,16 @@ public class SendData extends DataFrame {
 
     public String toString() {
         if (name != null) {
-            return "SendData(" + getNodeId() + ")[" + name + "]," + callbackId;
+            return "SendData(" + ByteUtil.createString(getNodeId()) + ")[" + name + "]," + callbackId;
         } else if (sendData != null) {
-            return "SendData(" + getNodeId() + ")[" + ByteUtil.createString(sendData, sendData.length) + "]," + callbackId;
+            return "SendData(" + ByteUtil.createString(getNodeId()) + ")[" + ByteUtil.createString(sendData, sendData.length) + "]," + callbackId;
         } else {
-            return "SendData(" + getNodeId() + ")";
+            return "SendData(" + ByteUtil.createString(getNodeId()) + ")";
         }
     }
 
     @Override
-    public DataFrameTransaction createTransaction(long startTime) {
-        return new SendDataTransaction(this, startTime, isResponseExpected);
+    public DataFrameTransaction createTransaction() {
+        return new SendDataTransaction(this, isResponseExpected);
     }
 }

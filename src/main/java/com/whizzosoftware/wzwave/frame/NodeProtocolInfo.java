@@ -110,20 +110,18 @@ public class NodeProtocolInfo extends DataFrame {
         return specificDeviceClass;
     }
 
+    @Override
+    public DataFrameTransaction createTransaction() {
+        return new RequestResponseTransaction(this);
+    }
+
     public String toString() {
-        StringBuilder sb = new StringBuilder("NodeProtocolInfo[").append(nodeId).append("]");
+        StringBuilder sb = new StringBuilder("ZW_GetNodeProtocolInfo[").append(ByteUtil.createString(nodeId)).append("]");
         if (getType() == DataFrameType.RESPONSE) {
             sb.append("(Basic=").append(ByteUtil.createString(basicDeviceClass)).append(",");
             sb.append("Generic=").append(ByteUtil.createString(genericDeviceClass)).append(",");
             sb.append("Specific=").append(ByteUtil.createString(specificDeviceClass)).append(")");
-        } else {
-            sb.append(".Request");
         }
         return sb.toString();
-    }
-
-    @Override
-    public DataFrameTransaction createTransaction(long startTime) {
-        return new RequestResponseTransaction(this, startTime);
     }
 }

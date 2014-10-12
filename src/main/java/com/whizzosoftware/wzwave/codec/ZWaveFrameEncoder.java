@@ -19,7 +19,7 @@ public class ZWaveFrameEncoder extends MessageToByteEncoder<Frame> {
     @Override
     protected void encode(ChannelHandlerContext channelHandlerContext, Frame frame, ByteBuf byteBuf) throws Exception {
         byte[] bytes = frame.getBytes();
-        logger.debug("Sending: " + ByteUtil.createString(bytes, bytes.length));
+        logger.debug("SENT {}: {}", frame.toString(), ByteUtil.createString(bytes, bytes.length));
         byteBuf.writeBytes(bytes);
     }
 }

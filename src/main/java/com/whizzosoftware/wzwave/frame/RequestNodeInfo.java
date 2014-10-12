@@ -9,6 +9,7 @@ package com.whizzosoftware.wzwave.frame;
 
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import com.whizzosoftware.wzwave.frame.transaction.RequestNodeInfoTransaction;
+import com.whizzosoftware.wzwave.util.ByteUtil;
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -23,8 +24,7 @@ public class RequestNodeInfo extends DataFrame {
     private Byte retVal;
 
     public RequestNodeInfo(byte nodeId) {
-        super(DataFrameType.REQUEST, ID, new byte[] {nodeId});
-
+        super(DataFrameType.REQUEST, ID, new byte[]{nodeId});
         this.nodeId = nodeId;
     }
 
@@ -46,7 +46,22 @@ public class RequestNodeInfo extends DataFrame {
     }
 
     @Override
-    public DataFrameTransaction createTransaction(long startTime) {
-        return new RequestNodeInfoTransaction(this, startTime);
+    public DataFrameTransaction createTransaction() {
+        return new RequestNodeInfoTransaction(this);
+    }
+
+    public String toString() {
+        if (nodeId != null) {
+            return "REQUEST_NODE_INFO(" + ByteUtil.createString(nodeId) + ")";
+        } else {
+            switch (retVal) {
+                case 0:
+                    return "REQUEST_NODE_INFO[failed]";
+                case 1:
+                    return "REQUEST_NODE_INFO[success]";
+                default:
+                    return "REQUEST_NODE_INFO: " + retVal;
+            }
+        }
     }
 }

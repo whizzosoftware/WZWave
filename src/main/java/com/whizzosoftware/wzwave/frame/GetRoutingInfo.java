@@ -34,7 +34,7 @@ public class GetRoutingInfo extends DataFrame {
     }
 
     @Override
-    public DataFrameTransaction createTransaction(long startTime) {
+    public DataFrameTransaction createTransaction() {
         return null;
     }
 }

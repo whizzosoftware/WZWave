@@ -23,7 +23,6 @@ abstract public class DataFrame extends Frame {
     private byte commandId;
     private byte[] data;
     private int sendCount;
-    private long sendTime;
 
     /**
      * Constructor
@@ -63,12 +62,8 @@ abstract public class DataFrame extends Frame {
         return sendCount;
     }
 
-    public boolean isSendCountMaxExceeded() {
-        return (sendCount > 5);
-    }
-
-    public void setSendTime(long sendTime) {
-        this.sendTime = sendTime;
+    public void incremenentSendCount() {
+        sendCount++;
     }
 
     protected void setData(byte[] data) {
@@ -102,5 +97,5 @@ abstract public class DataFrame extends Frame {
         return bytes;
     }
 
-    abstract public DataFrameTransaction createTransaction(long startTime);
+    abstract public DataFrameTransaction createTransaction();
 }

@@ -7,78 +7,132 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.frame.transaction;
 
-import com.whizzosoftware.wzwave.frame.ACK;
-import com.whizzosoftware.wzwave.frame.ApplicationCommand;
-import com.whizzosoftware.wzwave.frame.DataFrameType;
-import com.whizzosoftware.wzwave.frame.SendData;
+import com.whizzosoftware.wzwave.frame.*;
 import io.netty.buffer.Unpooled;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class SendDataTransactionTest {
     @Test
-    public void transactionWithExpectedResponse() {
-        long now = System.currentTimeMillis();
+    public void testTransactionWithExpectedResponse() {
         byte[] b = new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x25, 0x02, 0x05, 0x08, -45};
         SendData startFrame = new SendData(Unpooled.wrappedBuffer(b));
-        SendDataTransaction t = new SendDataTransaction(startFrame, now, true);
+        SendDataTransaction t = new SendDataTransaction(startFrame, true);
         assertFalse(t.isComplete());
 
-        t.addFrame(new ACK(), now);
+        assertTrue(t.addFrame(new ACK()));
+        assertFalse(t.isComplete());
+        assertFalse(t.hasError());
+
+        b = new byte[] {0x01, 0x04, 0x01, 0x13, 0x00, -45};
+        assertTrue(t.addFrame(new SendData(Unpooled.wrappedBuffer(b))));
+        assertFalse(t.isComplete());
+        assertFalse(t.hasError());
+
+        b = new byte[] {0x01, 0x04, 0x00, 0x13, 0x00, -45};
+        assertTrue(t.addFrame(new SendData(Unpooled.wrappedBuffer(b))));
+        assertFalse(t.isComplete());
+        assertFalse(t.hasError());
+
+        assertTrue(t.addFrame(new ApplicationCommand(DataFrameType.RESPONSE, (byte) 0x00, (byte) 0x01, new byte[]{0x00})));
+        assertTrue(t.isComplete());
+        assertFalse(t.hasError());
+    }
+
+    @Test
+    public void testTransactionWithoutExpectedResponse() {
+        byte[] b = new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x25, 0x02, 0x05, 0x08, -45};
+        SendData startFrame = new SendData(Unpooled.wrappedBuffer(b));
+        SendDataTransaction t = new SendDataTransaction(startFrame, false);
+        assertFalse(t.isComplete());
+
+        assertTrue(t.addFrame(new ACK()));
         assertFalse(t.isComplete());
 
         b = new byte[] {0x01, 0x04, 0x01, 0x13, 0x00, -45};
-        t.addFrame(new SendData(Unpooled.wrappedBuffer(b)), now);
+        assertTrue(t.addFrame(new SendData(Unpooled.wrappedBuffer(b))));
         assertFalse(t.isComplete());
 
         b = new byte[] {0x01, 0x04, 0x00, 0x13, 0x00, -45};
-        t.addFrame(new SendData(Unpooled.wrappedBuffer(b)), now);
-        assertFalse(t.isComplete());
-
-        t.addFrame(new ApplicationCommand(DataFrameType.RESPONSE, (byte)0x00, (byte)0x01, new byte[] {0x00}), now);
+        assertTrue(t.addFrame(new SendData(Unpooled.wrappedBuffer(b))));
         assertTrue(t.isComplete());
     }
 
     @Test
-    public void transactionWithoutExpectedResponse() {
-        long now = System.currentTimeMillis();
-        byte[] b = new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x25, 0x02, 0x05, 0x08, -45};
+    public void testTransactionWithCANBeforeACK() {
+        byte[] b = new byte[] {0x01, 0x09, 0x00, 0x13, 0x2E, 0x02, 0x25, 0x02, 0x05, 0x4A, (byte)0xA1};
         SendData startFrame = new SendData(Unpooled.wrappedBuffer(b));
-        SendDataTransaction t = new SendDataTransaction(startFrame, now, false);
-        assertFalse(t.isComplete());
+        SendDataTransaction t = new SendDataTransaction(startFrame, true);
 
-        t.addFrame(new ACK(), now);
-        assertFalse(t.isComplete());
-
-        b = new byte[] {0x01, 0x04, 0x01, 0x13, 0x00, -45};
-        t.addFrame(new SendData(Unpooled.wrappedBuffer(b)), now);
-        assertFalse(t.isComplete());
-
-        b = new byte[] {0x01, 0x04, 0x00, 0x13, 0x00, -45};
-        t.addFrame(new SendData(Unpooled.wrappedBuffer(b)), now);
+        // receive CAN
+        assertTrue(t.addFrame(new CAN()));
         assertTrue(t.isComplete());
+        assertTrue(t.hasError());
     }
 
     @Test
-    public void transactionWithExpectedResponseTimeout() {
-        long now = System.currentTimeMillis();
-        byte[] b = new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x25, 0x02, 0x05, 0x08, -45};
+    public void testTransactionWithCANAfterACK() {
+        byte[] b = new byte[] {0x01, 0x09, 0x00, 0x13, 0x2E, 0x02, 0x25, 0x02, 0x05, 0x4A, (byte)0xA1};
         SendData startFrame = new SendData(Unpooled.wrappedBuffer(b));
-        SendDataTransaction t = new SendDataTransaction(startFrame, now, true);
-        assertFalse(t.isComplete());
+        SendDataTransaction t = new SendDataTransaction(startFrame, true);
 
-        t.addFrame(new ACK(), now);
+        // receive ACK
+        assertTrue(t.addFrame(new ACK()));
         assertFalse(t.isComplete());
+        assertFalse(t.hasError());
 
+        // receive CAN
+        assertTrue(t.addFrame(new CAN()));
+        assertTrue(t.isComplete());
+        assertTrue(t.hasError());
+    }
+
+    @Test
+    public void testTransactionWithCANAfterResponse() {
+        byte[] b = new byte[] {0x01, 0x09, 0x00, 0x13, 0x2E, 0x02, 0x25, 0x02, 0x05, 0x4A, (byte)0xA1};
+        SendData startFrame = new SendData(Unpooled.wrappedBuffer(b));
+        SendDataTransaction t = new SendDataTransaction(startFrame, true);
+
+        // receive ACK
+        assertTrue(t.addFrame(new ACK()));
+        assertFalse(t.isComplete());
+        assertFalse(t.hasError());
+
+        // receive response
         b = new byte[] {0x01, 0x04, 0x01, 0x13, 0x00, -45};
-        t.addFrame(new SendData(Unpooled.wrappedBuffer(b)), now);
+        assertTrue(t.addFrame(new SendData(Unpooled.wrappedBuffer(b))));
+        assertFalse(t.isComplete());
+
+        // receive CAN
+        assertTrue(t.addFrame(new CAN()));
+        assertTrue(t.isComplete());
+        assertTrue(t.hasError());
+    }
+
+    @Test
+    public void testTransactionWithCANAfterRequest() {
+        byte[] b = new byte[] {0x01, 0x09, 0x00, 0x13, 0x2E, 0x02, 0x25, 0x02, 0x05, 0x4A, (byte)0xA1};
+        SendData startFrame = new SendData(Unpooled.wrappedBuffer(b));
+        SendDataTransaction t = new SendDataTransaction(startFrame, true);
+
+        // receive ACK
+        assertTrue(t.addFrame(new ACK()));
+        assertFalse(t.isComplete());
+        assertFalse(t.hasError());
+
+        // receive response
+        b = new byte[] {0x01, 0x04, 0x01, 0x13, 0x00, -45};
+        assertTrue(t.addFrame(new SendData(Unpooled.wrappedBuffer(b))));
         assertFalse(t.isComplete());
 
         b = new byte[] {0x01, 0x04, 0x00, 0x13, 0x00, -45};
-        t.addFrame(new SendData(Unpooled.wrappedBuffer(b)), now);
+        assertTrue(t.addFrame(new SendData(Unpooled.wrappedBuffer(b))));
         assertFalse(t.isComplete());
+        assertFalse(t.hasError());
 
-        assertFalse(t.hasError(now + 1000));
-        assertTrue(t.hasError(now + 2001));
+        // receive CAN
+        assertTrue(t.addFrame(new CAN()));
+        assertTrue(t.isComplete());
+        assertTrue(t.hasError());
     }
 }

@@ -58,7 +58,7 @@ public class ZWaveChannelInboundHandler extends ChannelInboundHandlerAdapter {
 
     private void processInitData(ChannelHandlerContext ctx, InitData initData) {
         for (Byte nodeId : initData.getNodes()) {
-            logger.info("Node " + nodeId + " found; requesting protocol info");
+            logger.trace("Node " + nodeId + " found; requesting protocol info");
 
             // the node protocol info response won't include a node ID so we add this to a queue
             // in order to correlate the response to this node

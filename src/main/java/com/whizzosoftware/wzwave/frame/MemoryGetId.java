@@ -19,8 +19,8 @@ import io.netty.buffer.ByteBuf;
 public class MemoryGetId extends DataFrame {
     public static final byte ID = 0x20;
 
-    private int homeId;
-    private byte nodeId;
+    private Integer homeId;
+    private Byte nodeId;
 
     public MemoryGetId() {
         super(DataFrameType.REQUEST, ID, null);
@@ -33,16 +33,24 @@ public class MemoryGetId extends DataFrame {
         nodeId = buffer.readByte();
     }
 
-    public int getHomeId() {
+    public Integer getHomeId() {
         return homeId;
     }
 
-    public byte getNodeId() {
+    public Byte getNodeId() {
         return nodeId;
     }
 
     @Override
-    public DataFrameTransaction createTransaction(long startTime) {
-        return new RequestResponseTransaction(this, startTime);
+    public DataFrameTransaction createTransaction() {
+        return new RequestResponseTransaction(this);
+    }
+
+    public String toString() {
+        String s = "ZW_MEMORY_GET_ID";
+        if (homeId != null) {
+            s += "[" + homeId + "," + nodeId + "]";
+        }
+        return s;
     }
 }

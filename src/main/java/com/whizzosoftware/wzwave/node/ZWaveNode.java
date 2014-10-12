@@ -49,7 +49,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
         listening = info.isListening();
 
         // if the device is listening, request its node info
-        if (listening) {
+        if (listening && shouldSendRequestNodeInfo()) {
             sendDataFrame(context, new RequestNodeInfo(nodeId));
         }
     }
@@ -84,7 +84,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
     }
 
     protected void setState(ZWaveControllerContext context, ZWaveNodeState nodeState) {
-        logger.debug("Node {} changing to state: {}", getNodeId(), nodeState);
+        logger.trace("Node {} changing to state: {}", getNodeId(), nodeState);
         this.nodeState = nodeState;
         this.stateRetries = 0;
 
@@ -194,13 +194,13 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
      */
     protected void queueDataFrame(ZWaveControllerContext context, DataFrame frame, boolean deferIfNotListening) {
         if (listening || !deferIfNotListening) {
-            logger.debug("Queueing data frame for write: {}", frame);
+            logger.trace("Queueing data frame for write: {}", frame);
             context.sendDataFrame(frame);
             if (nodeState == ZWaveNodeState.RetrieveStateSent) {
                 pendingStatusResponses++;
             }
         } else {
-            logger.debug("Queueing data frame for next wakeup: {}", frame);
+            logger.trace("Queueing data frame for next wakeup: {}", frame);
             wakeupQueue.add(frame);
         }
     }
@@ -215,6 +215,15 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
         }
     }
 
+    /**
+     * Indicates whether this node should send an initial RequestNodeInfo request.
+     *
+     * @return a boolean
+     */
+    protected boolean shouldSendRequestNodeInfo() {
+        return true;
+    }
+
     protected void processApplicationUpdate(ZWaveControllerContext context, ApplicationUpdate update) {
         switch (nodeState) {
 
@@ -222,16 +231,16 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
                 // if the application update failed to send, re-send it
                 if (update.didInfoRequestFail()) {
                     if (stateRetries < 1) {
-                        logger.debug("Application update failed for node {}; will retry", getNodeId());
+                        logger.trace("Application update failed for node {}; will retry", getNodeId());
                         sendDataFrame(context, new RequestNodeInfo(getNodeId()));
                         stateRetries++;
                     } else {
                         if (listening) {
-                            logger.debug("Node {} provided no node info after {} retries; should be listening so flagging as unavailable and started", getNodeId(), stateRetries);
+                            logger.trace("Node {} provided no node info after {} retries; should be listening so flagging as unavailable and started", getNodeId(), stateRetries);
                             available = false;
                             setState(context, ZWaveNodeState.Started);
                         } else {
-                            logger.debug("Node {} provided no node info after {} retries; not flagged as listening so assuming it's asleep", getNodeId(), stateRetries);
+                            logger.trace("Node {} provided no node info after {} retries; not flagged as listening so assuming it's asleep", getNodeId(), stateRetries);
                             available = true;
                             setState(context, ZWaveNodeState.Started);
                         }
@@ -245,7 +254,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
                             if (cc != null) {
                                 addCommandClass(commandClassId, cc);
                             } else {
-                                logger.debug("Ignoring optional command class: {}", ByteUtil.createString(commandClassId));
+                                logger.trace("Ignoring optional command class: {}", ByteUtil.createString(commandClassId));
                             }
                         }
                     }
@@ -261,7 +270,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
                 break;
 
             default:
-                logger.debug("Unsolicited ApplicationUpdate received; refreshing node");
+                logger.trace("Unsolicited ApplicationUpdate received; refreshing node");
                 // if we received an unsolicited update, the node is awake so push out any pending commands
                 flushWakeupQueue(context);
                 refresh(false);

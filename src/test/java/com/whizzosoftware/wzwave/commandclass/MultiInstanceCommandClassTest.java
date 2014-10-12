@@ -8,7 +8,7 @@
 package com.whizzosoftware.wzwave.commandclass;
 
 import com.whizzosoftware.wzwave.frame.DataFrame;
-import com.whizzosoftware.wzwave.frame.SendData;
+
 import org.junit.Test;
 import static org.junit.Assert.*;
 

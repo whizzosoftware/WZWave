@@ -30,25 +30,25 @@ public class RequestResponseRequestTransaction extends AbstractDataFrameTransact
     private static final int STATE_ACK_RECEIVED = 2;
     private static final int STATE_RESPONSE_RECEIVED = 3;
     private static final int STATE_REQUEST_RECEIVED = 4;
+    private static final int STATE_FAILED = 5;
 
     private DataFrame finalFrame;
     private int state;
 
-    public RequestResponseRequestTransaction(DataFrame startFrame, long startTime) {
-        super(startFrame, startTime);
+    public RequestResponseRequestTransaction(DataFrame startFrame) {
+        super(startFrame);
         this.state = STATE_REQUEST_SENT;
     }
 
     @Override
-    public void addFrame(Frame bs, long now) {
-        super.addFrame(bs, now);
-
+    public boolean addFrame(Frame bs) {
         switch (state) {
 
             case STATE_REQUEST_SENT:
                 if (bs instanceof ACK) {
-                    logger.debug("Received ACK as expected");
+                    logger.trace("Received ACK as expected");
                     state = STATE_ACK_RECEIVED;
+                    return true;
                 } else {
                     setError("Received unexpected frame for STATE_REQUEST_SENT: " + bs);
                 }
@@ -59,39 +59,49 @@ public class RequestResponseRequestTransaction extends AbstractDataFrameTransact
                     DataFrame response = (DataFrame)bs;
                     if (response.getType() == DataFrameType.RESPONSE) {
                         if (wasSendSuccessful(response)) {
-                            logger.debug("{} sent successfully", getStartFrame().getClass().getName());
+                            logger.trace("{} sent successfully", getStartFrame().getClass().getName());
                             state = STATE_RESPONSE_RECEIVED;
+                            return true;
                         } else {
                             setError(getStartFrame().getClass().getName() + " not sent successfully");
+                            state = STATE_FAILED;
+                            return true;
                         }
                     } else {
                         setError("Received frame but doesn't appear to be a response: " + bs);
+                        state = STATE_FAILED;
                     }
                 } else {
                     setError("Received unexpected frame for STATE_ACK_RECEIVED");
+                    state = STATE_FAILED;
                 }
                 break;
 
             case STATE_RESPONSE_RECEIVED:
                 if (bs instanceof DataFrame) {
                     if (((DataFrame)bs).getType() == DataFrameType.REQUEST) {
-                        logger.debug("Response received for {}", getStartFrame().getClass().getName());
+                        logger.trace("Response received for {}", getStartFrame().getClass().getName());
                         state = STATE_REQUEST_RECEIVED;
                         finalFrame = (DataFrame)bs;
+                        return true;
                     } else {
                         setError("Received data frame but doesn't appear to be a request: " + bs);
+                        state = STATE_FAILED;
                     }
                 } else {
                     setError("Received unexpected frame for STATE_RETVAL_RECEIVED");
+                    state = STATE_FAILED;
                 }
                 break;
 
         }
+
+        return false;
     }
 
     @Override
     public boolean isComplete() {
-        return (state == STATE_REQUEST_RECEIVED);
+        return (state == STATE_REQUEST_RECEIVED || state == STATE_FAILED);
     }
 
     @Override

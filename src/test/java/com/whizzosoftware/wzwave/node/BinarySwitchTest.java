@@ -20,7 +20,7 @@ public class BinarySwitchTest {
         MockZWaveControllerContext context = new MockZWaveControllerContext();
         BinarySwitch bs = new BinarySwitch(
             context,
-            (byte)0x01,
+            (byte)0x02,
             new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID, true),
             null
         );
@@ -34,7 +34,7 @@ public class BinarySwitchTest {
         bs.onDataFrameReceived(context, new ApplicationUpdate(
             DataFrameType.REQUEST,
             ApplicationUpdate.UPDATE_STATE_NODE_INFO_RECEIVED,
-            (byte)0x01,
+            (byte)0x02,
             new NodeInfo(
                 BasicDeviceClasses.ROUTING_SLAVE,
                 BinarySwitch.ID,
@@ -143,7 +143,7 @@ public class BinarySwitchTest {
         MockZWaveControllerContext context = new MockZWaveControllerContext();
         BinarySwitch bs = new BinarySwitch(
             context,
-            (byte)0x01,
+            (byte)0x02,
             new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID, true),
             null
         );

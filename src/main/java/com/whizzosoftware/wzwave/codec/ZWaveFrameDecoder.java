@@ -39,7 +39,7 @@ public class ZWaveFrameDecoder extends ByteToMessageDecoder {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        logger.trace("Received data in state {}: {}", state, ByteBufUtil.hexDump(in));
+        logger.debug("RCVD {}", ByteUtil.createString(in));
 
         ByteBuf data ;
         if (previousBuf != null) {
@@ -87,6 +87,7 @@ public class ZWaveFrameDecoder extends ByteToMessageDecoder {
                     byte checksum = data.readByte();
                     // TODO: calculate and verify checksum
                     if (currentDataFrame != null) {
+                        logger.debug("\"\"\"\" {}", currentDataFrame);
                         out.add(currentDataFrame);
                     }
                     resetDecoder();

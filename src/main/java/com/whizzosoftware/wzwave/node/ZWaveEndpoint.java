@@ -61,7 +61,7 @@ abstract public class ZWaveEndpoint {
 
     public void addCommandClass(byte commandClassId, CommandClass commandClass) {
         if (!commandClassMap.containsKey(commandClassId)) {
-            logger.debug("Registering command class: {}", commandClass.getName());
+            logger.trace("Registering command class: {}", commandClass.getName());
             commandClassMap.put(commandClassId, commandClass);
         }
     }

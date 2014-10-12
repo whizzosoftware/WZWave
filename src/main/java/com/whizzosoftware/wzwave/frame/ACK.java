@@ -20,4 +20,8 @@ public class ACK extends Frame {
     public byte[] getBytes() {
         return new byte[] { ID };
     }
+
+    public String toString() {
+        return "ACK";
+    }
 }

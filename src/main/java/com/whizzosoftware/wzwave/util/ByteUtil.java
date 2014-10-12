@@ -43,14 +43,28 @@ public class ByteUtil {
         return new String(hexChars);
     }
 
+    static public String createString(ByteBuf buf) {
+        int length = buf.readableBytes();
+        char[] hexChars = new char[length * 5];
+        int v;
+        for (int j=0; j < length; j++) {
+            v = buf.getByte(j) & 0xFF;
+            hexChars[j * 5] = '0';
+            hexChars[j * 5 + 1] = 'x';
+            hexChars[j * 5 + 2] = hexArray[v >>> 4];
+            hexChars[j * 5 + 3] = hexArray[v & 0x0F];
+            hexChars[j * 5 + 4] = ' ';
+        }
+        return new String(hexChars);
+    }
+
     static public String createString(byte b) {
-        char[] hexChars = new char[5];
+        char[] hexChars = new char[4];
         int v = b & 0xFF;
         hexChars[0] = '0';
         hexChars[1] = 'x';
         hexChars[2] = hexArray[v >>> 4];
         hexChars[3] = hexArray[v & 0x0F];
-        hexChars[4] = ' ';
         return new String(hexChars);
     }
 

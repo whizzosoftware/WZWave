@@ -73,7 +73,17 @@ public class ApplicationUpdate extends DataFrame {
     }
 
     @Override
-    public DataFrameTransaction createTransaction(long startTime) {
+    public DataFrameTransaction createTransaction() {
         return null;
+    }
+
+    public String toString() {
+        String s = "ZW_APPLICATION_CONTROLLER_UPDATE";
+        if (state == UPDATE_STATE_NODE_INFO_REQ_FAILED) {
+            s += "[failed]";
+        } else if (state == UPDATE_STATE_NODE_INFO_RECEIVED) {
+            s += "[success]";
+        }
+        return s;
     }
 }

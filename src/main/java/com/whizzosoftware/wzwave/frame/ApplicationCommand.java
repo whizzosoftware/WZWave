@@ -64,11 +64,11 @@ public class ApplicationCommand extends DataFrame {
     }
 
     public String toString() {
-        return "ApplicationCommand[" + getNodeId() + "]: " + ByteUtil.createString(commandClassBytes, commandClassBytes.length - 1);
+        return "ZW_APPLICATION_COMMAND_HANDLER[" + ByteUtil.createString(getNodeId()) + "]: " + ByteUtil.createString(commandClassBytes, commandClassBytes.length - 1);
     }
 
     @Override
-    public DataFrameTransaction createTransaction(long startTime) {
+    public DataFrameTransaction createTransaction() {
         return null;
     }
 }

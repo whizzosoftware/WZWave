@@ -158,9 +158,9 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     @Override
     public void onNodeProtocolInfo(byte nodeId, NodeProtocolInfo nodeProtocolInfo) {
         try {
-            logger.debug("Received protocol info for node " + nodeId);
+            logger.trace("Received protocol info for node " + nodeId);
             ZWaveNode node = ZWaveNodeFactory.createNode(this, nodeId, nodeProtocolInfo, this);
-            logger.debug("Created node [" + node.getNodeId() + "]: " + node);
+            logger.trace("Created node [" + node.getNodeId() + "]: " + node);
             nodes.add(node);
             nodeMap.put(node.getNodeId(), node);
         } catch (NodeCreationException e) {
@@ -196,10 +196,8 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     public void onApplicationUpdate(ApplicationUpdate applicationUpdate) {
         Byte nodeId = applicationUpdate.getNodeId();
 
-        // if we received an application update failure, then try to get the node ID from the
-        // current data frame transaction request
         if (applicationUpdate.didInfoRequestFail()) {
-            logger.warn("UPDATE_STATE_NODE_INFO_REQ_FAILED received");
+            logger.trace("UPDATE_STATE_NODE_INFO_REQ_FAILED received");
         }
 
         if (nodeId != null) {
@@ -254,6 +252,6 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
         c.setListener(listener);
         c.start();
 
-        Thread.sleep(50000);
+        Thread.sleep(10000);
     }
 }
