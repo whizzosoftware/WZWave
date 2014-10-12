@@ -8,4 +8,4 @@ It was created using a combination of studying online resources, studying the
 [open-zwave project](https://code.google.com/p/open-zwave/) as well as copious amounts
 of reverse engineering.
 
-Please see the project's [wiki page](https://www.dominion-automation.com/confluence/display/WZWAV/WZWave+Home) for more information
+Please see the project's [wiki page](https://www.hobson-automation.com/confluence/display/WZWAV/WZWave+Home) for more information
