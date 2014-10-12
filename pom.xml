@@ -83,16 +83,37 @@
             </plugin>
         </plugins>
     </build>
+    <repositories>
+        <repository>
+            <snapshots />
+            <id>hobson-snapshots</id>
+            <name>libs-snapshot</name>
+            <url>https://www.hobson-automation.com/artifactory/libs-snapshot</url>
+        </repository>
+        <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>hobson-releases</id>
+            <name>libs-release</name>
+            <url>https://www.hobson-automation.com/artifactory/libs-release</url>
+        </repository>
+    </repositories>
+    <scm>
+        <connection>scm:git:https://github.com/whizzosoftware/WZWave.git</connection>
+        <developerConnection>scm:git:https://github.com/whizzosoftware/WZWave.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
     <distributionManagement>
         <repository>
-            <id>nx-releases</id>
-            <name>Nexus Releases</name>
-            <url>${nexus.releases.url}</url>
+            <id>releases</id>
+            <name>Releases</name>
+            <url>${releases.url}</url>
         </repository>
         <snapshotRepository>
-            <id>nx-snapshots</id>
-            <name>Nexus Snapshots</name>
-            <url>${nexus.snapshots.url}</url>
+            <id>snapshots</id>
+            <name>Snapshots</name>
+            <url>${snapshots.url}</url>
         </snapshotRepository>
     </distributionManagement>
 </project>
