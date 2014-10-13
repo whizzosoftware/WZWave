@@ -13,52 +13,49 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.5</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>1.0.13</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.0.13</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-common</artifactId>
             <version>4.0.21.Final</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-buffer</artifactId>
             <version>4.0.21.Final</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-codec</artifactId>
             <version>4.0.21.Final</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport</artifactId>
             <version>4.0.21.Final</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-handler</artifactId>
             <version>4.0.21.Final</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-rxtx</artifactId>
             <version>4.0.21.Final</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>se.joel.osgi</groupId>
             <artifactId>rxtx-osgi</artifactId>
             <version>2.1.7</version>
-            <scope>runtime</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -85,18 +82,18 @@
     </build>
     <repositories>
         <repository>
-            <snapshots />
-            <id>hobson-snapshots</id>
-            <name>libs-snapshot</name>
-            <url>https://www.hobson-automation.com/artifactory/libs-snapshot</url>
-        </repository>
-        <repository>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
             <id>hobson-releases</id>
             <name>libs-release</name>
             <url>https://www.hobson-automation.com/artifactory/libs-release</url>
+        </repository>
+        <repository>
+            <snapshots />
+            <id>hobson-snapshots</id>
+            <name>libs-snapshot</name>
+            <url>https://www.hobson-automation.com/artifactory/libs-snapshot</url>
         </repository>
     </repositories>
     <scm>
