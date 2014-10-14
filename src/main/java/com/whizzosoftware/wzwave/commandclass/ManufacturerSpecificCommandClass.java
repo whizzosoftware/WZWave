@@ -48,8 +48,13 @@ public class ManufacturerSpecificCommandClass extends CommandClass {
     public void onApplicationCommand(NodeContext context, byte[] ccb, int startIndex) {
         logger.debug("Manufacturer specific data: {}", ByteUtil.createString(ccb, startIndex, ccb.length));
         if (ccb[startIndex+1] == MANUFACTURER_SPECIFIC_REPORT) {
-            productInfo = parseManufacturerSpecificData(ccb, startIndex);
-            logger.debug("Received MANUFACTURER_SPECIFIC_REPORT: {}", productInfo);
+            try {
+                productInfo = parseManufacturerSpecificData(ccb, startIndex);
+                logger.debug("Received MANUFACTURER_SPECIFIC_REPORT: {}", productInfo);
+            } catch (CommandClassParseException e) {
+                logger.error("Error parsing manufacturer specific data ({}); will request again", e.getLocalizedMessage());
+                context.sendDataFrame(createGetv1(context.getNodeId()));
+            }
         } else {
             logger.warn("Ignoring unsupported command: {}", ByteUtil.createString(ccb[startIndex+1]));
         }
@@ -61,12 +66,16 @@ public class ManufacturerSpecificCommandClass extends CommandClass {
         return 1;
     }
 
-    public ProductInfo parseManufacturerSpecificData(byte[] ccb, int startIndex) {
-        return ProductRegistry.lookupProduct(
-                ByteUtil.convertTwoBytesToInt(ccb[startIndex+2], ccb[startIndex+3]),
-                ByteUtil.convertTwoBytesToInt(ccb[startIndex+4], ccb[startIndex+5]),
-                ByteUtil.convertTwoBytesToInt(ccb[startIndex+6], ccb[startIndex+7])
-        );
+    public ProductInfo parseManufacturerSpecificData(byte[] ccb, int startIndex) throws CommandClassParseException {
+        if (ccb.length >= startIndex + 7) {
+            return ProductRegistry.lookupProduct(
+                ByteUtil.convertTwoBytesToInt(ccb[startIndex + 2], ccb[startIndex + 3]),
+                ByteUtil.convertTwoBytesToInt(ccb[startIndex + 4], ccb[startIndex + 5]),
+                ByteUtil.convertTwoBytesToInt(ccb[startIndex + 6], ccb[startIndex + 7])
+            );
+        } else {
+            throw new CommandClassParseException("Manufacturer data is too short");
+        }
     }
 
     static public DataFrame createGetv1(byte nodeId) {

@@ -61,7 +61,7 @@ public class VersionCommandClass extends CommandClass {
             library = String.format("%d", ccb[start]);
             protocol = String.format("%d.%2d", ccb[start + 1], ccb[start + 2]);
             application = String.format("%d.%2d", ccb[start + 3], ccb[start + 4]);
-            logger.debug("Node {} uses library {}, protocol {} and application {}", context.getNodeId(), library, protocol, application);
+            logger.debug("Node {} uses library {}, protocol {} and application {}", ByteUtil.createString(context.getNodeId()), library, protocol, application);
         } else if (ccb[1] == VERSION_COMMAND_CLASS_REPORT) {
             CommandClass cc = context.getCommandClass(ccb[startIndex+2]);
             if (cc != null) {

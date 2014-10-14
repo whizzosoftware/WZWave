@@ -137,17 +137,17 @@ public class MultiInstanceCommandClass extends CommandClass {
         if (endpointsIdentical) {
             // if the node reports all endpoints are identical, we simply query the first one for its
             // capabilities
-            logger.trace(
+            logger.debug(
                 "Node {} has {} identical endpoints; querying for endpoint 1 capability",
-                context.getNodeId(),
+                ByteUtil.createString(context.getNodeId()),
                 endpointCount
             );
             context.sendDataFrame(createMultiChannelCapabilityGetv2(context.getNodeId(), (byte) 0x01));
         } else {
             // if the node reports all endpoints are NOT identical, query each endpoint individually
-            logger.trace(
+            logger.debug(
                 "Node {} has {} non-identical endpoints; querying each endpoint",
-                context.getNodeId(),
+                ByteUtil.createString(context.getNodeId()),
                 endpointCount
             );
             for (int i=1; i <= endpointCount; i++) {

@@ -14,7 +14,7 @@ import static org.junit.Assert.*;
 
 public class ManufacturerSpecificCommandClassTest {
     @Test
-    public void testParseManufacturerSpecificData() {
+    public void testParseManufacturerSpecificData() throws CommandClassParseException {
         ManufacturerSpecificCommandClass mscc = new ManufacturerSpecificCommandClass();
         ProductInfo info = mscc.parseManufacturerSpecificData(new byte[] {0x72, 0x05, 0x00, (byte)0x86, 0x00, 0x03, 0x00, 0x0B}, 0);
         assertEquals(ProductRegistry.M_AEON_LABS, info.getManufacturer());
@@ -35,5 +35,33 @@ public class ManufacturerSpecificCommandClassTest {
         info = mscc.parseManufacturerSpecificData(new byte[] {0x72, 0x05, 0x00, 0x63, 0x44, 0x57, 0x32, 0x30}, 0);
         assertEquals(ProductRegistry.M_GE_JASCO, info.getManufacturer());
         assertEquals(ProductRegistry.P_45612_DIMMER_SWITCH, info.getName());
+    }
+
+    @Test
+    public void testParseManufacturerSpecificDataWithMissingData() {
+        try {
+            ManufacturerSpecificCommandClass mscc = new ManufacturerSpecificCommandClass();
+            mscc.parseManufacturerSpecificData(new byte[] {0x72, 0x05, 0x00}, 0);
+            fail("Should have thrown exception");
+        } catch (CommandClassParseException ignored) {
+        }
+        try {
+            ManufacturerSpecificCommandClass mscc = new ManufacturerSpecificCommandClass();
+            mscc.parseManufacturerSpecificData(new byte[] {0x72, 0x05, 0x00, 0x05}, 0);
+            fail("Should have thrown exception");
+        } catch (CommandClassParseException ignored) {
+        }
+        try {
+            ManufacturerSpecificCommandClass mscc = new ManufacturerSpecificCommandClass();
+            mscc.parseManufacturerSpecificData(new byte[] {0x72, 0x05, 0x00, 0x05, 0x00}, 0);
+            fail("Should have thrown exception");
+        } catch (CommandClassParseException ignored) {
+        }
+        try {
+            ManufacturerSpecificCommandClass mscc = new ManufacturerSpecificCommandClass();
+            mscc.parseManufacturerSpecificData(new byte[] {0x72, 0x05, 0x00, 0x05, 0x00, 0x05}, 0);
+            fail("Should have thrown exception");
+        } catch (CommandClassParseException ignored) {
+        }
     }
 }

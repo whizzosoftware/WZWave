@@ -80,7 +80,7 @@ public class MeterCommandClass extends CommandClass {
     @Override
     public void onApplicationCommand(NodeContext context, byte[] ccb, int startIndex) {
         if (ccb[startIndex+1] == METER_REPORT) {
-            logger.debug("Received meter report: {}", ByteUtil.createString(ccb, ccb.length));
+            logger.trace("Received meter report: {}", ByteUtil.createString(ccb, ccb.length));
             parseMeterReport(ccb, startIndex, getVersion());
         } else {
             logger.warn("Ignoring unsupported command: {}", ByteUtil.createString(ccb[1]));
@@ -119,18 +119,18 @@ public class MeterCommandClass extends CommandClass {
         int precision = (ccb[startIndex+3] >> 5) & 0x07;
         int scale = (ccb[startIndex+3] >> 3) & 0x03;
         int size = ccb[startIndex+3] & 0x07;
-        logger.debug("{} meter precision: {}, size: {}, scale: {}", type, precision, size, scale);
+        logger.trace("{} meter precision: {}, size: {}, scale: {}", type, precision, size, scale);
 
         // determine current value
         currentValue = ByteUtil.parseValue(ccb, startIndex + 4, size, precision);
-        logger.debug("Current value is {}", currentValue);
+        logger.trace("Current value is {}", currentValue);
 
         if (version == 2) {
             // read previous value
             previousValue = ByteUtil.parseValue(ccb, startIndex + 6 + size, size, precision);
             // read delta
             delta = ((ccb[startIndex + size + 4] << 8) & 0xFF00) | (ccb[startIndex + size + 5] & 0xFF);
-            logger.debug("Previous value was {} received {} seconds ago", previousValue, delta);
+            logger.trace("Previous value was {} received {} seconds ago", previousValue, delta);
         }
     }
 

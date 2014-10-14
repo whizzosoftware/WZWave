@@ -64,7 +64,7 @@ public class ApplicationCommand extends DataFrame {
     }
 
     public String toString() {
-        return "ZW_APPLICATION_COMMAND_HANDLER[" + ByteUtil.createString(getNodeId()) + "]: " + ByteUtil.createString(commandClassBytes, commandClassBytes.length - 1);
+        return "ZW_APPLICATION_COMMAND_HANDLER[" + ByteUtil.createString(getNodeId()) + "]: " + ByteUtil.createString(commandClassBytes, commandClassBytes.length);
     }
 
     @Override
