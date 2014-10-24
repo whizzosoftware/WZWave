@@ -52,7 +52,7 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>se.joel.osgi</groupId>
+            <groupId>com.whizzosoftware.osgi</groupId>
             <artifactId>rxtx-osgi</artifactId>
             <version>2.1.7</version>
             <scope>provided</scope>
@@ -95,13 +95,7 @@
             </snapshots>
             <id>hobson-releases</id>
             <name>libs-release</name>
-            <url>https://www.hobson-automation.com/artifactory/libs-release</url>
-        </repository>
-        <repository>
-            <snapshots />
-            <id>hobson-snapshots</id>
-            <name>libs-snapshot</name>
-            <url>https://www.hobson-automation.com/artifactory/libs-snapshot</url>
+            <url>http://dl.bintray.com/whizzosoftware/maven</url>
         </repository>
     </repositories>
     <scm>
