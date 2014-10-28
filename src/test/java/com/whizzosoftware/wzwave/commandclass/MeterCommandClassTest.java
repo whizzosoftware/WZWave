@@ -26,7 +26,6 @@ public class MeterCommandClassTest {
         assertEquals(0x32, b[6]); // command ID (Meter)
         assertEquals(0x01, b[7]); // METER_GET
         assertEquals(0x05, b[8]); // TX options
-        assertEquals(0x01, b[9]); // callback ID
         assertEquals(-45, b[10]); // checksum
     }
 
