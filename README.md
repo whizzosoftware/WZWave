@@ -9,3 +9,5 @@ Note: The project is not affiliated or endorsed by Sigma Designs and none of the
 in the creation of this library.
 
 Please see the project's [wiki page](https://whizzosoftware.atlassian.net/wiki/display/WZWAV/WZWave+Home) for more information.
+
+![](https://raw.githubusercontent.com/whizzosoftware/WZWave/master/wzwave.jpg)
