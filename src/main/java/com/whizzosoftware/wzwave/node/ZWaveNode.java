@@ -123,6 +123,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
     /**
      * Called when an inbound message is received for this specific node.
      *
+     * @param context the context for processing the data frame
      * @param dataFrame the data frame received
      */
     public void onDataFrameReceived(ZWaveControllerContext context, DataFrame dataFrame) {
@@ -168,6 +169,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
     /**
      * Add a data frame to the write queue.
      *
+     * @param context the context for processing the data frame
      * @param data the data frame to write
      */
     public void sendDataFrame(ZWaveControllerContext context, DataFrame data) {
@@ -188,6 +190,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
     /**
      * Add a data frame to the write queue.
      *
+     * @param context the context for processing the data frame
      * @param frame the data frame to write
      * @param deferIfNotListening indicates if the command should be deferred (added to the wakeup queue) if the node
      *                            is flagged as not listening
@@ -207,7 +210,8 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
 
     /**
      * Flushes all commands sitting in the wakeup queue to the write queue.
-     * @param context
+     *
+     * @param context the context for processing the data frame
      */
     public void flushWakeupQueue(ZWaveControllerContext context) {
         while (wakeupQueue.size() > 0) {

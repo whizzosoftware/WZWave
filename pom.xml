@@ -5,6 +5,20 @@
     <packaging>bundle</packaging>
     <version>0.0.2-SNAPSHOT</version>
     <name>Whizzo Z-Wave Java Library</name>
+    <description>An open-source, Java-native library for controlling Z-Wave wireless home automation smart devices.</description>
+    <url>https://github.com/whizzosoftware/WZWave</url>
+    <licenses>
+        <license>
+            <name>Eclise Public License, Version 1.0</name>
+            <url>https://www.eclipse.org/legal/epl-v10.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <scm>
+        <connection>scm:git:https://github.com/whizzosoftware/WZWave.git</connection>
+        <developerConnection>scm:git:https://github.com/whizzosoftware/WZWave.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -49,8 +63,8 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.whizzosoftware.osgi</groupId>
-            <artifactId>rxtx-osgi</artifactId>
+            <groupId>org.rxtx</groupId>
+            <artifactId>rxtx</artifactId>
             <version>2.1.7</version>
             <scope>provided</scope>
         </dependency>
@@ -123,21 +137,6 @@
             </plugin>
         </plugins>
     </build>
-    <repositories>
-        <repository>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>hobson-releases</id>
-            <name>libs-release</name>
-            <url>http://dl.bintray.com/whizzosoftware/maven</url>
-        </repository>
-    </repositories>
-    <scm>
-        <connection>scm:git:https://github.com/whizzosoftware/WZWave.git</connection>
-        <developerConnection>scm:git:https://github.com/whizzosoftware/WZWave.git</developerConnection>
-        <tag>HEAD</tag>
-    </scm>
     <distributionManagement>
         <repository>
             <id>bintray</id>

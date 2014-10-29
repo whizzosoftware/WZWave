@@ -86,6 +86,7 @@ abstract public class CommandClass {
      * @param name the name for logging purposes
      * @param nodeId the destination node ID
      * @param data the data portion of the SendData frame
+     * @param isResponseExpected indicates whether sending this data frame should require a response
      *
      * @return a DataFrame instance
      */
