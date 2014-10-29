@@ -14,6 +14,14 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+    <developers>
+        <developer>
+            <name>Dan Noguerol</name>
+            <email>oss@whizzosoftware.com</email>
+            <organization>Whizzo Software LLC</organization>
+            <organizationUrl>http://www.whizzosoftware.com</organizationUrl>
+        </developer>
+    </developers>
     <scm>
         <connection>scm:git:https://github.com/whizzosoftware/WZWave.git</connection>
         <developerConnection>scm:git:https://github.com/whizzosoftware/WZWave.git</developerConnection>
@@ -126,6 +134,19 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
                 <version>2.5.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>com.atlassian.maven.plugins</groupId>
