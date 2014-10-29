@@ -3,7 +3,7 @@
     <groupId>com.whizzosoftware</groupId>
     <artifactId>wzwave</artifactId>
     <packaging>bundle</packaging>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
     <name>Whizzo Z-Wave Java Library</name>
     <description>An open-source, Java-native library for controlling Z-Wave wireless home automation smart devices.</description>
     <url>https://github.com/whizzosoftware/WZWave</url>
