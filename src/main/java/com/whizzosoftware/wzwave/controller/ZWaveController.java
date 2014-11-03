@@ -64,6 +64,15 @@ public interface ZWaveController {
     public Collection<ZWaveNode> getNodes();
 
     /**
+     * Returns a specific node.
+     *
+     * @param nodeId the ID of the node
+     *
+     * @return a ZWaveNode instance (or null if not found)
+     */
+    public ZWaveNode getNode(byte nodeId);
+
+    /**
      * Sends a data frame to the Z-Wave network.
      *
      * @param dataFrame the data frame

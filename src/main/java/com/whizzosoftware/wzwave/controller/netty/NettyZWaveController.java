@@ -91,7 +91,9 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
                     channel.write(new MemoryGetId());
                     channel.write(new InitData());
                 } else {
-                    listener.onZWaveConnectionFailure(future.cause());
+                    if (listener != null) {
+                        listener.onZWaveConnectionFailure(future.cause());
+                    }
                 }
             }
         });
@@ -120,6 +122,11 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     @Override
     public Collection<ZWaveNode> getNodes() {
         return nodes;
+    }
+
+    @Override
+    public ZWaveNode getNode(byte nodeId) {
+        return nodeMap.get(nodeId);
     }
 
     @Override
@@ -237,33 +244,5 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
         if (listener != null) {
             listener.onZWaveNodeAdded(node);
         }
-    }
-
-    /*
-     * Test main
-     */
-
-    public static void main(String[] args) throws Exception {
-        NettyZWaveController c = new NettyZWaveController("/dev/cu.SLAB_USBtoUART");
-        ZWaveControllerListener listener = new ZWaveControllerListener() {
-            @Override
-            public void onZWaveNodeAdded(ZWaveEndpoint node) {
-                System.out.println("onZWaveNodeAdded: " + node);
-            }
-
-            @Override
-            public void onZWaveNodeUpdated(ZWaveEndpoint node) {
-                System.out.println("onZWaveNodeUpdated: " + node);
-            }
-
-            @Override
-            public void onZWaveConnectionFailure(Throwable t) {
-                System.out.println("A connection error occurred: " + t.getLocalizedMessage());
-            }
-        };
-        c.setListener(listener);
-        c.start();
-
-        Thread.sleep(10000);
     }
 }
