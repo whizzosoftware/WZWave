@@ -19,8 +19,14 @@ public class ColorControlCommandClass extends CommandClass {
     public static final byte STATE_SET = 0x05;
     public static final byte STOP_STATE_CHANGE = 0x06;
 
-    private Byte value1;
-    private Byte value2;
+    public static final byte CAPABILITY_ID_WARM_WHITE = 0x00;
+    public static final byte CAPABILITY_ID_COLD_WHITE = 0x01;
+    public static final byte CAPABILITY_ID_RED = 0x02;
+    public static final byte CAPABILITY_ID_GREEN = 0x03;
+    public static final byte CAPABILITY_ID_BLUE = 0x04;
+
+    private Byte capabilityId;
+    private Byte value;
 
     @Override
     public byte getId() {
@@ -32,12 +38,20 @@ public class ColorControlCommandClass extends CommandClass {
         return "COMMAND_CLASS_COLOR_CONTROL";
     }
 
+    public Byte getCapabilityId() {
+        return capabilityId;
+    }
+
+    public Byte getValue() {
+        return value;
+    }
+
     @Override
     public void onApplicationCommand(NodeContext context, byte[] ccb, int startIndex) {
         if (ccb[startIndex+1] == STATE_REPORT) {
-            value1 = ccb[startIndex+2];
-            value2 = ccb[startIndex+3];
-            logger.debug("Received updated value: {} {}", ByteUtil.createString(value1), ByteUtil.createString(value2));
+            capabilityId = ccb[startIndex+2];
+            value = ccb[startIndex+3];
+            logger.debug("Received capability ID {} with value {}", ByteUtil.createString(capabilityId), ByteUtil.createString(value));
         } else {
             logger.warn("Ignoring unsupported command: {}", ByteUtil.createString(ccb[startIndex+1]));
         }
@@ -45,15 +59,14 @@ public class ColorControlCommandClass extends CommandClass {
 
     @Override
     public int queueStartupMessages(NodeContext context, byte nodeId) {
-        context.sendDataFrame(createGetv1(nodeId));
-        return 1;
+        return 0;
     }
 
-    static public DataFrame createSetv1(byte nodeId, byte value) {
-        return createSendDataFrame("COLOR_CONTROL_SET", nodeId, new byte[]{ColorControlCommandClass.ID, STATE_SET, value}, false);
+    static public DataFrame createGetv1(byte nodeId, byte capabilityId) {
+        return createSendDataFrame("COLOR_CONTROL_GET", nodeId, new byte[]{ColorControlCommandClass.ID, STATE_GET, capabilityId}, true);
     }
 
-    static public DataFrame createGetv1(byte nodeId) {
-        return createSendDataFrame("COLOR_CONTROL_GET", nodeId, new byte[]{ColorControlCommandClass.ID, STATE_GET}, true);
+    static public DataFrame createSetv1(byte nodeId, byte capabilityId, byte value) {
+        return createSendDataFrame("COLOR_CONTROL_SET", nodeId, new byte[]{ColorControlCommandClass.ID, STATE_SET, 0x01, capabilityId, value}, false);
     }
 }
