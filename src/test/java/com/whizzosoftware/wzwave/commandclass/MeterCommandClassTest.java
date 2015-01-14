@@ -58,4 +58,17 @@ public class MeterCommandClassTest {
         assertEquals((Double)0.002, cc.getPreviousValue());
     }
 
+    @Test
+    public void testMeterReportv2Electric_FibaroWallPlug() {
+        byte[] ccb = {0x32, 0x02, 0x01, 0x44, 0x00, 0x00, 0x00, 0x03};
+        MeterCommandClass cc = new MeterCommandClass();
+        cc.setVersion(2);
+        cc.onApplicationCommand(null, ccb, 0);
+
+        assertEquals(MeterCommandClass.MeterType.Electric, cc.getMeterType());
+        assertEquals((Double)0.03, cc.getCurrentValue());
+        assertNull(cc.getPreviousValue());
+        assertNull(cc.getDelta());
+    }
+
 }

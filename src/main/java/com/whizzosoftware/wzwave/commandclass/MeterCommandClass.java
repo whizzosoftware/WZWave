@@ -79,7 +79,7 @@ public class MeterCommandClass extends CommandClass {
 
     @Override
     public void onApplicationCommand(NodeContext context, byte[] ccb, int startIndex) {
-        if (ccb[startIndex+1] == METER_REPORT) {
+        if (ccb[startIndex + 1] == METER_REPORT) {
             logger.trace("Received meter report: {}", ByteUtil.createString(ccb, ccb.length));
             parseMeterReport(ccb, startIndex, getVersion());
         } else {
@@ -99,9 +99,9 @@ public class MeterCommandClass extends CommandClass {
 
     private void parseMeterReport(byte[] ccb, int startIndex, int version) {
         // read meter type
-        int meterType = ccb[startIndex+2];
+        int meterType = ccb[startIndex + 2];
         if (version == 2) {
-            meterType = ccb[startIndex+2] & 0x1F;
+            meterType = ccb[startIndex + 2] & 0x1F;
         }
         switch (meterType) {
             case 1:
@@ -116,16 +116,16 @@ public class MeterCommandClass extends CommandClass {
         }
 
         // read precision, scale and size
-        int precision = (ccb[startIndex+3] >> 5) & 0x07;
-        int scale = (ccb[startIndex+3] >> 3) & 0x03;
-        int size = ccb[startIndex+3] & 0x07;
+        int precision = (ccb[startIndex + 3] >> 5) & 0x07;
+        int scale = (ccb[startIndex + 3] >> 3) & 0x03;
+        int size = ccb[startIndex + 3] & 0x07;
         logger.trace("{} meter precision: {}, size: {}, scale: {}", type, precision, size, scale);
 
         // determine current value
         currentValue = ByteUtil.parseValue(ccb, startIndex + 4, size, precision);
         logger.trace("Current value is {}", currentValue);
 
-        if (version == 2) {
+        if (version == 2 && ccb.length >= (startIndex + 6 + size + size)) {
             // read previous value
             previousValue = ByteUtil.parseValue(ccb, startIndex + 6 + size, size, precision);
             // read delta
@@ -135,12 +135,12 @@ public class MeterCommandClass extends CommandClass {
     }
 
     static public DataFrame createGetv1(byte nodeId) {
-        return createSendDataFrame("METER_GET", nodeId, new byte[] {MeterCommandClass.ID, METER_GET}, true);
+        return createSendDataFrame("METER_GET", nodeId, new byte[]{MeterCommandClass.ID, METER_GET}, true);
     }
 
     static public DataFrame createGetv2(byte nodeId, byte scale) {
-        byte b = (byte)((scale << 3) & 0x18);
-        return createSendDataFrame("METER_GET", nodeId, new byte[] {MeterCommandClass.ID, METER_GET, b}, true);
+        byte b = (byte) ((scale << 3) & 0x18);
+        return createSendDataFrame("METER_GET", nodeId, new byte[]{MeterCommandClass.ID, METER_GET, b}, true);
     }
 
     public enum MeterType {
