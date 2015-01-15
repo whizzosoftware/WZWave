@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/whizzosoftware/WZWave.svg)](https://travis-ci.org/whizzosoftware/WZWave)
+[![Coverage Status](https://coveralls.io/repos/whizzosoftware/WZWave/badge.svg)](https://coveralls.io/r/whizzosoftware/WZWave)
+
 ## Overview
 
 The goal of this project is to create a Java-native, open-source library for controlling Z-Wave
