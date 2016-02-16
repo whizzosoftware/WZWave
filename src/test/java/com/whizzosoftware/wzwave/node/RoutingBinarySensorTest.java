@@ -70,7 +70,7 @@ public class RoutingBinarySensorTest {
             new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID, false),
             null
         );
-        assertEquals(ZWaveNodeState.NodeInfo, sensor.getState());
+        assertEquals(ZWaveNodeState.Started, sensor.getState());
 
         // make sure we have no messages waiting in the wakeup queue
         assertEquals(0, sensor.getWakeupQueueCount());

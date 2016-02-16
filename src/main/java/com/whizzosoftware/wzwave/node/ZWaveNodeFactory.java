@@ -8,15 +8,10 @@
 package com.whizzosoftware.wzwave.node;
 
 import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
-import com.whizzosoftware.wzwave.node.generic.BinarySensor;
-import com.whizzosoftware.wzwave.node.generic.BinarySwitch;
-import com.whizzosoftware.wzwave.node.generic.MultilevelSwitch;
-import com.whizzosoftware.wzwave.node.generic.StaticController;
-import com.whizzosoftware.wzwave.node.specific.BinaryPowerSwitch;
-import com.whizzosoftware.wzwave.node.specific.MultilevelPowerSwitch;
-import com.whizzosoftware.wzwave.node.specific.PCController;
-import com.whizzosoftware.wzwave.node.specific.RoutingBinarySensor;
+import com.whizzosoftware.wzwave.node.generic.*;
+import com.whizzosoftware.wzwave.node.specific.*;
 import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
+import com.whizzosoftware.wzwave.util.ByteUtil;
 
 /**
  * Factory for creating Z-Wave nodes from a NodeProtocolInfo instance.
@@ -28,12 +23,30 @@ public class ZWaveNodeFactory {
     public static ZWaveNode createNode(ZWaveControllerContext context, byte nodeId, NodeProtocolInfo info, NodeListener listener) throws NodeCreationException {
         switch (info.getGenericDeviceClass()) {
 
-            case StaticController.ID: {
+            case AlarmSensor.ID: {
                 switch (info.getSpecificDeviceClass()) {
-                    case PCController.ID:
-                        return new PCController(context, nodeId, info, listener);
+                    case BasicRoutingAlarmSensor.ID:
+                        return new BasicRoutingAlarmSensor(context, nodeId, info, listener);
+                    case RoutingAlarmSensor.ID:
+                        return new RoutingAlarmSensor(context, nodeId, info, listener);
+                    case BasicZensorNetAlarmSensor.ID:
+                        return new BasicZensorNetAlarmSensor(context, nodeId, info, listener);
+                    case ZensorNetAlarmSensor.ID:
+                        return new ZensorNetAlarmSensor(context, nodeId, info, listener);
+                    case AdvancedZensorNetAlarmSensor.ID:
+                        return new AdvancedZensorNetAlarmSensor(context, nodeId, info, listener);
+                    case BasicRoutingSmokeSensor.ID:
+                        return new BasicRoutingSmokeSensor(context, nodeId, info, listener);
+                    case RoutingSmokeSensor.ID:
+                        return new RoutingSmokeSensor(context, nodeId, info, listener);
+                    case BasicZensorNetSmokeSensor.ID:
+                        return new BasicZensorNetSmokeSensor(context, nodeId, info, listener);
+                    case ZensorNetSmokeSensor.ID:
+                        return new ZensorNetSmokeSensor(context, nodeId, info, listener);
+                    case AdvancedZensorNetSmokeSensor.ID:
+                        return new AdvancedZensorNetSmokeSensor(context, nodeId, info, listener);
                     default:
-                        return new StaticController(context, nodeId, info, listener);
+                        return new AlarmSensor(context, nodeId, info, listener);
                 }
             }
 
@@ -64,8 +77,17 @@ public class ZWaveNodeFactory {
                 }
             }
 
+            case StaticController.ID: {
+                switch (info.getSpecificDeviceClass()) {
+                    case PCController.ID:
+                        return new PCController(context, nodeId, info, listener);
+                    default:
+                        return new StaticController(context, nodeId, info, listener);
+                }
+            }
+
             default:
-                throw new NodeCreationException("Unable to create node due to unknown generic device class: " + info.getGenericDeviceClass());
+                throw new NodeCreationException("Unable to create node " + nodeId + " due to unknown generic device class: " + ByteUtil.createString(info.getGenericDeviceClass()));
         }
     }
 }

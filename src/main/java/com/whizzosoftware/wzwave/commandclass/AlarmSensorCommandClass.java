@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Whizzo Software, LLC.
+ * Copyright (c) 2016 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,20 +14,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Binary Switch Command Class
+ * Alarm Sensor Command Class.
  *
  * @author Dan Noguerol
  */
-public class BinarySensorCommandClass extends CommandClass {
+public class AlarmSensorCommandClass extends CommandClass {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private static final byte SENSOR_BINARY_SET = 0x01;
-    private static final byte SENSOR_BINARY_GET = 0x02;
-    private static final byte SENSOR_BINARY_REPORT = 0x03;
+    public static final byte SENSOR_ALARM_GET = 0x01;
+    public static final byte SENSOR_ALARM_REPORT = 0x02;
 
-    public static final byte ID = 0x30;
+    public static final byte ID = (byte)0x9C;
 
-    public Boolean isIdle;
+    private Type type;
+    private byte level;
 
     @Override
     public byte getId() {
@@ -36,27 +36,22 @@ public class BinarySensorCommandClass extends CommandClass {
 
     @Override
     public String getName() {
-        return "COMMAND_CLASS_SENSOR_BINARY";
+        return "COMMAND_CLASS_SENSOR_ALARM";
     }
 
-    public Boolean isIdle() {
-        return isIdle;
+    public Type getType() {
+        return type;
+    }
+
+    public byte getLevel() {
+        return level;
     }
 
     @Override
     public void onApplicationCommand(NodeContext context, byte[] ccb, int startIndex) {
-        // some devices (e.g. Everspring SM103) seem to use SENSOR_BINARY_SET rather than SENSOR_BINARY_REPORT
-        // when sending unsolicited updates
-        if (ccb[startIndex+1] == SENSOR_BINARY_REPORT || ccb[startIndex+1] == SENSOR_BINARY_SET) {
-            if (ccb[startIndex+2] == 0x00) {
-                isIdle = true;
-                logger.debug("Received updated isIdle (true)");
-            } else if ((ccb[startIndex+2] & 0xFF) == 0xFF || ccb[startIndex+2] == 0x63) {
-                isIdle = false;
-                logger.debug("Received updated isIdle (false)");
-            } else {
-                logger.warn("Ignoring invalid report value: {}", ByteUtil.createString(ccb[startIndex+2]));
-            }
+        if (ccb[startIndex+1] == SENSOR_ALARM_REPORT) {
+            type = Type.convert(ccb[startIndex+2]);
+            level = ccb[startIndex+3];
         } else {
             logger.warn("Ignoring unsupported command: {}", ByteUtil.createString(ccb[startIndex+1]));
         }
@@ -69,6 +64,19 @@ public class BinarySensorCommandClass extends CommandClass {
     }
 
     static public DataFrame createGetv1(byte nodeId) {
-        return createSendDataFrame("SENSOR_BINARY_GET", nodeId, new byte[]{BinarySensorCommandClass.ID, SENSOR_BINARY_GET}, true);
+        return createSendDataFrame("SENSOR_ALARM_GET", nodeId, new byte[] {AlarmSensorCommandClass.ID, SENSOR_ALARM_GET}, true);
+    }
+
+    public enum Type {
+        GENERAL,
+        SMOKE,
+        CARBON_MONOXIDE,
+        CARBON_DIOXIDE,
+        HEAT,
+        FLOOD;
+
+        public static Type convert(byte b) {
+            return Type.values()[b];
+        }
     }
 }

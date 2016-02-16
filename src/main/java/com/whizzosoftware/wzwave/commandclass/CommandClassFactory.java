@@ -15,6 +15,10 @@ package com.whizzosoftware.wzwave.commandclass;
 public class CommandClassFactory {
     public static CommandClass createCommandClass(byte commandClassId) {
         switch (commandClassId) {
+            case AlarmCommandClass.ID:
+                return new AlarmCommandClass();
+            case AlarmSensorCommandClass.ID:
+                return new AlarmSensorCommandClass();
             case BasicCommandClass.ID:
                 return new BasicCommandClass();
             case BatteryCommandClass.ID:
