@@ -41,8 +41,8 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     private Bootstrap bootstrap;
     private Channel channel;
     private String libraryVersion;
-    private int homeId;
-    private byte nodeId;
+    private Integer homeId;
+    private Byte nodeId;
     private ZWaveChannelInboundHandler inboundHandler;
     private ZWaveControllerListener listener;
     private final List<ZWaveNode> nodes = new ArrayList<ZWaveNode>();
@@ -91,9 +91,7 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
                     channel.write(new MemoryGetId());
                     channel.write(new InitData());
                 } else {
-                    if (listener != null) {
-                        listener.onZWaveConnectionFailure(future.cause());
-                    }
+                    onZWaveConnectionFailure(future.cause());
                 }
             }
         });
@@ -156,6 +154,15 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     public void onZWaveConnectionFailure(Throwable t) {
         if (listener != null) {
             listener.onZWaveConnectionFailure(t);
+        } else {
+            logger.error("Connection failure and no listener was set", t);
+        }
+    }
+
+    @Override
+    public void onZWaveControllerInfo(String libraryVersion, Integer homeId, Byte nodeId) {
+        if (listener != null && libraryVersion != null && homeId != null && nodeId != null) {
+            listener.onZWaveControllerInfo(libraryVersion, homeId, nodeId);
         }
     }
 
@@ -166,12 +173,14 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     @Override
     public void onLibraryInfo(String libraryVersion) {
         this.libraryVersion = libraryVersion;
+        onZWaveControllerInfo(libraryVersion, homeId, nodeId);
     }
 
     @Override
     public void onControllerInfo(int homeId, byte nodeId) {
         this.homeId = homeId;
         this.nodeId = nodeId;
+        onZWaveControllerInfo(libraryVersion, homeId, nodeId);
     }
 
     @Override
@@ -203,8 +212,8 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
         ZWaveNode node = nodeMap.get(applicationCommand.getNodeId());
         if (node != null) {
             node.onDataFrameReceived(this, applicationCommand);
-            if (listener != null && node.isStarted()) {
-                listener.onZWaveNodeUpdated(node);
+            if (node.isStarted()) {
+                onZWaveNodeUpdated(node);
             }
         } else {
             logger.error("Unable to find node " + applicationCommand.getNodeId());
@@ -223,8 +232,8 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
             ZWaveNode node = nodeMap.get(nodeId);
             if (node != null) {
                 node.onDataFrameReceived(this, applicationUpdate);
-                if (listener != null && node.isStarted()) {
-                    listener.onZWaveNodeUpdated(node);
+                if (node.isStarted()) {
+                    onZWaveNodeUpdated(node);
                 }
             } else {
                 logger.error("Unable to find node " + applicationUpdate.getNodeId());
@@ -241,8 +250,6 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     @Override
     public void onNodeStarted(ZWaveNode node) {
         // when a node moves to the "started" state, alert listeners that it's ready to be added
-        if (listener != null) {
-            listener.onZWaveNodeAdded(node);
-        }
+        onZWaveNodeAdded(node);
     }
 }
