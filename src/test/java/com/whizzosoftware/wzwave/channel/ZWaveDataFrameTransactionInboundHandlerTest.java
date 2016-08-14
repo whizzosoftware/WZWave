@@ -7,7 +7,7 @@ import io.netty.buffer.Unpooled;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-public class ZWaveDataFrameTransactionInbountHandlerTest {
+public class ZWaveDataFrameTransactionInboundHandlerTest {
     @Test
     public void testRequestNodeInfoFailure() {
         MockChannelHandlerContext ctx = new MockChannelHandlerContext();

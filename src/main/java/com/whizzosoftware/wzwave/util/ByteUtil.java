@@ -47,13 +47,15 @@ public class ByteUtil {
         int length = buf.readableBytes();
         char[] hexChars = new char[length * 5];
         int v;
-        for (int j=0; j < length; j++) {
+        int i = 0;
+        for (int j=buf.readerIndex(); j < buf.readerIndex() + length; j++) {
             v = buf.getByte(j) & 0xFF;
-            hexChars[j * 5] = '0';
-            hexChars[j * 5 + 1] = 'x';
-            hexChars[j * 5 + 2] = hexArray[v >>> 4];
-            hexChars[j * 5 + 3] = hexArray[v & 0x0F];
-            hexChars[j * 5 + 4] = ' ';
+            hexChars[i * 5] = '0';
+            hexChars[i * 5 + 1] = 'x';
+            hexChars[i * 5 + 2] = hexArray[v >>> 4];
+            hexChars[i * 5 + 3] = hexArray[v & 0x0F];
+            hexChars[i * 5 + 4] = ' ';
+            i++;
         }
         return new String(hexChars);
     }

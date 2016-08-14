@@ -69,13 +69,12 @@ public class ZWaveFrameDecoderTest {
     @Test
     public void testPartialMessage() throws Exception {
         ZWaveFrameDecoder decoder = new ZWaveFrameDecoder();
-        List<Object> out = new ArrayList<Object>();
+        List<Object> out = new ArrayList<>();
         ByteBuf in = wrappedBuffer(new byte[] {0x06, 0x01, 0x10, 0x01});
         decoder.decode(null, in, out);
-        assertEquals(1, in.readerIndex());
-        assertEquals(0x01, in.getByte(in.readerIndex()));
-        assertEquals(1, out.size());
-        in = wrappedBuffer(new byte[] {0x01, 0x10, 0x01, 0x15,0x5A,0x2D,0x57,0x61,0x76,0x65,0x20,0x32,0x2E,0x37,0x38,0x00,0x01,(byte)0x9B});
+        assertEquals(0, in.readerIndex());
+        assertEquals(0, out.size());
+        in = wrappedBuffer(new byte[] {0x15,0x5A,0x2D,0x57,0x61,0x76,0x65,0x20,0x32,0x2E,0x37,0x38,0x00,0x01,(byte)0x9B});
         decoder.decode(null, in, out);
         assertEquals(2, out.size());
         assertTrue(out.get(0) instanceof ACK);
@@ -293,5 +292,31 @@ public class ZWaveFrameDecoderTest {
         decoder.decode(null, wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x13, 0x01, (byte)0xE8}), out);
         decoder.decode(null, wrappedBuffer(new byte[] {0x01, 0x05, 0x00, 0x13, 0x01, 0x00, (byte)0xE8}), out);
         assertEquals(3, out.size());
+    }
+
+    @Test
+    public void testIncompleteWithMultipleAttempts() throws Exception {
+        ZWaveFrameDecoder decoder = new ZWaveFrameDecoder();
+        List<Object> out = new ArrayList<>();
+        decoder.decode(null, wrappedBuffer(new byte[] {0x06, 0x01, 0x08, 0x01, 0x20, (byte)0xD3, 0x3C, (byte)0xB4, 0x11, 0x01}), out);
+        assertEquals(0, out.size());
+        decoder.decode(null, wrappedBuffer(new byte[] {0x06, 0x01, 0x08, 0x01, 0x20, (byte)0xD3, 0x3C, (byte)0xB4, 0x11}), out);
+        assertEquals(0, out.size());
+        decoder.decode(null, wrappedBuffer(new byte[] {0x06, 0x01, 0x08, 0x01, 0x20, (byte)0xD3, 0x3C, (byte)0xB4, 0x11, 0x01, (byte)0x9D, 0x01}), out);
+        assertEquals(2, out.size());
+        assertTrue(out.get(0) instanceof ACK);
+        assertTrue(out.get(1) instanceof MemoryGetId);
+        out.clear();
+        decoder.decode(null, wrappedBuffer(new byte[] {0x05, 0x00, 0x13, 0x01, 0x00, (byte)0xE8}), out);
+        assertEquals(1, out.size());
+        assertTrue(out.get(0) instanceof SendData);
+    }
+
+    @Test
+    public void testTwoCompleteFramesAtOnce() throws Exception {
+        ZWaveFrameDecoder decoder = new ZWaveFrameDecoder();
+        List<Object> out = new ArrayList<>();
+        decoder.decode(null, wrappedBuffer(new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x25, 0x02, 0x05, 0x01, (byte)0xC2, 0x01, 0x04, 0x01, 0x13, 0x01, (byte)0xE8}), out);
+        assertEquals(2, out.size());
     }
 }

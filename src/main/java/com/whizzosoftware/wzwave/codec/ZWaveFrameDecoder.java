@@ -10,7 +10,6 @@ package com.whizzosoftware.wzwave.codec;
 import com.whizzosoftware.wzwave.frame.*;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -28,27 +27,18 @@ import java.util.List;
 public class ZWaveFrameDecoder extends ByteToMessageDecoder {
     private static final Logger logger = LoggerFactory.getLogger(ZWaveFrameDecoder.class);
 
-    private State state;
-    private int currentDataFrameLength;
-    private DataFrame currentDataFrame;
     private ByteBuf previousBuf;
-
-    enum State {
-        WAITING_FOR_DATA_FRAME_START,
-        READ_DATA_FRAME_LENGTH,
-        WAITING_FOR_DATA_FRAME_DATA,
-        READ_DATA_FRAME_CHECKSUM
-    }
-
-    public ZWaveFrameDecoder() {
-        this.state = State.WAITING_FOR_DATA_FRAME_START;
-    }
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        logger.debug("RCVD {}", ByteUtil.createString(in));
+        if (logger.isDebugEnabled()) {
+            logger.debug("RCVD: {}", ByteUtil.createString(in));
+        }
 
-        ByteBuf data ;
+        ByteBuf data;
+
+        // if there was data left from the last decode call, create a ByteBuf that contains both
+        // previous and new data
         if (previousBuf != null) {
             CompositeByteBuf cbuf = Unpooled.compositeBuffer();
             cbuf.addComponent(previousBuf);
@@ -60,89 +50,78 @@ public class ZWaveFrameDecoder extends ByteToMessageDecoder {
             data = in;
         }
 
-        while (data.readableBytes() > 0) {
-            switch (state) {
-                case WAITING_FOR_DATA_FRAME_START:
-                    if (!lookForDataFrameStart(data, out)) {
-                        return;
-                    }
-                    this.state = State.READ_DATA_FRAME_LENGTH;
-                    // fall through
-                case READ_DATA_FRAME_LENGTH:
-                    if (data.readableBytes() < 1) {
-                        return;
-                    }
-                    currentDataFrameLength = data.getByte(data.readerIndex() + 1);
-                    this.state = State.WAITING_FOR_DATA_FRAME_DATA;
-                    // fall through
-                case WAITING_FOR_DATA_FRAME_DATA:
-                    if (data.readableBytes() < currentDataFrameLength + 2) {
-                        logger.trace("Received incomplete data; will wait for more");
-                        if (data.readableBytes() > 0) {
-                            logger.trace("Had extra bytes so saving for next round");
-                            previousBuf = data;
+        while (data.isReadable()) {
+            // check for single ACK/NAK/CAN
+            if (data.readableBytes() == 1 && isSingleByteFrame(data, data.readerIndex())) {
+                out.add(createSingleByteFrame(data));
+            } else {
+                boolean foundFrame = false;
+                // search for a valid frame in the data
+                for (int searchStartIx = data.readerIndex(); searchStartIx < data.readerIndex() + data.readableBytes(); searchStartIx++) {
+                    if (data.getByte(searchStartIx) == DataFrame.START_OF_FRAME) {
+                        int frameEndIx = scanForFrame(data, searchStartIx);
+                        if (frameEndIx > 0) {
+                            if (searchStartIx > data.readerIndex() && isSingleByteFrame(data, searchStartIx - 1)) {
+                                data.readerIndex(searchStartIx - 1);
+                                out.add(createSingleByteFrame(data));
+                            } else {
+                                data.readerIndex(searchStartIx);
+                            }
+                            out.add(createDataFrame(data));
+                            data.readByte(); // discard checksum
+                            foundFrame = true;
                         }
-                        return;
                     }
-                    currentDataFrame = createDataFrame(data);
-                    this.state = State.READ_DATA_FRAME_CHECKSUM;
-                    // fall through
-                case READ_DATA_FRAME_CHECKSUM:
-                    if (data.readableBytes() < 1) {
-                        return;
-                    }
-                    byte checksum = data.readByte();
-                    // TODO: calculate and verify checksum
-                    if (currentDataFrame != null) {
-                        logger.debug("\"\"\"\" {}", currentDataFrame);
-                        out.add(currentDataFrame);
-                    }
-                    resetDecoder();
+                }
+                if (!foundFrame) {
+                    break;
+                }
             }
+        }
+
+        if (data.readableBytes() > 0) {
+            previousBuf = data;
         }
 
         logger.trace("Done processing received data");
     }
 
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        super.channelInactive(ctx);
-
-        resetDecoder();
+    private boolean isSingleByteFrame(ByteBuf data, int ix) {
+        byte b = data.getByte(ix);
+        return (b == ACK.ID || b == NAK.ID || b == CAN.ID);
     }
 
-    protected void resetDecoder() {
-        this.state = State.WAITING_FOR_DATA_FRAME_START;
-        currentDataFrameLength = 0;
-        currentDataFrame = null;
+    private Frame createSingleByteFrame(ByteBuf data) {
+        byte b = data.readByte();
+        if (b == ACK.ID) {
+            return new ACK();
+        } else if (b == NAK.ID) {
+            return new NAK();
+        } else if (b == CAN.ID) {
+            return new CAN();
+        } else {
+            return null;
+        }
     }
 
-    /**
-     * Reads through the buffer until a data frame SOF is found. Process all ACK, NAK and CAN frames found along
-     * the way.
-     *
-     * @param buffer the ByteBuf to process
-     * @param out the output list
-     *
-     * @return true if an SOF was found before the buffer was exhausted
-     */
-    protected boolean lookForDataFrameStart(ByteBuf buffer, List<Object> out) {
-        while (buffer.readableBytes() > 0) {
-            byte b = buffer.readByte();
-            if (b == ACK.ID) {
-                out.add(new ACK());
-            } else if (b == NAK.ID) {
-                out.add(new NAK());
-            } else if (b == CAN.ID) {
-                out.add(new CAN());
-            } else if (b == DataFrame.START_OF_FRAME) {
-                buffer.readerIndex(buffer.readerIndex() - 1);
-                return true;
-            } else {
-                logger.debug("Ignoring unexpected byte {}", ByteUtil.createString(b));
+    private int scanForFrame(ByteBuf data, int startIndex) {
+        int readableBytes = data.readableBytes();
+        if (data.getByte(startIndex) == DataFrame.START_OF_FRAME && startIndex + 1 < data.readerIndex() + readableBytes) {
+            byte frameLen = data.getByte(startIndex + 1);
+            int checksumIx = startIndex + frameLen + 1;
+            if (frameLen > 0 && checksumIx < data.readerIndex() + readableBytes) {
+                byte frameChecksum = data.getByte(checksumIx);
+                byte checksum = 0;
+                for (int i = startIndex + 1; i < checksumIx; i++) {
+                    checksum ^= data.getByte(i);
+                }
+                checksum = (byte)(~checksum);
+                if (frameChecksum == checksum) {
+                    return checksumIx;
+                }
             }
         }
-        return false;
+        return -1;
     }
 
     /**
@@ -152,7 +131,7 @@ public class ZWaveFrameDecoder extends ByteToMessageDecoder {
      *
      * @return a DataFrame instance (or null if a valid one wasn't found)
      */
-    protected DataFrame createDataFrame(ByteBuf buf) {
+    private DataFrame createDataFrame(ByteBuf buf) {
         if (buf.readableBytes() > 3) {
             byte messageType = buf.getByte(buf.readerIndex() + 3);
 
