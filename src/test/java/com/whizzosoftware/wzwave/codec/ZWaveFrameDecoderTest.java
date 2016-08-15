@@ -7,17 +7,16 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.codec;
 
-import com.whizzosoftware.wzwave.commandclass.VersionCommandClass;
-import io.netty.buffer.ByteBuf;
-import static io.netty.buffer.Unpooled.*;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import com.whizzosoftware.wzwave.commandclass.VersionCommandClass;
 import com.whizzosoftware.wzwave.frame.*;
+import io.netty.buffer.ByteBuf;
+import static io.netty.buffer.Unpooled.*;
+
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
  * Test for the ZWaveFrameDecoder.
@@ -72,10 +71,12 @@ public class ZWaveFrameDecoderTest {
         List<Object> out = new ArrayList<>();
         ByteBuf in = wrappedBuffer(new byte[] {0x06, 0x01, 0x10, 0x01});
         decoder.decode(null, in, out);
-        assertEquals(0, in.readerIndex());
+        assertEquals(0, in.readableBytes());
         assertEquals(0, out.size());
         in = wrappedBuffer(new byte[] {0x15,0x5A,0x2D,0x57,0x61,0x76,0x65,0x20,0x32,0x2E,0x37,0x38,0x00,0x01,(byte)0x9B});
+        assertEquals(15, in.readableBytes());
         decoder.decode(null, in, out);
+        assertEquals(0, in.readableBytes());
         assertEquals(2, out.size());
         assertTrue(out.get(0) instanceof ACK);
         assertTrue(out.get(1) instanceof Version);
@@ -234,9 +235,11 @@ public class ZWaveFrameDecoderTest {
     @Test
     public void testExtraneousPrefixBytes() throws Exception {
         ZWaveFrameDecoder decoder = new ZWaveFrameDecoder();
-        List<Object> out = new ArrayList<Object>();
+        List<Object> out = new ArrayList<>();
         ByteBuf in = wrappedBuffer(new byte[] {0x02, 0x03, 0x04, 0x01, 0x05, 0x00, 0x13, 0x02, 0x00, (byte)0xeb});
+        assertEquals(10, in.readableBytes());
         decoder.decode(null, in, out);
+        assertEquals(0, in.readableBytes());
         assertEquals(1, out.size());
         assertTrue(out.get(0) instanceof SendData);
         SendData sd = (SendData)out.get(0);
@@ -257,10 +260,23 @@ public class ZWaveFrameDecoderTest {
         assertEquals(0x00, ach.getStatus());
         assertEquals((byte)14, ach.getNodeId());
         assertEquals(VersionCommandClass.ID, ach.getCommandClassId());
-//        Version v = new Version(ach.getCommandClassBytes());
-//        assertEquals("6", v.getLibrary());
-//        assertEquals("3.25", v.getApplication());
-//        assertEquals("3.40", v.getProtocol());
+    }
+
+    @Test
+    public void testOneFrameAcrossTwoReads() throws Exception {
+        ZWaveFrameDecoder decoder = new ZWaveFrameDecoder();
+        List<Object> out = new ArrayList<>();
+        ByteBuf buf = wrappedBuffer(new byte[] {0x01, 0x10, 0x01, 0x15, 0x5a, 0x2d, 0x57, 0x61, 0x76, 0x65});
+        assertEquals(10, buf.readableBytes());
+        decoder.decode(null, buf, out);
+        assertEquals(0, buf.readableBytes());
+        assertEquals(0, out.size());
+        buf = wrappedBuffer(new byte[] {0x20, 0x32, 0x2e, 0x37, 0x38, 0x00, 0x01, (byte)0x9b});
+        assertEquals(8, buf.readableBytes());
+        decoder.decode(null, buf, out);
+        assertEquals(0, buf.readableBytes());
+        assertEquals(1, out.size());
+        assertTrue (out.get(0) instanceof Version);
     }
 
     @Test
@@ -268,9 +284,14 @@ public class ZWaveFrameDecoderTest {
         ZWaveFrameDecoder decoder = new ZWaveFrameDecoder();
         List<Object> out = new ArrayList<Object>();
         ByteBuf in = wrappedBuffer(new byte[] {0x01, 0x0d, 0x00, 0x04, 0x00, 0x0e, 0x07, (byte)0x86, 0x12, 0x06, 0x03, 0x28, 0x03, 0x19, 0x5c, 0x01, 0x0d});
+        assertEquals(17, in.readableBytes());
         decoder.decode(null, in, out);
+        assertEquals(0, in.readableBytes());
+        assertEquals(1, out.size());
         in = wrappedBuffer(new byte[] {0x00, 0x04, 0x00, 0x0e, 0x07, (byte)0x86, 0x12, 0x06, 0x03, 0x28, 0x03, 0x19, 0x5c});
+        assertEquals(13, in.readableBytes());
         decoder.decode(null, in, out);
+        assertEquals(0, in.readableBytes());
         assertEquals(2, out.size());
         assertTrue(out.get(0) instanceof ApplicationCommand);
         assertTrue(out.get(1) instanceof ApplicationCommand);
@@ -281,7 +302,10 @@ public class ZWaveFrameDecoderTest {
         ZWaveFrameDecoder decoder = new ZWaveFrameDecoder();
         List<Object> out = new ArrayList<Object>();
         ByteBuf in = wrappedBuffer(new byte[] {0x01, 0x25, 0x01, 0x02, 0x05, 0x00, 0x1d, 0x01, 0x00, 0x00, 0x00, (byte)0xc0, 0x00,  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x01, 0x02});
+        assertEquals(39, in.readableBytes());
         decoder.decode(null, in, out);
+        assertEquals(0, in.readableBytes());
+        assertEquals(1, in.refCnt());
     }
 
     @Test
@@ -313,10 +337,52 @@ public class ZWaveFrameDecoderTest {
     }
 
     @Test
+    public void testIncompleteWithMultipleAttempts2() throws Exception {
+        ZWaveFrameDecoder decoder = new ZWaveFrameDecoder();
+        List<Object> out = new ArrayList<>();
+        ByteBuf buf = wrappedBuffer(new byte[] {0x06});
+        assertEquals(1, buf.readableBytes());
+        decoder.decode(null, buf, out);
+        assertEquals(1, out.size());
+        assertEquals(0, buf.readableBytes());
+
+        buf = wrappedBuffer(new byte[] {0x01, 0x25, 0x01});
+        assertEquals(3, buf.readableBytes());
+        decoder.decode(null, buf, out);
+        assertEquals(1, out.size());
+        assertEquals(0, buf.readableBytes());
+        assertEquals(1, buf.refCnt());
+
+        buf = wrappedBuffer(new byte[] {0x01, 0x25, 0x01, 0x02, 0x05, 0x00, 0x1D, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
+        assertEquals(19, buf.readableBytes());
+        decoder.decode(null, buf, out);
+        assertEquals(1, out.size());
+        assertEquals(0, buf.readableBytes());
+        assertEquals(1, buf.refCnt());
+
+        buf = wrappedBuffer(new byte[] {0x01, 0x25, 0x01, 0x02, 0x05, 0x00, 0x1D, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, (byte)0xC3});
+        assertEquals(39, buf.readableBytes());
+        decoder.decode(null, buf, out);
+        assertEquals(2, out.size());
+        assertEquals(0, buf.readableBytes());
+        assertTrue(out.get(0) instanceof ACK);
+        assertTrue(out.get(1) instanceof InitData);
+
+        out = new ArrayList<>();
+        decoder.decode(null, wrappedBuffer(new byte[] {0x06, 0x01, 0x09, 0x01, 0x41, (byte)0x93, 0x16, 0x01, 0x02, 0x02, 0x01, 0x33}), out);
+        assertEquals(2, out.size());
+        assertTrue(out.get(0) instanceof ACK);
+        assertTrue(out.get(1) instanceof NodeProtocolInfo);
+    }
+
+    @Test
     public void testTwoCompleteFramesAtOnce() throws Exception {
         ZWaveFrameDecoder decoder = new ZWaveFrameDecoder();
         List<Object> out = new ArrayList<>();
-        decoder.decode(null, wrappedBuffer(new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x25, 0x02, 0x05, 0x01, (byte)0xC2, 0x01, 0x04, 0x01, 0x13, 0x01, (byte)0xE8}), out);
+        ByteBuf buf = wrappedBuffer(new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x25, 0x02, 0x05, 0x01, (byte)0xC2, 0x01, 0x04, 0x01, 0x13, 0x01, (byte)0xE8});
+        assertEquals(17, buf.readableBytes());
+        decoder.decode(null, buf, out);
+        assertEquals(0, buf.readableBytes());
         assertEquals(2, out.size());
     }
 }

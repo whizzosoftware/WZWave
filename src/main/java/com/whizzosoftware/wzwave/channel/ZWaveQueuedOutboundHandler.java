@@ -26,7 +26,7 @@ public class ZWaveQueuedOutboundHandler extends ChannelOutboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(ZWaveQueuedOutboundHandler.class);
 
     private ChannelHandlerContext context;
-    private Deque<DataFrame> pendingQueue = new LinkedList<DataFrame>();
+    private Deque<FrameWrite> pendingQueue = new LinkedList<>();
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
@@ -43,7 +43,7 @@ public class ZWaveQueuedOutboundHandler extends ChannelOutboundHandlerAdapter {
                 DataFrame frame = (DataFrame) msg;
                 if (transactionHandler.hasCurrentRequestTransaction()) {
                     logger.trace("Queueing data frame: " + frame + "; current queue size: " + pendingQueue.size());
-                    pendingQueue.add(frame);
+                    pendingQueue.add(new FrameWrite(frame, promise));
                 } else {
                     logger.trace("No transaction detected, sending data frame: {}", frame);
                     ctx.writeAndFlush(msg, promise);
@@ -62,13 +62,23 @@ public class ZWaveQueuedOutboundHandler extends ChannelOutboundHandlerAdapter {
         logger.trace("Detected data frame transaction completion");
         ZWaveDataFrameTransactionInboundHandler transactionHandler = (ZWaveDataFrameTransactionInboundHandler)context.pipeline().get("transaction");
         if (pendingQueue.size() > 0) {
-            DataFrame frame = pendingQueue.pop();
-            logger.trace("Sending next queued data frame: {}", frame);
-            context.writeAndFlush(frame);
-            frame.incremenentSendCount();
-            transactionHandler.onDataFrameWrite(frame);
+            FrameWrite fw = pendingQueue.pop();
+            logger.trace("Sending next queued data frame: {}", fw.frame);
+            context.writeAndFlush(fw.frame, fw.promise);
+            fw.frame.incremenentSendCount();
+            transactionHandler.onDataFrameWrite(fw.frame);
         } else {
             logger.trace("No pending data frames to send");
+        }
+    }
+
+    private class FrameWrite {
+        public DataFrame frame;
+        public ChannelPromise promise;
+
+        public FrameWrite(DataFrame frame, ChannelPromise promise) {
+            this.frame = frame;
+            this.promise = promise;
         }
     }
 }

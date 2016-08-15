@@ -37,14 +37,16 @@ public class ZWaveFrameDecoder extends ByteToMessageDecoder {
 
         ByteBuf data;
 
-        // if there was data left from the last decode call, create a ByteBuf that contains both
+        // if there was data left from the last decode call, create a composite ByteBuf that contains both
         // previous and new data
         if (previousBuf != null) {
-            CompositeByteBuf cbuf = Unpooled.compositeBuffer();
-            cbuf.addComponent(previousBuf);
+            CompositeByteBuf cbuf = Unpooled.compositeBuffer(2);
+            cbuf.addComponent(previousBuf.copy());
             cbuf.addComponent(in);
             cbuf.writerIndex(previousBuf.readableBytes() + in.readableBytes());
             data = cbuf;
+            // release the data from the previous decode call
+            previousBuf.release();
             previousBuf = null;
         } else {
             data = in;
@@ -64,7 +66,7 @@ public class ZWaveFrameDecoder extends ByteToMessageDecoder {
                             if (searchStartIx > data.readerIndex() && isSingleByteFrame(data, searchStartIx - 1)) {
                                 data.readerIndex(searchStartIx - 1);
                                 out.add(createSingleByteFrame(data));
-                            } else {
+                            } else if (searchStartIx > data.readerIndex()) {
                                 data.readerIndex(searchStartIx);
                             }
                             out.add(createDataFrame(data));
@@ -74,16 +76,16 @@ public class ZWaveFrameDecoder extends ByteToMessageDecoder {
                     }
                 }
                 if (!foundFrame) {
+                    previousBuf = data.copy();
                     break;
                 }
             }
         }
 
-        if (data.readableBytes() > 0) {
-            previousBuf = data;
-        }
+        // make sure we read from the input ByteBuf so Netty doesn't throw an exception
+        in.readBytes(in.readableBytes());
 
-        logger.trace("Done processing received data");
+        logger.trace("Done processing received data: {}", out);
     }
 
     private boolean isSingleByteFrame(ByteBuf data, int ix) {
