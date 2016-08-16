@@ -34,7 +34,7 @@ public class Version extends DataFrame {
 
     public Version(ByteBuf buffer) {
         super(buffer);
-        libraryVersion = new String(buffer.readBytes(12).array());
+        libraryVersion = new String(buffer.readBytes(12).array()).trim();
         libraryType = buffer.readByte();
     }
 

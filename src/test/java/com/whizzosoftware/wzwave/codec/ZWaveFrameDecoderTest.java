@@ -90,7 +90,7 @@ public class ZWaveFrameDecoderTest {
         decoder.decode(null, in, out);
         assertEquals(1, out.size());
         assertTrue(out.get(0) instanceof Version);
-        assertEquals("Z-Wave 2.78\u0000", ((Version)out.get(0)).getLibraryVersion());
+        assertEquals("Z-Wave 2.78", ((Version)out.get(0)).getLibraryVersion());
         assertEquals((byte) 0x01, ((Version) out.get(0)).getLibraryType());
     }
 

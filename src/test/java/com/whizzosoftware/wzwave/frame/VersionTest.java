@@ -31,7 +31,7 @@ public class VersionTest {
         ByteBuf buffer = Unpooled.wrappedBuffer(b);
         Version v = new Version(buffer);
         assertEquals(1, buffer.readableBytes());
-        assertEquals("Z-Wave 2.78\u0000", v.getLibraryVersion());
+        assertEquals("Z-Wave 2.78", v.getLibraryVersion());
         assertEquals(0x01, v.getLibraryType());
     }
 }
