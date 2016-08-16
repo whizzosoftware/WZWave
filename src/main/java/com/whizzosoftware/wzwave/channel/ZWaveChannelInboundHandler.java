@@ -62,6 +62,10 @@ public class ZWaveChannelInboundHandler extends ChannelInboundHandlerAdapter {
             if (listener != null) {
                 listener.onAddNodeToNetwork((AddNodeToNetwork)frame);
             }
+        } else if (frame instanceof SetDefault) {
+            if (listener != null) {
+                listener.onSetDefault();
+            }
         } else {
             logger.error("Received unknown data frame: " + frame);
         }

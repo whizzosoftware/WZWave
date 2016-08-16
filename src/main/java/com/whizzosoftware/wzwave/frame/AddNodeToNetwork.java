@@ -7,8 +7,9 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.frame;
 
-import com.whizzosoftware.wzwave.frame.transaction.AddNodeToNetworkTransaction;
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
+import com.whizzosoftware.wzwave.frame.transaction.RequestRequestTransaction;
+import com.whizzosoftware.wzwave.node.NodeInfo;
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -40,9 +41,12 @@ public class AddNodeToNetwork extends DataFrame {
     private byte funcId;
     private byte status;
     private byte source;
+    private NodeInfo nodeInfo;
+
+    private static byte nextCallbackId;
 
     public AddNodeToNetwork(byte mode) {
-        super(DataFrameType.REQUEST, ID, new byte[] {mode});
+        super(DataFrameType.REQUEST, ID, new byte[] {mode, ++nextCallbackId});
     }
 
     public AddNodeToNetwork(ByteBuf buffer) {
@@ -55,7 +59,14 @@ public class AddNodeToNetwork extends DataFrame {
         // read node info if present
         byte len = buffer.readByte();
         if (len > 0) {
-            // TODO
+            byte basicClass = buffer.readByte();
+            byte genericClass = buffer.readByte();
+            byte specificClass = buffer.readByte();
+            byte[] commandClasses = new byte[len-3];
+            for (int i=0; i < len-3; i++) {
+                commandClasses[i] = buffer.readByte();
+            }
+            nodeInfo = new NodeInfo(basicClass, genericClass, specificClass, commandClasses);
         }
     }
 
@@ -72,11 +83,15 @@ public class AddNodeToNetwork extends DataFrame {
     }
 
     public boolean hasNodeInfo() {
-        return false;
+        return (nodeInfo != null);
+    }
+
+    public NodeInfo getNodeInfo() {
+        return nodeInfo;
     }
 
     @Override
     public DataFrameTransaction createTransaction() {
-        return new AddNodeToNetworkTransaction(this);
+        return new RequestRequestTransaction(this);
     }
 }

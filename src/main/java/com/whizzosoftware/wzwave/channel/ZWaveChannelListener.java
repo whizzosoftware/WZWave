@@ -21,5 +21,16 @@ public interface ZWaveChannelListener {
     void onSendData(SendData sendData);
     void onApplicationCommand(ApplicationCommand cmd);
     void onApplicationUpdate(ApplicationUpdate update);
-    void onAddNodeToNetwork(AddNodeToNetwork update);
+
+    /**
+     * Called when an AddNodeToNetwork frame is received.
+     *
+     * @param addNode the received frame
+     */
+    void onAddNodeToNetwork(AddNodeToNetwork addNode);
+
+    /**
+     * Called when a SetDefault frame is received due to the controller being factory reset.
+     */
+    void onSetDefault();
 }

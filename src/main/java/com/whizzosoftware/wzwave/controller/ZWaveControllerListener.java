@@ -7,6 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.controller;
 
+import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.ZWaveEndpoint;
 
 /**
@@ -37,7 +38,7 @@ public interface ZWaveControllerListener {
     void onZWaveConnectionFailure(Throwable t);
 
     /**
-     * Callback indicating the library has determined information about the Z-Wave controller.
+     * Callback when the library has determined information about the Z-Wave controller.
      *
      * @param libraryVersion the library version of the controller
      * @param homeId the home ID of the controller
@@ -46,12 +47,19 @@ public interface ZWaveControllerListener {
     void onZWaveControllerInfo(String libraryVersion, Integer homeId, Byte nodeId);
 
     /**
-     * Callback indicating the Z-Wave controller has started network inclusion mode.
+     * Callback when the Z-Wave controller has started network inclusion mode.
      */
-    void onZWaveAddNodeToNetworkStarted();
+    void onZWaveInclusionStarted();
 
     /**
-     * Callback indicating the Z-Wave controller has stopped network inclusion mode.
+     * Callback when a the Z-Wave controller has either successfully or unsuccessfully included a new node.
+     *
+     * @param nodeInfo information about the new node
      */
-    void onZWaveAddNodeToNetworkStopped();
+    void onZWaveInclusion(NodeInfo nodeInfo, boolean success);
+
+    /**
+     * Callback when the Z-Wave controller has stopped network inclusion mode.
+     */
+    void onZWaveInclusionStopped();
 }

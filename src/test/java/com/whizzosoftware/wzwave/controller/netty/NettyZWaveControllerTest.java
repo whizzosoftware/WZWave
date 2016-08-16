@@ -8,6 +8,7 @@
 package com.whizzosoftware.wzwave.controller.netty;
 
 import com.whizzosoftware.wzwave.controller.ZWaveControllerListener;
+import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.ZWaveEndpoint;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -65,12 +66,17 @@ public class NettyZWaveControllerTest {
         }
 
         @Override
-        public void onZWaveAddNodeToNetworkStarted() {
+        public void onZWaveInclusionStarted() {
 
         }
 
         @Override
-        public void onZWaveAddNodeToNetworkStopped() {
+        public void onZWaveInclusion(NodeInfo nodeInfo, boolean success) {
+
+        }
+
+        @Override
+        public void onZWaveInclusionStopped() {
 
         }
     }

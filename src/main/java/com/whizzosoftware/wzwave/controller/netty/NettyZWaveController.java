@@ -15,6 +15,7 @@ import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.controller.ZWaveControllerListener;
 import com.whizzosoftware.wzwave.frame.*;
 import com.whizzosoftware.wzwave.node.*;
+import com.whizzosoftware.wzwave.util.ByteUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -167,16 +168,23 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     }
 
     @Override
-    public void onZWaveAddNodeToNetworkStarted() {
+    public void onZWaveInclusionStarted() {
         if (listener != null) {
-            listener.onZWaveAddNodeToNetworkStarted();
+            listener.onZWaveInclusionStarted();
         }
     }
 
     @Override
-    public void onZWaveAddNodeToNetworkStopped() {
+    public void onZWaveInclusion(NodeInfo nodeInfo, boolean success) {
         if (listener != null) {
-            listener.onZWaveAddNodeToNetworkStopped();
+            listener.onZWaveInclusion(nodeInfo, success);
+        }
+    }
+
+    @Override
+    public void onZWaveInclusionStopped() {
+        if (listener != null) {
+            listener.onZWaveInclusionStopped();
         }
     }
 
@@ -259,11 +267,36 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
 
     @Override
     public void onAddNodeToNetwork(AddNodeToNetwork update) {
-        if (update.getStatus() == AddNodeToNetwork.ADD_NODE_STATUS_LEARN_READY && listener != null) {
-            listener.onZWaveAddNodeToNetworkStarted();
-        } else if (update.getStatus() == AddNodeToNetwork.ADD_NODE_STATUS_DONE && listener != null) {
-            listener.onZWaveAddNodeToNetworkStopped();
+        if (listener != null) {
+            switch (update.getStatus()) {
+                case AddNodeToNetwork.ADD_NODE_STATUS_LEARN_READY:
+                    listener.onZWaveInclusionStarted();
+                    break;
+                case AddNodeToNetwork.ADD_NODE_STATUS_DONE:
+                    listener.onZWaveInclusionStopped();
+                    break;
+                case AddNodeToNetwork.ADD_NODE_STATUS_NODE_FOUND:
+                    logger.debug("A node has been found that wants to be included: {}", ByteUtil.createString(update.getSource()));
+                    break;
+                case AddNodeToNetwork.ADD_NODE_STATUS_ADDING_CONTROLLER:
+                case AddNodeToNetwork.ADD_NODE_STATUS_ADDING_SLAVE:
+                    listener.onZWaveInclusion(update.getNodeInfo(), true);
+                    break;
+                case AddNodeToNetwork.ADD_NODE_STATUS_PROTOCOL_DONE:
+                    logger.debug("The add node protocol is complete");
+                    break;
+                case AddNodeToNetwork.ADD_NODE_STATUS_FAILED:
+                    listener.onZWaveInclusion(update.getNodeInfo(), false);
+                    break;
+                default:
+                    logger.debug("Received unexpected status from AddNodeToNetwork frame: {}", update.getStatus());
+            }
         }
+    }
+
+    @Override
+    public void onSetDefault() {
+        logger.info("Z-Wave controller has been reset to factory default");
     }
 
     /*
