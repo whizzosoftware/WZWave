@@ -165,6 +165,8 @@ public class ZWaveFrameDecoder extends ByteToMessageDecoder {
                     return new GetSUCNodeId(buf);
                 case AddNodeToNetwork.ID:
                     return new AddNodeToNetwork(buf);
+                case RemoveNodeFromNetwork.ID:
+                    return new RemoveNodeFromNetwork(buf);
                 case SetDefault.ID:
                     return new SetDefault(buf);
             }

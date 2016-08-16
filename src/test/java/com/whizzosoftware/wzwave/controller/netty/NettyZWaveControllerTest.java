@@ -79,5 +79,20 @@ public class NettyZWaveControllerTest {
         public void onZWaveInclusionStopped() {
 
         }
+
+        @Override
+        public void onZWaveExclusionStarted() {
+
+        }
+
+        @Override
+        public void onZWaveExclusion(NodeInfo nodeInfo, boolean success) {
+
+        }
+
+        @Override
+        public void onZWaveExclusionStopped() {
+
+        }
     }
 }

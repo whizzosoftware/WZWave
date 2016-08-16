@@ -30,6 +30,13 @@ public interface ZWaveChannelListener {
     void onAddNodeToNetwork(AddNodeToNetwork addNode);
 
     /**
+     * Called when a RemoveNodeFromNetwork frame is received.
+     *
+     * @param removeNode the received frame
+     */
+    void onRemoveNodeFromNetwork(RemoveNodeFromNetwork removeNode);
+
+    /**
      * Called when a SetDefault frame is received due to the controller being factory reset.
      */
     void onSetDefault();

@@ -188,6 +188,27 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
         }
     }
 
+    @Override
+    public void onZWaveExclusionStarted() {
+        if (listener != null) {
+            listener.onZWaveExclusionStarted();
+        }
+    }
+
+    @Override
+    public void onZWaveExclusion(NodeInfo nodeInfo, boolean success) {
+        if (listener != null) {
+            listener.onZWaveExclusion(nodeInfo, success);
+        }
+    }
+
+    @Override
+    public void onZWaveExclusionStopped() {
+        if (listener != null) {
+            listener.onZWaveExclusionStopped();
+        }
+    }
+
     /*
      * ZWaveChannelListener methods
      */
@@ -270,26 +291,52 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
         if (listener != null) {
             switch (update.getStatus()) {
                 case AddNodeToNetwork.ADD_NODE_STATUS_LEARN_READY:
-                    listener.onZWaveInclusionStarted();
+                    onZWaveInclusionStarted();
                     break;
                 case AddNodeToNetwork.ADD_NODE_STATUS_DONE:
-                    listener.onZWaveInclusionStopped();
+                    onZWaveInclusionStopped();
                     break;
                 case AddNodeToNetwork.ADD_NODE_STATUS_NODE_FOUND:
                     logger.debug("A node has been found that wants to be included: {}", ByteUtil.createString(update.getSource()));
                     break;
                 case AddNodeToNetwork.ADD_NODE_STATUS_ADDING_CONTROLLER:
                 case AddNodeToNetwork.ADD_NODE_STATUS_ADDING_SLAVE:
-                    listener.onZWaveInclusion(update.getNodeInfo(), true);
+                    onZWaveInclusion(update.getNodeInfo(), true);
                     break;
                 case AddNodeToNetwork.ADD_NODE_STATUS_PROTOCOL_DONE:
                     logger.debug("The add node protocol is complete");
                     break;
                 case AddNodeToNetwork.ADD_NODE_STATUS_FAILED:
-                    listener.onZWaveInclusion(update.getNodeInfo(), false);
+                    onZWaveInclusion(update.getNodeInfo(), false);
                     break;
                 default:
                     logger.debug("Received unexpected status from AddNodeToNetwork frame: {}", update.getStatus());
+            }
+        }
+    }
+
+    @Override
+    public void onRemoveNodeFromNetwork(RemoveNodeFromNetwork update) {
+        if (listener != null) {
+            switch (update.getStatus()) {
+                case RemoveNodeFromNetwork.REMOVE_NODE_STATUS_LEARN_READY:
+                    onZWaveExclusionStarted();
+                    break;
+                case RemoveNodeFromNetwork.REMOVE_NODE_STATUS_DONE:
+                    onZWaveExclusionStopped();
+                    break;
+                case RemoveNodeFromNetwork.REMOVE_NODE_STATUS_NODE_FOUND:
+                    logger.debug("A node has been found that wants to be excluded: {}", ByteUtil.createString(update.getSource()));
+                    break;
+                case RemoveNodeFromNetwork.REMOVE_NODE_STATUS_REMOVING_CONTROLLER:
+                case RemoveNodeFromNetwork.REMOVE_NODE_STATUS_REMOVING_SLAVE:
+                    onZWaveExclusion(update.getNodeInfo(), true);
+                    break;
+                case RemoveNodeFromNetwork.REMOVE_NODE_STATUS_FAILED:
+                    onZWaveExclusion(update.getNodeInfo(), false);
+                    break;
+                default:
+                    logger.debug("Received unexpected status from RemoveNodeFromNetwork frame: {}", update.getStatus());
             }
         }
     }
