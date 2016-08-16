@@ -166,6 +166,20 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
         }
     }
 
+    @Override
+    public void onZWaveAddNodeToNetworkStarted() {
+        if (listener != null) {
+            listener.onZWaveAddNodeToNetworkStarted();
+        }
+    }
+
+    @Override
+    public void onZWaveAddNodeToNetworkStopped() {
+        if (listener != null) {
+            listener.onZWaveAddNodeToNetworkStopped();
+        }
+    }
+
     /*
      * ZWaveChannelListener methods
      */
@@ -240,6 +254,15 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
             }
         } else {
             logger.error("Unable to determine node to route ApplicationUpdate to");
+        }
+    }
+
+    @Override
+    public void onAddNodeToNetwork(AddNodeToNetwork update) {
+        if (update.getStatus() == AddNodeToNetwork.ADD_NODE_STATUS_LEARN_READY && listener != null) {
+            listener.onZWaveAddNodeToNetworkStarted();
+        } else if (update.getStatus() == AddNodeToNetwork.ADD_NODE_STATUS_DONE && listener != null) {
+            listener.onZWaveAddNodeToNetworkStopped();
         }
     }
 

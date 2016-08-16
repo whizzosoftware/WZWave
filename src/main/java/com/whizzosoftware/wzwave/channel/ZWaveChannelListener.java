@@ -15,10 +15,11 @@ import com.whizzosoftware.wzwave.frame.*;
  * @author Dan Noguerol
  */
 public interface ZWaveChannelListener {
-    public void onLibraryInfo(String libraryVersion);
-    public void onControllerInfo(int homeId, byte nodeId);
-    public void onNodeProtocolInfo(byte nodeId, NodeProtocolInfo nodeProtocolInfo);
-    public void onSendData(SendData sendData);
-    public void onApplicationCommand(ApplicationCommand cmd);
-    public void onApplicationUpdate(ApplicationUpdate update);
+    void onLibraryInfo(String libraryVersion);
+    void onControllerInfo(int homeId, byte nodeId);
+    void onNodeProtocolInfo(byte nodeId, NodeProtocolInfo nodeProtocolInfo);
+    void onSendData(SendData sendData);
+    void onApplicationCommand(ApplicationCommand cmd);
+    void onApplicationUpdate(ApplicationUpdate update);
+    void onAddNodeToNetwork(AddNodeToNetwork update);
 }

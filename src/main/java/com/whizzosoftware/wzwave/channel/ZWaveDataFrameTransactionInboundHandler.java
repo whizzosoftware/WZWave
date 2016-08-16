@@ -125,7 +125,7 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
                 logger.trace("*** Data frame transaction started for {}", frame);
 
                 // start timeout
-                if (handlerContext != null && handlerContext.executor() != null) {
+                if (currentDataFrameTransaction.getTimeout() > 0 && handlerContext != null && handlerContext.executor() != null) {
                     timeoutFuture = handlerContext.executor().schedule(
                             new TransactionTimeout(
                                     currentDataFrameTransaction.getId(),

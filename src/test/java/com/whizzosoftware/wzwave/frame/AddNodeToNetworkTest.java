@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Whizzo Software, LLC.
+ * Copyright (c) 2016 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,31 +11,25 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
-public class RequestNodeInfoTest {
+public class AddNodeToNetworkTest {
     @Test
     public void testRequestConstructor() {
-        RequestNodeInfo mgid = new RequestNodeInfo((byte)0x01);
-        byte[] b = mgid.getBytes();
+        AddNodeToNetwork f = new AddNodeToNetwork(AddNodeToNetwork.ADD_NODE_ANY);
+        byte[] b = f.getBytes();
         assertEquals(6, b.length);
-        assertEquals(0x01, b[0]);
-        assertEquals(0x04, b[1]);
-        assertEquals(0x00, b[2]);
-        assertEquals(0x60, b[3]);
-        assertEquals(0x01, b[4]);
-        assertEquals((byte)0x9A, b[5]);
     }
 
     @Test
     public void testResponseConstructor() {
-        byte[] b = new byte[] {0x01, 0x04, 0x01, 0x60, 0x01, (byte)0x9B};
+        byte[] b = new byte[] {0x01, 0x07, 0x00, 0x4A, 0x02, 0x01, 0x00, 0x00, (byte)0xB1};
         ByteBuf buffer = Unpooled.wrappedBuffer(b);
-        RequestNodeInfo rni = new RequestNodeInfo(buffer);
+        AddNodeToNetwork f = new AddNodeToNetwork(buffer);
         assertEquals(1, buffer.readableBytes());
-        assertNotNull(rni.getRetVal());
-        assertEquals((byte)0x01, (byte)rni.getRetVal());
-        assertTrue(rni.wasSuccessfullySent());
-        assertEquals(1, buffer.readableBytes());
+        assertEquals(AddNodeToNetwork.ADD_NODE_STATUS_LEARN_READY, f.getStatus());
+        assertEquals(0, f.getSource());
+        assertFalse(f.hasNodeInfo());
     }
 }

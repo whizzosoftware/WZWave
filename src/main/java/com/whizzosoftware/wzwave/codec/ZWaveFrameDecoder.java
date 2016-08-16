@@ -69,9 +69,14 @@ public class ZWaveFrameDecoder extends ByteToMessageDecoder {
                             } else if (searchStartIx > data.readerIndex()) {
                                 data.readerIndex(searchStartIx);
                             }
-                            out.add(createDataFrame(data));
-                            data.readByte(); // discard checksum
-                            foundFrame = true;
+                            DataFrame df = createDataFrame(data);
+                            if (df != null) {
+                                out.add(df);
+                                data.readByte(); // discard checksum
+                                foundFrame = true;
+                            } else {
+                                logger.debug("Unable to determine frame type");
+                            }
                         }
                     }
                 }
@@ -158,6 +163,8 @@ public class ZWaveFrameDecoder extends ByteToMessageDecoder {
                     return new GetRoutingInfo(buf);
                 case GetSUCNodeId.ID:
                     return new GetSUCNodeId(buf);
+                case AddNodeToNetwork.ID:
+                    return new AddNodeToNetwork(buf);
             }
         }
         return null;

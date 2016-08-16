@@ -385,4 +385,13 @@ public class ZWaveFrameDecoderTest {
         assertEquals(0, buf.readableBytes());
         assertEquals(2, out.size());
     }
+
+    @Test
+    public void testUnknownFrameType() throws Exception {
+        ZWaveFrameDecoder decoder = new ZWaveFrameDecoder();
+        List<Object> out = new ArrayList<>();
+        ByteBuf buf = wrappedBuffer(new byte[] {0x01, 0x07, 0x00, (byte)0x99, 0x02, 0x01, 0x00, 0x00, (byte)98});
+        decoder.decode(null, buf, out);
+        assertEquals(0, out.size());
+    }
 }

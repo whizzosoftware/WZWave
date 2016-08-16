@@ -63,5 +63,15 @@ public class NettyZWaveControllerTest {
             this.homeId = homeId;
             this.nodeId = nodeId;
         }
+
+        @Override
+        public void onZWaveAddNodeToNetworkStarted() {
+
+        }
+
+        @Override
+        public void onZWaveAddNodeToNetworkStopped() {
+
+        }
     }
 }

@@ -24,21 +24,21 @@ public interface DataFrameTransaction {
      *
      * @return a String
      */
-    public String getId();
+    String getId();
 
     /**
      * Returns the first frame of the transaction.
      *
      * @return a DataFrame
      */
-    public DataFrame getStartFrame();
+    DataFrame getStartFrame();
 
     /**
      * The transaction timeout interval.
      *
      * @return an interval in milliseconds
      */
-    public long getTimeout();
+    long getTimeout();
 
     /**
      * Add a Frame to the transaction.
@@ -47,21 +47,21 @@ public interface DataFrameTransaction {
      *
      * @return indicates whether the frame was consumed by the transaction
      */
-    public boolean addFrame(Frame f);
+    boolean addFrame(Frame f);
 
     /**
      * Indicates whether the transaction is in an error state.
      *
      * @return a boolean
      */
-    public boolean hasError();
+    boolean hasError();
 
     /**
      * Identifies whether the transaction is complete.
      *
      * @return a boolean
      */
-    public boolean isComplete();
+    boolean isComplete();
 
     /**
      * Returns the final frame of the transaction. This is what is passed along to the various listeners in order
@@ -69,5 +69,5 @@ public interface DataFrameTransaction {
      *
      * @return a DataFrame
      */
-    public DataFrame getFinalFrame();
+    DataFrame getFinalFrame();
 }

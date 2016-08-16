@@ -44,4 +44,14 @@ public interface ZWaveControllerListener {
      * @param nodeId the node ID of the controller
      */
     void onZWaveControllerInfo(String libraryVersion, Integer homeId, Byte nodeId);
+
+    /**
+     * Callback indicating the Z-Wave controller has started network inclusion mode.
+     */
+    void onZWaveAddNodeToNetworkStarted();
+
+    /**
+     * Callback indicating the Z-Wave controller has stopped network inclusion mode.
+     */
+    void onZWaveAddNodeToNetworkStopped();
 }
