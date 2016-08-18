@@ -1,10 +1,12 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.controller;
 
 import com.whizzosoftware.wzwave.node.NodeInfo;
@@ -17,7 +19,7 @@ import com.whizzosoftware.wzwave.node.ZWaveEndpoint;
  */
 public interface ZWaveControllerListener {
     /**
-     * Callback when a new Z-Wave node is discovered.
+     * Callback when a new Z-Wave node has been discovered and interrogated.
      *
      * @param node the new Z-Wave node
      */
@@ -52,7 +54,8 @@ public interface ZWaveControllerListener {
     void onZWaveInclusionStarted();
 
     /**
-     * Callback when a the Z-Wave controller has either successfully or unsuccessfully included a new node.
+     * Callback when a the Z-Wave controller has either successfully or unsuccessfully included a new node. This
+     * call will be received prior to device interrogation.
      *
      * @param nodeInfo information about the new node
      * @param success whether the inclusion was successful
