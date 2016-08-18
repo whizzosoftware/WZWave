@@ -1,6 +1,16 @@
+/*
+ *******************************************************************************
+ * Copyright (c) 2013 Whizzo Software, LLC.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.channel;
 
 import com.whizzosoftware.wzwave.frame.ACK;
+import com.whizzosoftware.wzwave.frame.AddNodeToNetwork;
 import com.whizzosoftware.wzwave.frame.RequestNodeInfo;
 import io.netty.buffer.Unpooled;
 
@@ -24,7 +34,7 @@ public class ZWaveDataFrameTransactionInboundHandlerTest {
 
         // receive unsuccessful send
         h.channelRead(ctx, new RequestNodeInfo(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x60, 0x00, (byte)0x9a})));
-        assertFalse(h.hasCurrentRequestTransaction());
+        assertFalse(h.hasCurrentTransaction());
 
         // confirm request was re-queued
         assertEquals(1, ctx.getWriteQueue().size());
@@ -33,7 +43,7 @@ public class ZWaveDataFrameTransactionInboundHandlerTest {
         // simulate re-send
         requestFrame.incremenentSendCount();
         h.onDataFrameWrite(requestFrame);
-        assertTrue(h.hasCurrentRequestTransaction());
+        assertTrue(h.hasCurrentTransaction());
 
         // receive ACK
         h.channelRead(ctx, new ACK());
@@ -41,7 +51,7 @@ public class ZWaveDataFrameTransactionInboundHandlerTest {
 
         // receive unsuccessful send
         h.channelRead(ctx, new RequestNodeInfo(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x60, 0x00, (byte)0x9a})));
-        assertFalse(h.hasCurrentRequestTransaction());
+        assertFalse(h.hasCurrentTransaction());
 
         // confirm request was re-queued
         assertEquals(2, ctx.getWriteQueue().size());
@@ -50,7 +60,7 @@ public class ZWaveDataFrameTransactionInboundHandlerTest {
         // simulate re-send
         requestFrame.incremenentSendCount();
         h.onDataFrameWrite(requestFrame);
-        assertTrue(h.hasCurrentRequestTransaction());
+        assertTrue(h.hasCurrentTransaction());
 
         // receive ACK
         h.channelRead(ctx, new ACK());
@@ -58,9 +68,21 @@ public class ZWaveDataFrameTransactionInboundHandlerTest {
 
         // receive unsuccessful send
         h.channelRead(ctx, new RequestNodeInfo(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x60, 0x00, (byte)0x9a})));
-        assertFalse(h.hasCurrentRequestTransaction());
+        assertFalse(h.hasCurrentTransaction());
 
         // confirm request was not requeued
         assertEquals(2, ctx.getWriteQueue().size());
+    }
+
+    @Test
+    public void testAddNodeToNetworkTransaction() {
+        MockChannelHandlerContext ctx = new MockChannelHandlerContext();
+        ZWaveDataFrameTransactionInboundHandler h = new ZWaveDataFrameTransactionInboundHandler();
+        h.channelRead(ctx, new AddNodeToNetwork(Unpooled.wrappedBuffer(new byte[] {0x01, 0x07, 0x00, 0x4A, 0x01, 0x02, 0x00, 0x00, (byte)0xB1})));
+        assertTrue(h.hasCurrentTransaction());
+        h.channelRead(ctx, new AddNodeToNetwork(Unpooled.wrappedBuffer(new byte[] {0x01, 0x12, 0x00, 0x4A, 0x01, 0x03, 0x02, 0x0B, 0x04, 0x20, 0x01, 0x30, (byte)0x80, (byte)0x84, 0x71, 0x70, (byte)0x85, (byte)0x86, 0x72, (byte)0xCD})));
+        assertTrue(h.hasCurrentTransaction());
+        h.channelRead(ctx, new AddNodeToNetwork(Unpooled.wrappedBuffer(new byte[] {0x01, 0x12, 0x00, 0x4A, 0x01, 0x05, 0x02, 0x0B, 0x04, 0x20, 0x01, 0x30, (byte)0x80, (byte)0x84, 0x71, 0x70, (byte)0x85, (byte)0x86, 0x72, (byte)0xCB, 0x18})));
+        assertFalse(h.hasCurrentTransaction());
     }
 }

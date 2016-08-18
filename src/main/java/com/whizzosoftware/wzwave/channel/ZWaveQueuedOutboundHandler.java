@@ -41,7 +41,7 @@ public class ZWaveQueuedOutboundHandler extends ChannelOutboundHandlerAdapter {
             ZWaveDataFrameTransactionInboundHandler transactionHandler = (ZWaveDataFrameTransactionInboundHandler)ctx.pipeline().get("transaction");
             if (transactionHandler != null) {
                 DataFrame frame = (DataFrame) msg;
-                if (transactionHandler.hasCurrentRequestTransaction()) {
+                if (transactionHandler.hasCurrentTransaction()) {
                     logger.trace("Queueing data frame: " + frame + "; current queue size: " + pendingQueue.size());
                     pendingQueue.add(new FrameWrite(frame, promise));
                 } else {

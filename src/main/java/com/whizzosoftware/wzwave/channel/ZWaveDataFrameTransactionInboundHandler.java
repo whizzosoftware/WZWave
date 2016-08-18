@@ -7,10 +7,8 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.channel;
 
-import com.whizzosoftware.wzwave.frame.ApplicationUpdate;
-import com.whizzosoftware.wzwave.frame.DataFrame;
-import com.whizzosoftware.wzwave.frame.Frame;
-import com.whizzosoftware.wzwave.frame.RequestNodeInfo;
+import com.whizzosoftware.wzwave.frame.*;
+import com.whizzosoftware.wzwave.frame.transaction.NodeInclusionTransaction;
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -46,7 +44,7 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof Frame) {
             Frame frame = (Frame) msg;
-            if (hasCurrentRequestTransaction()) {
+            if (hasCurrentTransaction()) {
                 logger.trace("Received frame within transaction context: {}", frame);
 
                 if (currentDataFrameTransaction.addFrame(frame)) {
@@ -69,9 +67,9 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
                             // if there's an ApplicationUpdate with no node ID (e.g. when there's a app update failure), attempt
                             // to set the node ID based on the request frame that triggered it
                             if (finalFrame instanceof ApplicationUpdate) {
-                                ApplicationUpdate update = (ApplicationUpdate) finalFrame;
+                                ApplicationUpdate update = (ApplicationUpdate)finalFrame;
                                 if ((update.getNodeId() == null || update.getNodeId() == 0) && currentDataFrameTransaction.getStartFrame() instanceof RequestNodeInfo) {
-                                    update.setNodeId(((RequestNodeInfo) currentDataFrameTransaction.getStartFrame()).getNodeId());
+                                    update.setNodeId(((RequestNodeInfo)currentDataFrameTransaction.getStartFrame()).getNodeId());
                                 }
                             }
 
@@ -93,7 +91,7 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
                         // alert the outbound pipeline that a frame transaction has been completed
                         ChannelPipeline pipeline = ctx.pipeline();
                         if (pipeline != null) {
-                            ZWaveQueuedOutboundHandler writeHandler = (ZWaveQueuedOutboundHandler) ctx.pipeline().get("writeQueue");
+                            ZWaveQueuedOutboundHandler writeHandler = (ZWaveQueuedOutboundHandler)ctx.pipeline().get("writeQueue");
                             if (writeHandler != null) {
                                 writeHandler.onDataFrameTransactionComplete();
                             }
@@ -103,6 +101,9 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
                     logger.trace("Transaction didn't consume frame so passing it along");
                     ctx.fireChannelRead(msg);
                 }
+            } else if (msg instanceof AddNodeToNetwork) {
+                logger.trace("Received ADD_NODE_STATUS_NODE_FOUND; starting transaction");
+                currentDataFrameTransaction = new NodeInclusionTransaction((DataFrame)msg);
             } else {
                 logger.trace("Received frame outside of transaction context: {}", frame);
                 ctx.fireChannelRead(msg);
@@ -119,7 +120,7 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
 
     public void onDataFrameWrite(DataFrame frame) {
         logger.trace("Detected data frame write: {}", frame);
-        if (!hasCurrentRequestTransaction()) {
+        if (!hasCurrentTransaction()) {
             currentDataFrameTransaction = frame.createTransaction();
             if (currentDataFrameTransaction != null) {
                 logger.trace("*** Data frame transaction started for {}", frame);
@@ -144,7 +145,7 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
         }
     }
 
-    public boolean hasCurrentRequestTransaction() {
+    public boolean hasCurrentTransaction() {
         return (processingTransactionCompletion || (currentDataFrameTransaction != null && !currentDataFrameTransaction.isComplete()));
     }
 

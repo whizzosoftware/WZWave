@@ -12,7 +12,6 @@ package com.whizzosoftware.wzwave.controller.netty;
 import com.whizzosoftware.wzwave.channel.*;
 import com.whizzosoftware.wzwave.codec.ZWaveFrameDecoder;
 import com.whizzosoftware.wzwave.codec.ZWaveFrameEncoder;
-import com.whizzosoftware.wzwave.commandclass.SecurityCommandClass;
 import com.whizzosoftware.wzwave.controller.ZWaveController;
 import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.controller.ZWaveControllerListener;
@@ -207,22 +206,18 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     }
 
     @Override
-    public void onZWaveInclusion(Byte nodeId, NodeInfo nodeInfo, boolean success) {
+    public void onZWaveInclusion(NodeInfo nodeInfo, boolean success) {
         try {
-            logger.trace("Inclusion of new node {}", ByteUtil.createString(nodeId));
+            logger.trace("Inclusion of new node {}", ByteUtil.createString(nodeInfo.getNodeId()));
             ZWaveNode node = ZWaveNodeFactory.createNode(this, nodeInfo, true, true, this);
             logger.trace("Created node [" + node.getNodeId() + "]: " + node);
             nodes.add(node);
             nodeMap.put(node.getNodeId(), node);
-            if (nodeInfo.hasCommandClass(SecurityCommandClass.ID)) {
-                logger.debug("Detected inclusion of node with security command class; starting security handshaking");
+            if (listener != null) {
+                listener.onZWaveInclusion(nodeInfo, success);
             }
         } catch (NodeCreationException e) {
             logger.error("Unable to create node", e);
-        }
-
-        if (listener != null) {
-            listener.onZWaveInclusion(nodeId, nodeInfo, success);
         }
     }
 
@@ -241,9 +236,9 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     }
 
     @Override
-    public void onZWaveExclusion(Byte nodeId, NodeInfo nodeInfo, boolean success) {
+    public void onZWaveExclusion(NodeInfo nodeInfo, boolean success) {
         if (listener != null) {
-            listener.onZWaveExclusion(nodeId, nodeInfo, success);
+            listener.onZWaveExclusion(nodeInfo, success);
         }
     }
 
@@ -277,7 +272,7 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
             logger.trace("Received protocol info for node " + nodeId);
             ZWaveNode node = ZWaveNodeFactory.createNode(
                 this,
-                new NodeInfo(nodeId, npi.getBasicDeviceClass(), npi.getGenericDeviceClass(), npi.getSpecificDeviceClass(), null),
+                new NodeInfo(nodeId, npi.getBasicDeviceClass(), npi.getGenericDeviceClass(), npi.getSpecificDeviceClass()),
                 false,
                 npi.isListening(),
                 this
@@ -344,21 +339,12 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
                 case AddNodeToNetwork.ADD_NODE_STATUS_LEARN_READY:
                     onZWaveInclusionStarted();
                     break;
-                case AddNodeToNetwork.ADD_NODE_STATUS_DONE:
-                    onZWaveInclusionStopped();
-                    break;
-                case AddNodeToNetwork.ADD_NODE_STATUS_NODE_FOUND:
-                    logger.debug("A node has been found that wants to be included: {}", ByteUtil.createString(update.getSource()));
-                    break;
                 case AddNodeToNetwork.ADD_NODE_STATUS_ADDING_CONTROLLER:
                 case AddNodeToNetwork.ADD_NODE_STATUS_ADDING_SLAVE:
-                    onZWaveInclusion(update.getSource(), update.getNodeInfo(), true);
-                    break;
-                case AddNodeToNetwork.ADD_NODE_STATUS_PROTOCOL_DONE:
-                    logger.debug("The add node protocol is complete");
+                    onZWaveInclusionStopped();
                     break;
                 case AddNodeToNetwork.ADD_NODE_STATUS_FAILED:
-                    onZWaveInclusion(update.getSource(), update.getNodeInfo(), false);
+                    onZWaveInclusion(update.getNodeInfo(), false);
                     break;
                 default:
                     logger.debug("Received unexpected status from AddNodeToNetwork frame: {}", update.getStatus());
@@ -381,10 +367,10 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
                     break;
                 case RemoveNodeFromNetwork.REMOVE_NODE_STATUS_REMOVING_CONTROLLER:
                 case RemoveNodeFromNetwork.REMOVE_NODE_STATUS_REMOVING_SLAVE:
-                    onZWaveExclusion(update.getSource(), update.getNodeInfo(), true);
+                    onZWaveExclusion(update.getNodeInfo(), true);
                     break;
                 case RemoveNodeFromNetwork.REMOVE_NODE_STATUS_FAILED:
-                    onZWaveExclusion(update.getSource(), update.getNodeInfo(), false);
+                    onZWaveExclusion(update.getNodeInfo(), false);
                     break;
                 default:
                     logger.debug("Received unexpected status from RemoveNodeFromNetwork frame: {}", update.getStatus());
