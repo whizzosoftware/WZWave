@@ -55,10 +55,10 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
         this.listener = listener;
         this.basicDeviceClass = info.getBasicDeviceClass();
 
-
         // if the device is listening, request its node info
         if (listening && shouldSendRequestNodeInfo()) {
-            sendDataFrame(context, new RequestNodeInfo(nodeId));
+            sendDataFrame(context, new RequestNodeInfo(info.getNodeId()));
+            setState(context, ZWaveNodeState.NodeInfo);
         // otherwise, set it to started since we won't be able to get its node info
         } else {
             setState(context, ZWaveNodeState.Started);

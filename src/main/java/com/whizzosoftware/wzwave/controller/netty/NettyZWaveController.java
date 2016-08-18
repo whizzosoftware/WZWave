@@ -178,8 +178,17 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
 
     @Override
     public void onZWaveInclusion(NodeInfo nodeInfo, boolean success) {
-        if (listener != null) {
-            listener.onZWaveInclusion(nodeInfo, success);
+        try {
+            logger.trace("Inclusion of new node {}", ByteUtil.createString(nodeInfo.getNodeId()));
+            ZWaveNode node = ZWaveNodeFactory.createNode(this, nodeInfo, true, true, this);
+            logger.trace("Created node [" + node.getNodeId() + "]: " + node);
+            nodes.add(node);
+            nodeMap.put(node.getNodeId(), node);
+            if (listener != null) {
+                listener.onZWaveInclusion(nodeInfo, success);
+            }
+        } catch (NodeCreationException e) {
+            logger.error("Unable to create node", e);
         }
     }
 
@@ -229,10 +238,16 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     }
 
     @Override
-    public void onNodeProtocolInfo(byte nodeId, NodeProtocolInfo nodeProtocolInfo) {
+    public void onNodeProtocolInfo(byte nodeId, NodeProtocolInfo npi) {
         try {
             logger.trace("Received protocol info for node " + nodeId);
-            ZWaveNode node = ZWaveNodeFactory.createNode(this, nodeId, nodeProtocolInfo, this);
+            ZWaveNode node = ZWaveNodeFactory.createNode(
+                this,
+                new NodeInfo(nodeId, npi.getBasicDeviceClass(), npi.getGenericDeviceClass(), npi.getSpecificDeviceClass()),
+                false,
+                npi.isListening(),
+                this
+            );
             logger.trace("Created node [" + node.getNodeId() + "]: " + node);
             nodes.add(node);
             nodeMap.put(node.getNodeId(), node);
@@ -295,18 +310,10 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
                 case AddNodeToNetwork.ADD_NODE_STATUS_LEARN_READY:
                     onZWaveInclusionStarted();
                     break;
-                case AddNodeToNetwork.ADD_NODE_STATUS_DONE:
-                    onZWaveInclusionStopped();
-                    break;
-                case AddNodeToNetwork.ADD_NODE_STATUS_NODE_FOUND:
-                    logger.debug("A node has been found that wants to be included: {}", ByteUtil.createString(update.getSource()));
-                    break;
                 case AddNodeToNetwork.ADD_NODE_STATUS_ADDING_CONTROLLER:
                 case AddNodeToNetwork.ADD_NODE_STATUS_ADDING_SLAVE:
                     onZWaveInclusion(update.getNodeInfo(), true);
-                    break;
-                case AddNodeToNetwork.ADD_NODE_STATUS_PROTOCOL_DONE:
-                    logger.debug("The add node protocol is complete");
+                    onZWaveInclusionStopped();
                     break;
                 case AddNodeToNetwork.ADD_NODE_STATUS_FAILED:
                     onZWaveInclusion(update.getNodeInfo(), false);
