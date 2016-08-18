@@ -50,6 +50,7 @@ public class NodeInclusionTransaction extends AbstractDataFrameTransaction {
                     logger.error("AddNodeToNetwork failed");
                     finalFrame = (DataFrame)f;
                     finished = true;
+                    setError("Node addition failed");
                     return true;
                 default:
                     logger.trace("Unknown frame received in transaction; passing it along");
