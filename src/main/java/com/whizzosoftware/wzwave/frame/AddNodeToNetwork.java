@@ -66,7 +66,7 @@ public class AddNodeToNetwork extends DataFrame {
             for (int i=0; i < len-3; i++) {
                 commandClasses[i] = buffer.readByte();
             }
-            nodeInfo = new NodeInfo(basicClass, genericClass, specificClass, commandClasses);
+            nodeInfo = new NodeInfo(source, basicClass, genericClass, specificClass, commandClasses);
         }
     }
 

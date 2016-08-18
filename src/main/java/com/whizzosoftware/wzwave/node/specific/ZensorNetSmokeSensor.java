@@ -13,6 +13,7 @@ import com.whizzosoftware.wzwave.commandclass.ManufacturerSpecificCommandClass;
 import com.whizzosoftware.wzwave.commandclass.VersionCommandClass;
 import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
+import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.generic.AlarmSensor;
 import org.slf4j.Logger;
@@ -23,8 +24,8 @@ public class ZensorNetSmokeSensor extends AlarmSensor {
 
     private static final Logger logger = LoggerFactory.getLogger(RoutingBinarySensor.class);
 
-    public ZensorNetSmokeSensor(ZWaveControllerContext context, byte nodeId, NodeProtocolInfo info, NodeListener listener) {
-        super(context, nodeId, info, listener);
+    public ZensorNetSmokeSensor(ZWaveControllerContext context, NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
+        super(context, info, listening, newlyIncluded, listener);
 
         addCommandClass(AlarmSensor.ID, new AlarmSensorCommandClass());
         addCommandClass(ManufacturerSpecificCommandClass.ID, new ManufacturerSpecificCommandClass());

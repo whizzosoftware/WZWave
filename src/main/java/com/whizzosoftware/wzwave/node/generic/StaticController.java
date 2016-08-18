@@ -8,9 +8,9 @@
 package com.whizzosoftware.wzwave.node.generic;
 
 import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
+import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.ZWaveNode;
-import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +24,8 @@ public class StaticController extends ZWaveNode {
 
     public static final byte ID = 0x02;
 
-    public StaticController(ZWaveControllerContext context, byte nodeId, NodeProtocolInfo info, NodeListener listener) {
-        super(context, nodeId, info, listener);
+    public StaticController(ZWaveControllerContext context, NodeInfo info, boolean newlyIncluded, NodeListener listener) {
+        super(context, info, newlyIncluded, true, listener);
     }
 
     @Override

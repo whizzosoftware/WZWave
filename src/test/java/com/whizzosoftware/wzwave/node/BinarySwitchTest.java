@@ -20,8 +20,9 @@ public class BinarySwitchTest {
         MockZWaveControllerContext context = new MockZWaveControllerContext();
         BinarySwitch bs = new BinarySwitch(
             context,
-            (byte)0x02,
-            new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID, true),
+            new NodeInfo((byte)0x02, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID),
+            false,
+            true,
             null
         );
 
@@ -36,6 +37,7 @@ public class BinarySwitchTest {
             ApplicationUpdate.UPDATE_STATE_NODE_INFO_RECEIVED,
             (byte)0x02,
             new NodeInfo(
+                (byte)0x02,
                 BasicDeviceClasses.ROUTING_SLAVE,
                 BinarySwitch.ID,
                 BinaryPowerSwitch.ID,
@@ -96,8 +98,9 @@ public class BinarySwitchTest {
         // create new binary switch
         BinarySwitch bs = new BinarySwitch(
             context,
-            (byte)0x01,
-            new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID, false),
+            new NodeInfo((byte)0x01, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID),
+            false,
+            false,
             null
         );
 
@@ -118,8 +121,9 @@ public class BinarySwitchTest {
         // create new binary switch
         BinarySwitch bs = new BinarySwitch(
             context,
-            (byte)0x01,
-            new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID, false),
+            new NodeInfo((byte)0x01, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID),
+            false,
+            false,
             null
         );
 
@@ -143,8 +147,9 @@ public class BinarySwitchTest {
         MockZWaveControllerContext context = new MockZWaveControllerContext();
         BinarySwitch bs = new BinarySwitch(
             context,
-            (byte)0x02,
-            new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID, true),
+            new NodeInfo((byte)0x02, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID),
+            false,
+            true,
             null
         );
         assertEquals(0, bs.getWakeupQueueCount());

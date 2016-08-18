@@ -18,8 +18,9 @@ public class RoutingBinarySensorTest {
         MockZWaveControllerContext context = new MockZWaveControllerContext();
         RoutingBinarySensor sensor = new RoutingBinarySensor(
             context,
-            (byte)0x09,
-            new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID, false),
+            new NodeInfo((byte)0x09, BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID),
+            false,
+            false,
             null
         );
 
@@ -33,8 +34,9 @@ public class RoutingBinarySensorTest {
 
         RoutingBinarySensor sensor = new RoutingBinarySensor(
             context,
-            (byte)0x09,
-            new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID, false),
+            new NodeInfo((byte)0x09, BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID),
+            false,
+            false,
             null
         );
 
@@ -66,8 +68,9 @@ public class RoutingBinarySensorTest {
 
         RoutingBinarySensor sensor = new RoutingBinarySensor(
             context,
-            (byte)0x09,
-            new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID, false),
+            new NodeInfo((byte)0x09, BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID),
+            false,
+            false,
             null
         );
         assertEquals(ZWaveNodeState.Started, sensor.getState());
@@ -99,8 +102,9 @@ public class RoutingBinarySensorTest {
         MockZWaveControllerContext context = new MockZWaveControllerContext();
         RoutingBinarySensor sensor = new RoutingBinarySensor(
             context,
-            (byte)0x0D,
-            new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID, false),
+            new NodeInfo((byte)0x0D, BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID),
+            false,
+            false,
             null
         );
 

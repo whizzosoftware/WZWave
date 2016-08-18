@@ -54,10 +54,11 @@ public interface ZWaveControllerListener {
     /**
      * Callback when a the Z-Wave controller has either successfully or unsuccessfully included a new node.
      *
+     * @param nodeId the node ID of the new node
      * @param nodeInfo information about the new node
      * @param success whether the inclusion was successful
      */
-    void onZWaveInclusion(NodeInfo nodeInfo, boolean success);
+    void onZWaveInclusion(Byte nodeId, NodeInfo nodeInfo, boolean success);
 
     /**
      * Callback when the Z-Wave controller has stopped network inclusion mode.
@@ -72,10 +73,11 @@ public interface ZWaveControllerListener {
     /**
      * Callback when the Z-Wave controller has either successfully or unsuccessfully excluded a node.
      *
+     * @param nodeId the node ID of the new node
      * @param nodeInfo information about the new node
      * @param success whether the exclusion was successful
      */
-    void onZWaveExclusion(NodeInfo nodeInfo, boolean success);
+    void onZWaveExclusion(Byte nodeId, NodeInfo nodeInfo, boolean success);
 
     /**
      * Callback when the Z-Wave controller has stopped network exclusion mode.

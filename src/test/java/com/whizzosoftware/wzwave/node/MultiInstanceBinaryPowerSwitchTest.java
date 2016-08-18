@@ -21,8 +21,9 @@ public class MultiInstanceBinaryPowerSwitchTest {
         MockZWaveControllerContext context = new MockZWaveControllerContext();
         BinaryPowerSwitch ps = new BinaryPowerSwitch(
             context,
-            nodeId,
-            new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID, true),
+            new NodeInfo(nodeId, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID),
+            false,
+            true,
             null
         );
 
@@ -38,6 +39,7 @@ public class MultiInstanceBinaryPowerSwitchTest {
             ApplicationUpdate.UPDATE_STATE_NODE_INFO_RECEIVED,
             nodeId,
             new NodeInfo(
+                nodeId,
                 BasicDeviceClasses.ROUTING_SLAVE,
                 BinarySwitch.ID,
                 BinaryPowerSwitch.ID,

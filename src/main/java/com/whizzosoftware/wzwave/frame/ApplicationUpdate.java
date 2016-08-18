@@ -46,7 +46,7 @@ public class ApplicationUpdate extends DataFrame {
         state = buffer.readByte();
         this.nodeId = buffer.readByte();
         if (state == UPDATE_STATE_NODE_INFO_RECEIVED) {
-            nodeInfo = new NodeInfo(buffer, dataFrameLength - 6);
+            nodeInfo = new NodeInfo(this.nodeId, buffer, dataFrameLength - 6);
         } else {
             buffer.readByte(); // read 0 length
         }

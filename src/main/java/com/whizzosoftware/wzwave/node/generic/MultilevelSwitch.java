@@ -10,9 +10,9 @@ package com.whizzosoftware.wzwave.node.generic;
 import com.whizzosoftware.wzwave.commandclass.BasicCommandClass;
 import com.whizzosoftware.wzwave.commandclass.MultilevelSwitchCommandClass;
 import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
+import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.ZWaveNode;
-import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
 
 /**
  * A Multilevel Switch node.
@@ -22,8 +22,8 @@ import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
 public class MultilevelSwitch extends ZWaveNode {
     public static final byte ID = 0x11;
 
-    public MultilevelSwitch(ZWaveControllerContext context, byte nodeId, NodeProtocolInfo info, NodeListener listener) {
-        super(context, nodeId, info, listener);
+    public MultilevelSwitch(ZWaveControllerContext context, NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
+        super(context, info, newlyIncluded, listening, listener);
 
         addCommandClass(BasicCommandClass.ID, new BasicCommandClass());
         addCommandClass(MultilevelSwitchCommandClass.ID, new MultilevelSwitchCommandClass());

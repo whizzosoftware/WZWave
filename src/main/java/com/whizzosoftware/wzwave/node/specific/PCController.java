@@ -8,6 +8,7 @@
 package com.whizzosoftware.wzwave.node.specific;
 
 import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
+import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.generic.StaticController;
 import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
@@ -20,8 +21,8 @@ import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
 public class PCController extends StaticController {
     static public final byte ID = 0x01;
 
-    public PCController(ZWaveControllerContext context, byte nodeId, NodeProtocolInfo info, NodeListener listener) {
-        super(context, nodeId, info, listener);
+    public PCController(ZWaveControllerContext context, NodeInfo info, NodeListener listener) {
+        super(context, info, false, listener);
     }
 
     @Override

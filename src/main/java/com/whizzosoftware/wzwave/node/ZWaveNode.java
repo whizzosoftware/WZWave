@@ -39,14 +39,22 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
     private int pendingStatusResponses;
     private NodeListener listener;
 
-    public ZWaveNode(ZWaveControllerContext context, byte nodeId, NodeProtocolInfo info, NodeListener listener) {
-        super(nodeId, info.getGenericDeviceClass(), info.getSpecificDeviceClass());
+    /**
+     * Constructor.
+     *
+     * @param context the controller context
+     * @param info information about the new node
+     * @param newlyIncluded whether this node has just been included on the network
+     * @param listening indicates whether the node is a "actively listening" node
+     * @param listener the listener for callbacks
+     */
+    public ZWaveNode(ZWaveControllerContext context, NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
+        super(info.getNodeId(), info.getGenericDeviceClass(), info.getSpecificDeviceClass());
 
+        this.listening = listening;
         this.listener = listener;
-        setState(context, ZWaveNodeState.NodeInfo);
+        this.basicDeviceClass = info.getBasicDeviceClass();
 
-        basicDeviceClass = info.getBasicDeviceClass();
-        listening = info.isListening();
 
         // if the device is listening, request its node info
         if (listening && shouldSendRequestNodeInfo()) {
@@ -82,7 +90,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
         return basicDeviceClass;
     }
 
-    protected ZWaveNodeState getState() {
+    public ZWaveNodeState getState() {
         return nodeState;
     }
 

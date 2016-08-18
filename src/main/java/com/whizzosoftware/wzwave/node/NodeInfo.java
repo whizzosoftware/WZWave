@@ -15,24 +15,35 @@ import io.netty.buffer.ByteBuf;
  * @author Dan Noguerol
  */
 public class NodeInfo {
+    private byte nodeId;
     private byte basicDeviceClass;
     private byte genericDeviceClass;
     private byte specificDeviceClass;
     private byte[] commandClasses;
 
-    public NodeInfo(byte basicDeviceClass, byte genericDeviceClass, byte specificDeviceClass, byte[] commandClasses) {
+    public NodeInfo(byte nodeId, byte basicDeviceClass, byte genericDeviceClass, byte specificDeviceClass) {
+        this(nodeId, basicDeviceClass, genericDeviceClass, specificDeviceClass, null);
+    }
+
+    public NodeInfo(byte nodeId, byte basicDeviceClass, byte genericDeviceClass, byte specificDeviceClass, byte[] commandClasses) {
+        this.nodeId = nodeId;
         this.basicDeviceClass = basicDeviceClass;
         this.genericDeviceClass = genericDeviceClass;
         this.specificDeviceClass = specificDeviceClass;
         this.commandClasses = commandClasses;
     }
 
-    public NodeInfo(ByteBuf buffer, int nodeInfoLength) {
+    public NodeInfo(byte nodeId, ByteBuf buffer, int nodeInfoLength) {
+        this.nodeId = nodeId;
         buffer.readByte();
         basicDeviceClass = buffer.readByte();
         genericDeviceClass = buffer.readByte();
         specificDeviceClass = buffer.readByte();
         commandClasses = buffer.readBytes(nodeInfoLength - 3).array();
+    }
+
+    public byte getNodeId() {
+        return nodeId;
     }
 
     public byte getBasicDeviceClass() {
@@ -45,6 +56,17 @@ public class NodeInfo {
 
     public byte getSpecificDeviceClass() {
         return specificDeviceClass;
+    }
+
+    public boolean hasCommandClass(byte cclass) {
+        if (commandClasses != null) {
+            for (int i = 0; i < commandClasses.length; i++) {
+                if (commandClasses[i] == cclass) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public byte[] getCommandClasses() {

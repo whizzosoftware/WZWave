@@ -8,6 +8,7 @@
 package com.whizzosoftware.wzwave.node.specific;
 
 import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
+import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.generic.BinarySwitch;
 import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
@@ -20,7 +21,7 @@ import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
 public class BinaryPowerSwitch extends BinarySwitch {
     static public final byte ID = 0x01;
 
-    public BinaryPowerSwitch(ZWaveControllerContext context, byte nodeId, NodeProtocolInfo info, NodeListener listener) {
-        super(context, nodeId, info, listener);
+    public BinaryPowerSwitch(ZWaveControllerContext context, NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
+        super(context, info, newlyIncluded, listening, listener);
     }
 }

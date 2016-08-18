@@ -11,10 +11,10 @@ import com.whizzosoftware.wzwave.commandclass.BasicCommandClass;
 import com.whizzosoftware.wzwave.commandclass.BinarySwitchCommandClass;
 import com.whizzosoftware.wzwave.commandclass.CommandClass;
 import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
+import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.ZWaveEndpoint;
 import com.whizzosoftware.wzwave.node.ZWaveNode;
-import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +28,8 @@ public class BinarySwitch extends ZWaveNode {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public BinarySwitch(ZWaveControllerContext context, byte nodeId, NodeProtocolInfo info, NodeListener listener) {
-        super(context, nodeId, info, listener);
+    public BinarySwitch(ZWaveControllerContext context, NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
+        super(context, info, newlyIncluded, listening, listener);
 
         addCommandClass(BasicCommandClass.ID, new BasicCommandClass());
         addCommandClass(BinarySwitchCommandClass.ID, new BinarySwitchCommandClass());

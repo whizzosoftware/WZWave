@@ -11,9 +11,9 @@ import com.whizzosoftware.wzwave.commandclass.BasicCommandClass;
 import com.whizzosoftware.wzwave.commandclass.BinarySensorCommandClass;
 import com.whizzosoftware.wzwave.commandclass.CommandClass;
 import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
+import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.ZWaveNode;
-import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
 
 /**
  * A Binary Sensor node.
@@ -25,8 +25,8 @@ public class BinarySensor extends ZWaveNode {
 
     private Byte value = null;
 
-    public BinarySensor(ZWaveControllerContext context, byte nodeId, NodeProtocolInfo info, NodeListener listener) {
-        super(context, nodeId, info, listener);
+    public BinarySensor(ZWaveControllerContext context, NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
+        super(context, info, newlyIncluded, listening, listener);
 
         addCommandClass(BasicCommandClass.ID, new BasicCommandClass());
         addCommandClass(BinarySensorCommandClass.ID, new BinarySensorCommandClass());
