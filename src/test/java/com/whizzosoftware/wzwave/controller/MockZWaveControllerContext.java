@@ -23,6 +23,21 @@ public class MockZWaveControllerContext implements ZWaveControllerContext {
     }
 
     @Override
+    public byte[] getNetworkKey() {
+        return new byte[] {0xB, 0xE, 0xE, 0xF, 0xB, 0xE, 0xE, 0xF, 0xB, 0xE, 0xE, 0xF, 0xB, 0xE, 0xE, 0xF};
+    }
+
+    @Override
+    public byte[] getFrameEncryptionKey() {
+        return new byte[0];
+    }
+
+    @Override
+    public byte[] getDataOriginAuthenticationKey() {
+        return new byte[0];
+    }
+
+    @Override
     public void sendDataFrame(DataFrame frame) {
         sentFrames.add(frame);
     }

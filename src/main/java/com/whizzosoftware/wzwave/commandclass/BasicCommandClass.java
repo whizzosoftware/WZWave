@@ -31,6 +31,15 @@ public class BasicCommandClass extends CommandClass {
 
     private Byte value;
 
+    public BasicCommandClass() {
+        this(false);
+    }
+
+    public BasicCommandClass(boolean secure) {
+        super();
+        setSecure(secure);
+    }
+
     @Override
     public byte getId() {
         return ID;

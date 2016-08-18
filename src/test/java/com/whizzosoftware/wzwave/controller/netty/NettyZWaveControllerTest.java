@@ -9,16 +9,23 @@
 */
 package com.whizzosoftware.wzwave.controller.netty;
 
+import com.whizzosoftware.wzwave.commandclass.SecurityCommandClass;
 import com.whizzosoftware.wzwave.controller.ZWaveControllerListener;
-import com.whizzosoftware.wzwave.node.NodeInfo;
-import com.whizzosoftware.wzwave.node.ZWaveEndpoint;
+import com.whizzosoftware.wzwave.frame.ApplicationCommand;
+import com.whizzosoftware.wzwave.node.*;
+import com.whizzosoftware.wzwave.node.generic.EntryControl;
+import com.whizzosoftware.wzwave.node.specific.SecureKeypadDoorLock;
+import io.netty.buffer.Unpooled;
 import org.junit.Test;
+
+import java.security.GeneralSecurityException;
+
 import static org.junit.Assert.*;
 
 public class NettyZWaveControllerTest {
     @Test
-    public void testOnZWaveControllerInfo() {
-        NettyZWaveController c = new NettyZWaveController("/dev/null");
+    public void testOnZWaveControllerInfo() throws GeneralSecurityException {
+        NettyZWaveController c = new NettyZWaveController("/dev/null", new byte[] {0xB, 0xE, 0xE, 0xF, 0xB, 0xE, 0xE, 0xF, 0xB, 0xE, 0xE, 0xF, 0xB, 0xE, 0xE, 0xF});
         MockZWaveControllerListener l = new MockZWaveControllerListener();
         c.setListener(l);
         c.onLibraryInfo("Z-Wave 2.7.8\u0000");
@@ -26,6 +33,21 @@ public class NettyZWaveControllerTest {
         assertEquals("Z-Wave 2.7.8\u0000", l.getLibraryVersion());
         assertEquals(22727648, (int)l.getHomeId());
         assertEquals(1, (byte)l.getNodeId());
+    }
+
+    @Test
+    public void testSecureDeviceInclusion() throws GeneralSecurityException {
+        byte nodeId = 0x03;
+        NettyZWaveController c = new NettyZWaveController("/dev/null", new byte[] {0xB, 0xE, 0xE, 0xF, 0xB, 0xE, 0xE, 0xF, 0xB, 0xE, 0xE, 0xF, 0xB, 0xE, 0xE, 0xF});
+        c.setNodeId((byte)0x01);
+        MockZWaveControllerListener l = new MockZWaveControllerListener();
+        c.setListener(l);
+        c.onZWaveInclusion(nodeId, new NodeInfo(nodeId, BasicDeviceClasses.SLAVE, EntryControl.ID, SecureKeypadDoorLock.ID, new byte[] {SecurityCommandClass.ID}), true);
+        assertEquals(ZWaveNodeState.SchemeGetSent, c.getNode(nodeId).getState());
+        c.onApplicationCommand(new ApplicationCommand(Unpooled.copiedBuffer(new byte[] {0x01, 0x09, 0x00, 0x04, 0x00, 0x03, 0x03, (byte)0x98, 0x05, 0x00, 0x6F})));
+        assertEquals(ZWaveNodeState.NonceGetSent, c.getNode(nodeId).getState());
+        c.onApplicationCommand(new ApplicationCommand(Unpooled.copiedBuffer(new byte[] {0x01, 0x10, 0x00, 0x04, 0x00, 0x03, 0x0A, (byte)0x98, (byte)0x80, (byte)0xD8, 0x74, (byte)0xDA, (byte)0x8C, (byte)0xD9, 0x7D, (byte)0xCD, (byte)0xC5, (byte)0xAC})));
+        assertEquals(ZWaveNodeState.NetworkKeySent, c.getNode(nodeId).getState());
     }
 
     private class MockZWaveControllerListener implements ZWaveControllerListener {
@@ -73,7 +95,7 @@ public class NettyZWaveControllerTest {
         }
 
         @Override
-        public void onZWaveInclusion(NodeInfo nodeInfo, boolean success) {
+        public void onZWaveInclusion(Byte nodeId, NodeInfo nodeInfo, boolean success) {
 
         }
 
@@ -88,7 +110,7 @@ public class NettyZWaveControllerTest {
         }
 
         @Override
-        public void onZWaveExclusion(NodeInfo nodeInfo, boolean success) {
+        public void onZWaveExclusion(Byte nodeId, NodeInfo nodeInfo, boolean success) {
 
         }
 

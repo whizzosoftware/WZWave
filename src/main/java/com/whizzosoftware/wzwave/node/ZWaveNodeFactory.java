@@ -70,6 +70,15 @@ public class ZWaveNodeFactory {
                 }
             }
 
+            case EntryControl.ID: {
+                switch (info.getSpecificDeviceClass()) {
+                    case SecureKeypadDoorLock.ID:
+                        return new SecureKeypadDoorLock(context, info, newlyIncluded, listening, listener);
+                    default:
+                        return new EntryControl(context, info, newlyIncluded, listening, false, listener);
+                }
+            }
+
             case MultilevelSwitch.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     case MultilevelPowerSwitch.ID:

@@ -10,6 +10,7 @@ package com.whizzosoftware.wzwave.node;
 import com.whizzosoftware.wzwave.commandclass.*;
 import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.frame.*;
+import com.whizzosoftware.wzwave.security.RandomNonceProvider;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,13 +56,18 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
         this.listener = listener;
         this.basicDeviceClass = info.getBasicDeviceClass();
 
-
-        // if the device is listening, request its node info
-        if (listening && shouldSendRequestNodeInfo()) {
-            sendDataFrame(context, new RequestNodeInfo(nodeId));
-        // otherwise, set it to started since we won't be able to get its node info
+        if (newlyIncluded && info.hasCommandClass(SecurityCommandClass.ID)) {
+            sendDataFrame(context, SecurityCommandClass.createSchemeGetv1(info.getNodeId()));
+            setState(context, ZWaveNodeState.SchemeGetSent);
         } else {
-            setState(context, ZWaveNodeState.Started);
+            // if the device has just been included or is normally listening, request its node info
+            if (newlyIncluded || (listening && shouldSendRequestNodeInfo())) {
+                sendDataFrame(context, new RequestNodeInfo(info.getNodeId()));
+                setState(context, ZWaveNodeState.NodeInfo);
+            // otherwise, set it to started since we won't be able to get its node info
+            } else {
+                setState(context, ZWaveNodeState.Started);
+            }
         }
     }
 
@@ -139,6 +145,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
      */
     public void onDataFrameReceived(ZWaveControllerContext context, DataFrame dataFrame) {
         if (dataFrame instanceof ApplicationCommand) {
+            byte nodeId = ((ApplicationCommand)dataFrame).getNodeId();
             byte commandClassId = ((ApplicationCommand)dataFrame).getCommandClassId();
             CommandClass cc = getCommandClass(commandClassId);
             if (cc != null) {
@@ -159,6 +166,21 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
                     if (pendingVersionResponses <= 0) {
                         setState(context, ZWaveNodeState.RetrieveStatePending);
                     }
+                } else if (cc instanceof SecurityCommandClass && ((SecurityCommandClass)cc).isSchemeReport() && nodeState == ZWaveNodeState.SchemeGetSent) {
+                    logger.trace("Received security scheme report");
+                    context.sendDataFrame(SecurityCommandClass.createGetNoncev1(nodeId));
+                    setState(context, ZWaveNodeState.NonceGetSent);
+                } else if (cc instanceof SecurityCommandClass && ((SecurityCommandClass)cc).isNonceReport() && nodeState == ZWaveNodeState.NonceGetSent) {
+                    SecurityCommandClass scc = (SecurityCommandClass)cc;
+                    logger.trace("Received security nonce report");
+                    try {
+                        context.sendDataFrame(SecurityCommandClass.createNetworkKeySetv1(context, context.getNodeId(), nodeId, new RandomNonceProvider(scc.getNonceReport())));
+                        setState(context, ZWaveNodeState.NetworkKeySent);
+                    } catch (Exception e) {
+                        logger.error("Error sending network key", e);
+                    }
+                } else if (cc instanceof SecurityCommandClass && nodeState == ZWaveNodeState.NetworkKeySent) {
+                    logger.trace("Received response to sent network key");
                 // if we're waiting on state responses, decrement the pending count and change to next state if
                 // we've received all pending responses
                 } else if (nodeState == ZWaveNodeState.RetrieveStateSent) {

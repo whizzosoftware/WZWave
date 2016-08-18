@@ -13,6 +13,9 @@ package com.whizzosoftware.wzwave.node;
  * @author Dan Noguerol
  */
 public enum ZWaveNodeState {
+    SchemeGetSent,
+    NonceGetSent,
+    NetworkKeySent,
     NodeInfo,
     RetrieveVersionPending,
     RetrieveVersionSent,

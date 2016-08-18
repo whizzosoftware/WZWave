@@ -20,6 +20,7 @@ import com.whizzosoftware.wzwave.node.NodeContext;
  */
 abstract public class CommandClass {
     private int version = 1; // always assume version 1 unless told otherwise
+    private boolean secure = false; // always assume insecure unless told otherwise
 
     /**
      * Returns the command class version
@@ -46,6 +47,14 @@ abstract public class CommandClass {
      */
     public void setVersion(int version) {
         this.version = version;
+    }
+
+    public boolean isSecure() {
+        return secure;
+    }
+
+    public void setSecure(boolean secure) {
+        this.secure = secure;
     }
 
     /**

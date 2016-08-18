@@ -16,13 +16,17 @@ package com.whizzosoftware.wzwave.commandclass;
  */
 public class CommandClassFactory {
     public static CommandClass createCommandClass(byte commandClassId) {
+        return createCommandClass(commandClassId, false);
+    }
+
+    public static CommandClass createCommandClass(byte commandClassId, boolean secure) {
         switch (commandClassId) {
             case AlarmCommandClass.ID:
                 return new AlarmCommandClass();
             case AlarmSensorCommandClass.ID:
                 return new AlarmSensorCommandClass();
             case BasicCommandClass.ID:
-                return new BasicCommandClass();
+                return new BasicCommandClass(secure);
             case BatteryCommandClass.ID:
                 return new BatteryCommandClass();
             case BinarySensorCommandClass.ID:
@@ -31,6 +35,10 @@ public class CommandClassFactory {
                 return new BinarySwitchCommandClass();
             case ColorControlCommandClass.ID:
                 return new ColorControlCommandClass();
+            case DoorLockCommandClass.ID:
+                return new DoorLockCommandClass(secure);
+            case SecurityCommandClass.ID:
+                return new SecurityCommandClass();
             case ManufacturerSpecificCommandClass.ID:
                 return new ManufacturerSpecificCommandClass();
             case MeterCommandClass.ID:
@@ -41,6 +49,8 @@ public class CommandClassFactory {
                 return new MultilevelSensorCommandClass();
             case MultilevelSwitchCommandClass.ID:
                 return new MultilevelSwitchCommandClass();
+            case UserCodeCommandClass.ID:
+                return new UserCodeCommandClass(secure);
             case VersionCommandClass.ID:
                 return new VersionCommandClass();
             case WakeUpCommandClass.ID:
