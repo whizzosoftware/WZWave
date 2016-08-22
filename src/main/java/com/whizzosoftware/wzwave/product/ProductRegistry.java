@@ -7,29 +7,48 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.product;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A class that returns information for all products known by the library.
  *
  * @author Dan Noguerol
  */
 public class ProductRegistry {
+    private static final Logger logger = LoggerFactory.getLogger(ProductRegistry.class);
+
     public final static String M_AEON_LABS = "Aeon Labs";
     public final static String M_GE_JASCO = "GE/Jasco";
 
     public final static String P_45604_OUTDOOR_MODULE = "45604 Outdoor Module";
     public final static String P_45609_RELAY_SWITCH = "45609 On/Off Relay Switch";
     public final static String P_45612_DIMMER_SWITCH = "45612 Dimmer Switch";
+    public final static String P_HOME_ENERGY_METER = "Home Energy Meter";
+    public final static String P_HOME_ENERGY_METER_G2 = "Home Energy Meter G2";
     public final static String P_SMART_ENERGY_SWITCH = "Smart Energy Switch";
     public final static String P_SMART_ENERGY_STRIP = "Smart Energy Strip";
 
     static public ProductInfo lookupProduct(Integer manufacturerId, Integer productTypeId, Integer productId) {
         ProductInfo info = new ProductInfo(manufacturerId, productTypeId, productId);
 
+        logger.debug("Looking up product info: {}, {}, {}", manufacturerId, productTypeId, productId);
+
         switch (manufacturerId) {
             // Aeon Labs
             case -122:
                 info.setManufacturer(M_AEON_LABS);
                 switch (productTypeId) {
+                    case 2:
+                        switch (productId) {
+                            case 9:
+                                info.setName(P_HOME_ENERGY_METER);
+                                break;
+                            case 28:
+                                info.setName(P_HOME_ENERGY_METER_G2);
+                                break;
+                        }
+                        break;
                     case 3:
                         switch (productId) {
                             case 6:
