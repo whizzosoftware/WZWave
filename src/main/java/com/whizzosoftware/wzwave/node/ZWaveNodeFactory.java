@@ -79,6 +79,15 @@ public class ZWaveNodeFactory {
                 }
             }
 
+            case Meter.ID: {
+                switch (info.getSpecificDeviceClass()) {
+                    case SimpleMeter.ID:
+                        return new SimpleMeter(context, info, newlyIncluded, listening, listener);
+                    default:
+                        return new Meter(context, info, newlyIncluded, listening, listener);
+                }
+            }
+
             case MultilevelSwitch.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     case MultilevelPowerSwitch.ID:
