@@ -1,10 +1,12 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.commandclass;
 
 import com.whizzosoftware.wzwave.frame.DataFrame;
@@ -47,15 +49,28 @@ public class MeterCommandClassTest {
 
     @Test
     public void testMeterReportv2Electric() {
-        byte[] ccb = {0x01, 0x14, 0x00, 0x04, 0x00, 0x11, 0x0E, 0x32, 0x02, 0x21, 0x64, 0x00, 0x00, 0x00, 0x0c, 0x00, (byte)0x82, 0x00, 0x00, 0x00, 0x02, (byte)0xe4};
+        byte[] ccb = {0x32, 0x02, 0x21, 0x64, 0x00, 0x00, 0x00, 0x0c, 0x00, (byte)0x82, 0x00, 0x00, 0x00, 0x02, (byte)0xe4};
         MeterCommandClass cc = new MeterCommandClass();
         cc.setVersion(2);
-        cc.onApplicationCommand(null, ccb, 7);
+        cc.onApplicationCommand(null, ccb, 0);
 
         assertEquals(MeterCommandClass.MeterType.Electric, cc.getMeterType());
         assertEquals((Integer)130, cc.getDelta());
         assertEquals((Double)0.012, cc.getCurrentValue());
         assertEquals((Double)0.002, cc.getPreviousValue());
+    }
+
+    @Test
+    public void testMeterReportv2Electric2() {
+        byte[] ccb = {0x32, 0x02, 0x21, 0x74, 0x00, (byte)0xB8, 0x1A, (byte)0x12, 0x02, 0x58, 0x00, (byte)0xB8, 0x08, 0x06};
+        MeterCommandClass cc = new MeterCommandClass();
+        cc.setVersion(2);
+        cc.onApplicationCommand(null, ccb, 0);
+
+        assertEquals(MeterCommandClass.MeterType.Electric, cc.getMeterType());
+        assertEquals(600, (int)cc.getDelta());
+        assertEquals(12065.298, cc.getCurrentValue(), 3);
+        assertEquals(12060.678, cc.getPreviousValue(), 3);
     }
 
     @Test

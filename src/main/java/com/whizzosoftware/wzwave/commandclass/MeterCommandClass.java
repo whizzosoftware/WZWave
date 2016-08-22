@@ -1,10 +1,12 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.commandclass;
 
 import com.whizzosoftware.wzwave.frame.DataFrame;
@@ -99,9 +101,11 @@ public class MeterCommandClass extends CommandClass {
 
     private void parseMeterReport(byte[] ccb, int startIndex, int version) {
         // read meter type
-        int meterType = ccb[startIndex + 2];
-        if (version == 2) {
+        int meterType;
+        if (version > 1) {
             meterType = ccb[startIndex + 2] & 0x1F;
+        } else {
+            meterType = ccb[startIndex + 2];
         }
         switch (meterType) {
             case 1:
@@ -112,6 +116,10 @@ public class MeterCommandClass extends CommandClass {
                 break;
             case 3:
                 type = MeterType.Water;
+                break;
+            default:
+                logger.warn("Found unknown meter type: {}", meterType);
+                type = MeterType.Unknown;
                 break;
         }
 
@@ -144,6 +152,7 @@ public class MeterCommandClass extends CommandClass {
     }
 
     public enum MeterType {
+        Unknown,
         Electric,
         Gas,
         Water

@@ -1,10 +1,12 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.util;
 
 import com.whizzosoftware.wzwave.frame.Frame;
@@ -78,7 +80,7 @@ public class ByteUtil {
         long value = 0;
         for (int i=start; i < start+length; i++) {
             int shift = 8 * ((length - (i - start)) - 1);
-            value += b[i] << shift;
+            value += (b[i] & 0xFF) << shift;
         }
         return new BigDecimal(value).movePointLeft(precision).doubleValue();
     }
