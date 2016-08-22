@@ -84,14 +84,14 @@ public class VersionCommandClass extends CommandClass {
         int count = 1;
 
         // get the device version
-        context.sendDataFrame(createGetv1(nodeId));
+        context.sendDataFrame(createGet(nodeId));
 
         // check each command class the node has...
         for (CommandClass commandClass : context.getCommandClasses()) {
             // if this library supports more than one version of the command class, query for the version the
             // device supports
             if (commandClass.getMaxSupportedVersion() > 1) {
-                context.sendDataFrame(createCommandClassGetv1(nodeId, commandClass.getId()));
+                context.sendDataFrame(createCommandClassGet(nodeId, commandClass.getId()));
                 count++;
             }
         }
@@ -99,28 +99,28 @@ public class VersionCommandClass extends CommandClass {
         return count;
     }
 
-    static public DataFrame createGetv1(byte nodeId) {
+    public DataFrame createGet(byte nodeId) {
         return createSendDataFrame(
-            "VERSION_GET",
-            nodeId,
-            new byte[]{
-                VersionCommandClass.ID,
-                VERSION_GET
-            },
-            true
+                "VERSION_GET",
+                nodeId,
+                new byte[]{
+                        VersionCommandClass.ID,
+                        VERSION_GET
+                },
+                true
         );
     }
 
-    static public DataFrame createCommandClassGetv1(byte nodeId, byte commandClass) {
+    public DataFrame createCommandClassGet(byte nodeId, byte commandClass) {
         return createSendDataFrame(
-            "VERSION_COMMAND_CLASS_GET",
-            nodeId,
-            new byte[] {
-                VersionCommandClass.ID,
-                VERSION_COMMAND_CLASS_GET,
-                commandClass
-            },
-            true
+                "VERSION_COMMAND_CLASS_GET",
+                nodeId,
+                new byte[] {
+                        VersionCommandClass.ID,
+                        VERSION_COMMAND_CLASS_GET,
+                        commandClass
+                },
+                true
         );
     }
 }

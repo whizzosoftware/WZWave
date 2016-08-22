@@ -15,7 +15,8 @@ import static org.junit.Assert.*;
 public class MultiInstanceCommandClassTest {
     @Test
     public void testCommandEncapsulation() {
-        DataFrame cmd = BinarySwitchCommandClass.createSetv1((byte)22, true);
+        BinarySwitchCommandClass bscc = new BinarySwitchCommandClass();
+        DataFrame cmd = bscc.createSet((byte)22, true);
         DataFrame ecmd = MultiInstanceCommandClass.createMultiChannelCmdEncapv2((byte)1, (byte)3, cmd, true);
         byte[] data = ecmd.getBytes();
         assertEquals(16, data.length);

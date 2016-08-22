@@ -64,11 +64,11 @@ public class BinarySensorCommandClass extends CommandClass {
 
     @Override
     public int queueStartupMessages(NodeContext context, byte nodeId) {
-        context.sendDataFrame(createGetv1(nodeId));
+        context.sendDataFrame(createGet(nodeId));
         return 1;
     }
 
-    static public DataFrame createGetv1(byte nodeId) {
+    public DataFrame createGet(byte nodeId) {
         return createSendDataFrame("SENSOR_BINARY_GET", nodeId, new byte[]{BinarySensorCommandClass.ID, SENSOR_BINARY_GET}, true);
     }
 }

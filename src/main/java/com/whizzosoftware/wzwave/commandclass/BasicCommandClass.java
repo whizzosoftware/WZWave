@@ -57,15 +57,15 @@ public class BasicCommandClass extends CommandClass {
 
     @Override
     public int queueStartupMessages(NodeContext context, byte nodeId) {
-        context.sendDataFrame(createGetv1(nodeId));
+        context.sendDataFrame(createGet(nodeId));
         return 1;
     }
 
-    static public DataFrame createSetv1(byte nodeId, byte value) {
+    public DataFrame createSet(byte nodeId, byte value) {
         return createSendDataFrame("BASIC_SET", nodeId, new byte[]{BasicCommandClass.ID, BASIC_SET, value}, false);
     }
 
-    static public DataFrame createGetv1(byte nodeId) {
+    public DataFrame createGet(byte nodeId) {
         return createSendDataFrame("BASIC_GET", nodeId, new byte[]{BasicCommandClass.ID, BASIC_GET}, true);
     }
 }

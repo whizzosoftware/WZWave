@@ -53,7 +53,7 @@ public class ManufacturerSpecificCommandClass extends CommandClass {
                 logger.debug("Received MANUFACTURER_SPECIFIC_REPORT: {}", productInfo);
             } catch (CommandClassParseException e) {
                 logger.error("Error parsing manufacturer specific data ({}); will request again", e.getLocalizedMessage());
-                context.sendDataFrame(createGetv1(context.getNodeId()));
+                context.sendDataFrame(createGet(context.getNodeId()));
             }
         } else {
             logger.warn("Ignoring unsupported command: {}", ByteUtil.createString(ccb[startIndex+1]));
@@ -62,7 +62,7 @@ public class ManufacturerSpecificCommandClass extends CommandClass {
 
     @Override
     public int queueStartupMessages(NodeContext context, byte nodeId) {
-        context.sendDataFrame(createGetv1(nodeId));
+        context.sendDataFrame(createGet(nodeId));
         return 1;
     }
 
@@ -78,7 +78,7 @@ public class ManufacturerSpecificCommandClass extends CommandClass {
         }
     }
 
-    static public DataFrame createGetv1(byte nodeId) {
+    public DataFrame createGet(byte nodeId) {
         return createSendDataFrame("MANUFACTURER_SPECIFIC_GET", nodeId, new byte[] {ManufacturerSpecificCommandClass.ID, MANUFACTURER_SPECIFIC_GET}, true);
     }
 }

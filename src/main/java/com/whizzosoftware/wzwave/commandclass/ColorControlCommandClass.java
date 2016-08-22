@@ -62,11 +62,11 @@ public class ColorControlCommandClass extends CommandClass {
         return 0;
     }
 
-    static public DataFrame createGetv1(byte nodeId, byte capabilityId) {
+    public DataFrame createGet(byte nodeId, byte capabilityId) {
         return createSendDataFrame("COLOR_CONTROL_GET", nodeId, new byte[]{ColorControlCommandClass.ID, STATE_GET, capabilityId}, true);
     }
 
-    static public DataFrame createSetv1(byte nodeId, byte capabilityId, byte value) {
+    public DataFrame createSet(byte nodeId, byte capabilityId, byte value) {
         return createSendDataFrame("COLOR_CONTROL_SET", nodeId, new byte[]{ColorControlCommandClass.ID, STATE_SET, 0x02, capabilityId, value}, false);
     }
 }

@@ -60,11 +60,11 @@ public class BatteryCommandClass extends CommandClass {
 
     @Override
     public int queueStartupMessages(NodeContext context, byte nodeId) {
-        context.sendDataFrame(createGetv1(nodeId));
+        context.sendDataFrame(createGet(nodeId));
         return 1;
     }
 
-    static public DataFrame createGetv1(byte nodeId) {
+    public DataFrame createGet(byte nodeId) {
         return createSendDataFrame("BATTERY_GET", nodeId, new byte[]{BatteryCommandClass.ID, BATTERY_GET}, true);
     }
 }

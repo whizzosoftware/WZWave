@@ -16,62 +16,63 @@ public class ColorControlCommandClassTest {
     @Test
     public void testGetAndSetv1() {
         // get warm white
-        DataFrame df = ColorControlCommandClass.createGetv1((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_WARM_WHITE);
+        ColorControlCommandClass cccc = new ColorControlCommandClass();
+        DataFrame df = cccc.createGet((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_WARM_WHITE);
         byte[] b = df.getBytes();
         assertEquals(12, b.length);
         assertTrue(ByteUtil.createString(b, b.length).startsWith("0x01 0x0A 0x00 0x13 0x03 0x03 0x33 0x03 0x00 0x05 "));
 
         // get cold white
-        df = ColorControlCommandClass.createGetv1((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_COLD_WHITE);
+        df = cccc.createGet((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_COLD_WHITE);
         b = df.getBytes();
         assertEquals(12, b.length);
         assertTrue(ByteUtil.createString(b, b.length).startsWith("0x01 0x0A 0x00 0x13 0x03 0x03 0x33 0x03 0x01 0x05 "));
 
         // get red
-        df = ColorControlCommandClass.createGetv1((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_RED);
+        df = cccc.createGet((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_RED);
         b = df.getBytes();
         assertEquals(12, b.length);
         assertTrue(ByteUtil.createString(b, b.length).startsWith("0x01 0x0A 0x00 0x13 0x03 0x03 0x33 0x03 0x02 0x05 "));
 
         // get green
-        df = ColorControlCommandClass.createGetv1((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_GREEN);
+        df = cccc.createGet((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_GREEN);
         b = df.getBytes();
         assertEquals(12, b.length);
         assertTrue(ByteUtil.createString(b, b.length).startsWith("0x01 0x0A 0x00 0x13 0x03 0x03 0x33 0x03 0x03 0x05 "));
 
         // get blue
-        df = ColorControlCommandClass.createGetv1((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_BLUE);
+        df = cccc.createGet((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_BLUE);
         b = df.getBytes();
         assertEquals(12, b.length);
         assertTrue(ByteUtil.createString(b, b.length).startsWith("0x01 0x0A 0x00 0x13 0x03 0x03 0x33 0x03 0x04 0x05 "));
 
         // set warm white 195
-        df = ColorControlCommandClass.createSetv1((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_WARM_WHITE, (byte) 195);
+        df = cccc.createSet((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_WARM_WHITE, (byte) 195);
         b = df.getBytes();
         assertEquals(14, b.length);
         assertEquals(14, b.length);
         assertTrue(ByteUtil.createString(b, b.length).startsWith("0x01 0x0C 0x00 0x13 0x03 0x05 0x33 0x05 0x02 0x00 0xC3 0x05 "));
 
         // set cold white 150
-        df = ColorControlCommandClass.createSetv1((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_COLD_WHITE, (byte) 50);
+        df = cccc.createSet((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_COLD_WHITE, (byte) 50);
         b = df.getBytes();
         assertEquals(14, b.length);
         assertTrue(ByteUtil.createString(b, b.length).startsWith("0x01 0x0C 0x00 0x13 0x03 0x05 0x33 0x05 0x02 0x01 0x32 0x05 "));
 
         // set red 10
-        df = ColorControlCommandClass.createSetv1((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_RED, (byte) 10);
+        df = cccc.createSet((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_RED, (byte) 10);
         b = df.getBytes();
         assertEquals(14, b.length);
         assertTrue(ByteUtil.createString(b, b.length).startsWith("0x01 0x0C 0x00 0x13 0x03 0x05 0x33 0x05 0x02 0x02 0x0A 0x05 "));
 
         // set green 25
-        df = ColorControlCommandClass.createSetv1((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_GREEN, (byte) 25);
+        df = cccc.createSet((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_GREEN, (byte) 25);
         b = df.getBytes();
         assertEquals(14, b.length);
         assertTrue(ByteUtil.createString(b, b.length).startsWith("0x01 0x0C 0x00 0x13 0x03 0x05 0x33 0x05 0x02 0x03 0x19 0x05 "));
 
         // set blue 195
-        df = ColorControlCommandClass.createSetv1((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_BLUE, (byte) 195);
+        df = cccc.createSet((byte) 0x03, ColorControlCommandClass.CAPABILITY_ID_BLUE, (byte) 195);
         b = df.getBytes();
         assertEquals(14, b.length);
         assertTrue(ByteUtil.createString(b, b.length).startsWith("0x01 0x0C 0x00 0x13 0x03 0x05 0x33 0x05 0x02 0x04 0xC3 0x05 "));

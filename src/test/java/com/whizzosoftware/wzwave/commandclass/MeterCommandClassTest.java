@@ -16,7 +16,8 @@ import static org.junit.Assert.*;
 public class MeterCommandClassTest {
     @Test
     public void testMeterGetv1() {
-        DataFrame frame = MeterCommandClass.createGetv1((byte)3);
+        MeterCommandClass mcc = new MeterCommandClass();
+        DataFrame frame = mcc.createGet((byte)3, (byte)0x00);
         byte[] b = frame.getBytes();
         assertEquals(11, b.length);
         assertEquals(0x01, b[0]); // SOF
@@ -32,7 +33,9 @@ public class MeterCommandClassTest {
 
     @Test
     public void testMeterGetv2() {
-        DataFrame frame = MeterCommandClass.createGetv2((byte)4, MeterCommandClass.SCALE_ELECTRIC_W);
+        MeterCommandClass mcc = new MeterCommandClass();
+        mcc.setVersion(2);
+        DataFrame frame = mcc.createGet((byte)4, MeterCommandClass.SCALE_ELECTRIC_W);
         byte[] b = frame.getBytes();
         assertEquals(12, b.length);
         assertEquals(0x01, b[0]); // SOF

@@ -59,15 +59,15 @@ public class MultilevelSwitchCommandClass extends CommandClass {
 
     @Override
     public int queueStartupMessages(NodeContext context, byte nodeId) {
-        context.sendDataFrame(createGetv1(nodeId));
+        context.sendDataFrame(createGet(nodeId));
         return 1;
     }
 
-    static public DataFrame createSetv1(byte nodeId, byte level) {
+    public DataFrame createSet(byte nodeId, byte level) {
         return createSendDataFrame("SWITCH_MULTILEVEL_SET", nodeId, new byte[]{MultilevelSwitchCommandClass.ID, SWITCH_MULTILEVEL_SET, level}, false);
     }
 
-    static public DataFrame createGetv1(byte nodeId) {
+    public DataFrame createGet(byte nodeId) {
         return createSendDataFrame("SWITCH_MULTILEVEL_GET", nodeId, new byte[]{MultilevelSwitchCommandClass.ID, SWITCH_MULTILEVEL_GET}, true);
     }
 }

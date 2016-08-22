@@ -91,11 +91,7 @@ public class MeterCommandClass extends CommandClass {
 
     @Override
     public int queueStartupMessages(NodeContext context, byte nodeId) {
-        if (getVersion() == 1) {
-            context.sendDataFrame(createGetv1(nodeId));
-        } else {
-            context.sendDataFrame(createGetv2(nodeId, (byte) 0x00));
-        }
+        context.sendDataFrame(createGet(nodeId, (byte)0x00));
         return 1;
     }
 
@@ -142,13 +138,24 @@ public class MeterCommandClass extends CommandClass {
         }
     }
 
-    static public DataFrame createGetv1(byte nodeId) {
-        return createSendDataFrame("METER_GET", nodeId, new byte[]{MeterCommandClass.ID, METER_GET}, true);
-    }
+    /**
+     * Create a Get data frame.
+     *
+     * @param nodeId the target node ID
+     * @param scale the scale (0x00 for version 1)
+     *
+     * @return a DataFrame instance
+     */
+    public DataFrame createGet(byte nodeId, byte scale) {
+        switch (getVersion()) {
+            case 1:
+                return createSendDataFrame("METER_GET", nodeId, new byte[]{MeterCommandClass.ID, METER_GET}, true);
+            default: {
+                byte b = (byte) ((scale << 3) & 0x18);
+                return createSendDataFrame("METER_GET", nodeId, new byte[]{MeterCommandClass.ID, METER_GET, b}, true);
+            }
 
-    static public DataFrame createGetv2(byte nodeId, byte scale) {
-        byte b = (byte) ((scale << 3) & 0x18);
-        return createSendDataFrame("METER_GET", nodeId, new byte[]{MeterCommandClass.ID, METER_GET, b}, true);
+        }
     }
 
     public enum MeterType {

@@ -44,11 +44,11 @@ public class MultilevelSensorCommandClass extends CommandClass {
 
     @Override
     public int queueStartupMessages(NodeContext context, byte nodeId) {
-        context.sendDataFrame(createGetv1(nodeId));
+        context.sendDataFrame(createGet(nodeId));
         return 1;
     }
 
-    static public DataFrame createGetv1(byte nodeId) {
+    public DataFrame createGet(byte nodeId) {
         return createSendDataFrame("SENSOR_MULTILEVEL_GET", nodeId, new byte[]{MultilevelSensorCommandClass.ID, SENSOR_MULTILEVEL_GET}, true);
     }
 }
