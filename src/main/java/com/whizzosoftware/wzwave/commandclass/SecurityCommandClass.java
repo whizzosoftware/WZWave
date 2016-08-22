@@ -120,15 +120,32 @@ public class SecurityCommandClass extends CommandClass {
         }, true);
     }
 
-    static public DataFrame createMessageEncapsulation(String name, byte nodeId, NonceProvider noncep, byte commandClassId, byte commandId, byte[] commandBytes) {
+    static public DataFrame createMessageEncapsulationv1(String name, byte nodeId, NonceProvider noncep, byte commandClassId, byte commandId, byte[] commandBytes, byte[] encKey, byte[] authKey) throws GeneralSecurityException {
         byte[] randomNonce = noncep.getRandomNonce();
+        byte[] targetNonce = noncep.getTargetNonce();
+        System.out.println("Target nonce: " + ByteUtil.createString(targetNonce, 8));
         byte[] msg = new byte[22 + commandBytes.length];
-        byte[] iv = EncryptionHelper.createInitializationVector(randomNonce, noncep.getTargetNonce());
+        byte[] iv = EncryptionHelper.createInitializationVector(randomNonce, targetNonce);
+
         msg[0] = ID;
         msg[1] = SECURITY_MESSAGE_ENCAPSULATION;
         System.arraycopy(randomNonce, 0, msg, 2, 8);
-        // TODO
-        return createSendDataFrame("SECURITY_MESSAGE_ENCAPSULATION_" + name, nodeId, msg, true);
+
+        byte[] payload = new byte[3+commandBytes.length];
+        payload[0] = 0;
+        payload[1] = commandClassId;
+        payload[2] = commandId;
+        System.arraycopy(commandBytes, 0, payload, 3, commandBytes.length);
+        byte[] encPayload = EncryptionHelper.encryptOFB(payload, iv, encKey);
+        System.arraycopy(encPayload, 0, msg, 10, encPayload.length);
+
+        msg[10+encPayload.length] = targetNonce[0];
+
+        byte[] mac = EncryptionHelper.createMAC(SECURITY_MESSAGE_ENCAPSULATION, (byte)0x01, nodeId, targetNonce, encPayload, authKey);
+        System.out.println("MAC: " + ByteUtil.createString(mac, 8));
+        System.arraycopy(mac, 0, msg, 11+encPayload.length, 8);
+
+        return createSendDataFrame("foo", nodeId, msg, true);
     }
 
     static public DataFrame createNetworkKeySetv1(ZWaveControllerContext ctx, byte srcNodeId, byte dstNodeId, NonceProvider noncep) throws GeneralSecurityException {

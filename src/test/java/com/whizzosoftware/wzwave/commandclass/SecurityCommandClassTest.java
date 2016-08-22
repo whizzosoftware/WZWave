@@ -12,8 +12,10 @@ package com.whizzosoftware.wzwave.commandclass;
 import com.whizzosoftware.wzwave.controller.MockZWaveControllerContext;
 import com.whizzosoftware.wzwave.frame.DataFrame;
 import com.whizzosoftware.wzwave.frame.SendData;
+import com.whizzosoftware.wzwave.security.EncryptionHelper;
 import com.whizzosoftware.wzwave.security.NonceProvider;
 import com.whizzosoftware.wzwave.security.StaticNonceProvider;
+import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.junit.Test;
 
 import java.security.GeneralSecurityException;
@@ -43,8 +45,8 @@ public class SecurityCommandClassTest {
         assertEquals((byte)0x67, b[14]);
         assertEquals((byte)0x90, b[15]);
         assertEquals((byte)0x05, b[16]);
-        assertEquals((byte)0x01, b[17]);
-        assertEquals((byte)0xB2, b[18]);
+        assertEquals((byte)17, b[17]);
+        assertEquals((byte)-94, b[18]);
     }
 
     @Test
@@ -67,5 +69,62 @@ public class SecurityCommandClassTest {
         assertEquals(0x26, b[5]);
         assertEquals(SecurityCommandClass.ID, b[6]);
         assertEquals((byte)0x81, b[7]);
+    }
+
+    @Test
+    public void testCreateMessageEncapsulationv1() throws GeneralSecurityException {
+        NonceProvider np = new StaticNonceProvider(
+          new byte[] {(byte)0xAA, (byte)0xAA, (byte)0xAA, (byte)0xAA, (byte)0xAA, (byte)0xAA, (byte)0xAA, (byte)0xAA},
+          new byte[] {(byte)0xd8, 0x74, (byte)0xda, (byte)0x8c, (byte)0xd9, 0x7d, (byte)0xcd, (byte)0xc5}
+        );
+        byte[] encKey = EncryptionHelper.createEncryptionKey(new byte[] {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10});
+        byte[] authKey = EncryptionHelper.createAuthenticationKey(new byte[] {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10});
+        DataFrame df = SecurityCommandClass.createMessageEncapsulationv1("", (byte)0x05, np, (byte)0x62, (byte)0x01, new byte[] {(byte)0xFF}, encKey, authKey);
+        byte[] b = df.getBytes();
+
+        assertEquals(32, b.length);
+
+        // check header
+        assertEquals((byte)0x01, b[0]);
+        assertEquals((byte)0x1E, b[1]);
+        assertEquals((byte)0x00, b[2]);
+        assertEquals((byte)0x13, b[3]);
+        assertEquals((byte)0x05, b[4]);
+        assertEquals((byte)0x17, b[5]);
+        assertEquals((byte)0x98, b[6]);
+        assertEquals((byte)0x81, b[7]);
+
+        // check random nonce
+        assertEquals((byte)0xAA, b[8]);
+        assertEquals((byte)0xAA, b[9]);
+        assertEquals((byte)0xAA, b[10]);
+        assertEquals((byte)0xAA, b[11]);
+        assertEquals((byte)0xAA, b[12]);
+        assertEquals((byte)0xAA, b[13]);
+        assertEquals((byte)0xAA, b[14]);
+        assertEquals((byte)0xAA, b[15]);
+
+        // check encrypted payload
+        assertEquals((byte)0x43, b[16]);
+        assertEquals((byte)0x71, b[17]);
+        assertEquals((byte)0xB6, b[18]);
+        assertEquals((byte)0xF7, b[19]);
+
+        // check nonce identifier
+        assertEquals((byte)0xD8, b[20]);
+
+        // check MAC
+        assertEquals((byte)0x1D, b[21]);
+        assertEquals((byte)0x1C, b[22]);
+        assertEquals((byte)0xD1, b[23]);
+        assertEquals((byte)0x25, b[24]);
+        assertEquals((byte)0xB8, b[25]);
+        assertEquals((byte)0xF2, b[26]);
+        assertEquals((byte)0x6F, b[27]);
+        assertEquals((byte)0xDC, b[28]);
+
+        assertEquals((byte)0x05, b[29]); // tx options
+        assertEquals((byte)0x01, b[30]); // callback ID
+        assertEquals((byte)0x5A, b[31]); // checksum
     }
 }

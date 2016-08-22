@@ -9,6 +9,8 @@
 */
 package com.whizzosoftware.wzwave.security;
 
+import com.whizzosoftware.wzwave.util.ByteUtil;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -63,7 +65,7 @@ public class EncryptionHelper {
      * Creates a message authentication code (MAC) that is suffixed to the security command class data to insure
      * it hasn't been tampered with.
      *
-     * @param securityCommandClassCommand the security command class command byte
+     * @param cmd the security command class command byte
      * @param srcNode the source node
      * @param dstNode the destination node
      * @param deviceNonce the nonce provided by the destination node
@@ -73,23 +75,29 @@ public class EncryptionHelper {
      * @return a byte array
      * @throws GeneralSecurityException on failure
      */
-    static public byte[] createMAC(byte securityCommandClassCommand, byte srcNode, byte dstNode, byte[] deviceNonce, byte[] encPayload, byte[] authKey) throws GeneralSecurityException {
+    static public byte[] createMAC(byte cmd, byte srcNode, byte dstNode, byte[] deviceNonce, byte[] encPayload, byte[] authKey) throws GeneralSecurityException {
         byte[] mac = new byte[8];
 
         // create the IV and then encrypt with the auth key
-        byte[] tmpauth = EncryptionHelper.encryptECB(createInitializationVector(
-            new byte[] {(byte)0xAA, (byte)0xAA, (byte)0xAA, (byte)0xAA, (byte)0xAA, (byte)0xAA, (byte)0xAA, (byte)0xAA},
-            deviceNonce
-        ), authKey);
+        byte[] iv = createInitializationVector(
+                new byte[] {(byte)0xAA, (byte)0xAA, (byte)0xAA, (byte)0xAA, (byte)0xAA, (byte)0xAA, (byte)0xAA, (byte)0xAA},
+                deviceNonce
+        );
+        byte[] tmpauth = EncryptionHelper.encryptECB(iv, authKey);
+
+        System.out.println("Encrypted payload: " + ByteUtil.createString(encPayload, encPayload.length));
+        System.out.println("Encrypted IV: " + ByteUtil.createString(tmpauth, 16));
 
         // build the buffer
         int bufSize = encPayload.length + 4;
         byte[] buffer = new byte[bufSize];
-        buffer[0] = securityCommandClassCommand;
+        buffer[0] = cmd;
         buffer[1] = srcNode;
         buffer[2] = dstNode;
         buffer[3] = (byte)encPayload.length;
         System.arraycopy(encPayload, 0, buffer, 4, encPayload.length);
+
+        System.out.println("Buffer: " + ByteUtil.createString(buffer, buffer.length));
 
         byte[] encpck = new byte[16];
         int block = 0;

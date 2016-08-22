@@ -76,19 +76,18 @@ public class EncryptionHelperTest {
 
     @Test
     public void testGenerateMAC() throws Exception {
-        // Note: these values were taken from a real Z-Wave interaction
         byte[] networkKey = new byte[] {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10};
         byte[] deviceNonce = new byte[] {(byte)0xbd, 0x6e, 0x79, 0x51, 0x67, 0x30, 0x67, (byte)0x90};
         byte[] doaKey = EncryptionHelper.createAuthenticationKey(networkKey);
-        byte[] mac = EncryptionHelper.createMAC((byte)0x03, (byte)0x02, (byte)0x01, deviceNonce, new byte[] {(byte)0x93, 0x02, 0x46, 0x42, 0x12, (byte)0xad, (byte)0xba, (byte)0xe2, (byte)0xd4, (byte)0xb3, (byte)0xe2, 0x2f}, doaKey);
+        byte[] mac = EncryptionHelper.createMAC((byte)0x03, (byte)0x02, (byte)0x01, deviceNonce, new byte[] {(byte)0xe7, (byte)0x80, (byte)0x45, (byte)0x18, (byte)0x34, (byte)0x7f, (byte)0x8f, (byte)0x88, (byte)0x93, (byte)0x02, (byte)0x46, (byte)0x42}, doaKey);
         assertEquals(8, mac.length);
-        assertEquals((byte)0xBB, mac[0]);
-        assertEquals((byte)0xA9, mac[1]);
-        assertEquals((byte)0x06, mac[2]);
-        assertEquals((byte)0x70, mac[3]);
-        assertEquals((byte)0x58, mac[4]);
-        assertEquals((byte)0x73, mac[5]);
-        assertEquals((byte)0xE6, mac[6]);
-        assertEquals((byte)0xE3, mac[7]);
+        assertEquals((byte)0xED, mac[0]);
+        assertEquals((byte)0xFA, mac[1]);
+        assertEquals((byte)0x63, mac[2]);
+        assertEquals((byte)0x5C, mac[3]);
+        assertEquals((byte)0x25, mac[4]);
+        assertEquals((byte)0xF6, mac[5]);
+        assertEquals((byte)0xDB, mac[6]);
+        assertEquals((byte)0x0B, mac[7]);
     }
 }

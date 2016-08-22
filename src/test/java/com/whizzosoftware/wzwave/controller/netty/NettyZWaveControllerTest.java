@@ -42,7 +42,7 @@ public class NettyZWaveControllerTest {
         c.setNodeId((byte)0x01);
         MockZWaveControllerListener l = new MockZWaveControllerListener();
         c.setListener(l);
-        c.onZWaveInclusion(nodeId, new NodeInfo(nodeId, BasicDeviceClasses.SLAVE, EntryControl.ID, SecureKeypadDoorLock.ID, new byte[] {SecurityCommandClass.ID}), true);
+        c.onZWaveInclusion(new NodeInfo(nodeId, BasicDeviceClasses.SLAVE, EntryControl.ID, SecureKeypadDoorLock.ID, new byte[] {SecurityCommandClass.ID}), true);
         assertEquals(ZWaveNodeState.SchemeGetSent, c.getNode(nodeId).getState());
         c.onApplicationCommand(new ApplicationCommand(Unpooled.copiedBuffer(new byte[] {0x01, 0x09, 0x00, 0x04, 0x00, 0x03, 0x03, (byte)0x98, 0x05, 0x00, 0x6F})));
         assertEquals(ZWaveNodeState.NonceGetSent, c.getNode(nodeId).getState());
@@ -95,7 +95,7 @@ public class NettyZWaveControllerTest {
         }
 
         @Override
-        public void onZWaveInclusion(Byte nodeId, NodeInfo nodeInfo, boolean success) {
+        public void onZWaveInclusion(NodeInfo nodeInfo, boolean success) {
 
         }
 
@@ -110,7 +110,7 @@ public class NettyZWaveControllerTest {
         }
 
         @Override
-        public void onZWaveExclusion(Byte nodeId, NodeInfo nodeInfo, boolean success) {
+        public void onZWaveExclusion(NodeInfo nodeInfo, boolean success) {
 
         }
 
