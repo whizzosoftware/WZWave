@@ -21,10 +21,12 @@ import java.util.Collection;
  * @author Dan Noguerol
  */
 public class MultiChannelEncapsulatingNodeContext implements NodeContext {
+    private MultiInstanceCommandClass micc;
     private byte destEndpoint;
     private NodeContext context;
 
-    public MultiChannelEncapsulatingNodeContext(byte destEndpoint, NodeContext context) {
+    public MultiChannelEncapsulatingNodeContext(MultiInstanceCommandClass micc, byte destEndpoint, NodeContext context) {
+        this.micc = micc;
         this.destEndpoint = destEndpoint;
         this.context = context;
     }
@@ -36,7 +38,7 @@ public class MultiChannelEncapsulatingNodeContext implements NodeContext {
 
     @Override
     public void sendDataFrame(DataFrame d) {
-        DataFrame ed = MultiInstanceCommandClass.createMultiChannelCmdEncapv2((byte)0, destEndpoint, d, true);
+        DataFrame ed = micc.createMultiChannelCommandEncapsulation((byte)0, destEndpoint, d, true);
         if (ed == null) {
             ed = d;
         }
