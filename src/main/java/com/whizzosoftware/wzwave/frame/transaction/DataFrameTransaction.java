@@ -70,4 +70,9 @@ public interface DataFrameTransaction {
      * @return a DataFrame
      */
     DataFrame getFinalFrame();
+
+    /**
+     * Resets the transaction to its initial state.
+     */
+    void reset();
 }

@@ -10,6 +10,10 @@
 package com.whizzosoftware.wzwave.controller.netty;
 
 import com.whizzosoftware.wzwave.channel.*;
+import com.whizzosoftware.wzwave.channel.inbound.ACKInboundHandler;
+import com.whizzosoftware.wzwave.channel.inbound.ZWaveChannelInboundHandler;
+import com.whizzosoftware.wzwave.channel.inbound.TransactionInboundHandler;
+import com.whizzosoftware.wzwave.channel.outbound.QueuedOutboundHandler;
 import com.whizzosoftware.wzwave.codec.ZWaveFrameDecoder;
 import com.whizzosoftware.wzwave.codec.ZWaveFrameEncoder;
 import com.whizzosoftware.wzwave.controller.ZWaveController;
@@ -35,6 +39,40 @@ import java.util.*;
 /**
  * A Netty implementation of a ZWaveController.
  *
+ * The pipelines look like this:
+ *
+ *                                                      I/O Request via Channel or
+ *                                                        ChannelHandlerContext
+ *                                                                  |
+ * +----------------------------------------------------------------+-------------------+
+ * |                           ChannelPipeline                      |                   |
+ * |                                                               \|/                  |
+ * |    +--------------------------------+            +-------------+--------------+    |
+ * |    |    ZWaveChannelInboundHandler  |            |      ZWaveFrameEncoder     |    |
+ * |    +---------------+----------------+            +-------------+--------------+    |
+ * |                   /|\                                          |                   |
+ * |                    |                                          \|/                  |
+ * |    +---------------+----------------+            +-------------+--------------+    |
+ * |    |    TransactionInboundHandler   |            |    QueuedOutboundHandler   |    |
+ * |    +---------------+----------------+            +-------------+--------------+    |
+ * |                   /|\                                          |                   |
+ * |                    |                                           |                   |
+ * |    +---------------+----------------+                          |                   |
+ * |    |       ACKInboundHandler        |                          |                   |
+ * |    +---------------+----------------+                          |                   |
+ * |                   /|\                                          |                   |
+ * |                    |                                           |                   |
+ * |    +---------------+----------------+                          |                   |
+ * |    |        ZWaveFrameDecoder       |                          |                   |
+ * |    +---------------+----------------+                          |                   |
+ * |                   /|\                                          |                   |
+ * +--------------------+-------------------------------------------+-------------------+
+ * |                    |                                          \|/                  |
+ * +--------------------+-------------------------------------------+-------------------+
+ * |                    |                                           |                   |
+ * |            [ Socket.read() ]                           [ Socket.write() ]          |
+ * +------------------------------------------------------------------------------------+
+ *
  * @author Dan Noguerol
  */
 public class NettyZWaveController implements ZWaveController, ZWaveControllerContext, ZWaveControllerListener, ZWaveChannelListener, NodeListener {
@@ -48,8 +86,8 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     private Byte nodeId;
     private ZWaveChannelInboundHandler inboundHandler;
     private ZWaveControllerListener listener;
-    private final List<ZWaveNode> nodes = new ArrayList<ZWaveNode>();
-    private final Map<Byte,ZWaveNode> nodeMap = new HashMap<Byte,ZWaveNode>();
+    private final List<ZWaveNode> nodes = new ArrayList<>();
+    private final Map<Byte,ZWaveNode> nodeMap = new HashMap<>();
 
     public NettyZWaveController(String serialPort) {
         this.serialPort = serialPort;
@@ -67,11 +105,11 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
                 channel.config().setParitybit(RxtxChannelConfig.Paritybit.NONE);
                 channel.config().setStopbits(RxtxChannelConfig.Stopbits.STOPBITS_1);
                 channel.pipeline().addLast("decoder", new ZWaveFrameDecoder());
-                channel.pipeline().addLast("ack", new AcknowledgementInboundHandler());
-                channel.pipeline().addLast("transaction", new ZWaveDataFrameTransactionInboundHandler());
+                channel.pipeline().addLast("ack", new ACKInboundHandler());
+                channel.pipeline().addLast("transaction", new TransactionInboundHandler());
                 channel.pipeline().addLast("handler", inboundHandler);
                 channel.pipeline().addLast("encoder", new ZWaveFrameEncoder());
-                channel.pipeline().addLast("writeQueue", new ZWaveQueuedOutboundHandler());
+                channel.pipeline().addLast("writeQueue", new QueuedOutboundHandler());
             }
         });
     }
@@ -271,12 +309,9 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     public void onApplicationCommand(ApplicationCommand applicationCommand) {
         ZWaveNode node = nodeMap.get(applicationCommand.getNodeId());
         if (node != null) {
-            node.onDataFrameReceived(this, applicationCommand);
-            if (node.isStarted()) {
-                onZWaveNodeUpdated(node);
-            }
+            onNodeUpdate(node, applicationCommand);
         } else {
-            logger.error("Unable to find node " + applicationCommand.getNodeId());
+            logger.error("Unable to find node: {}", nodeId);
         }
     }
 
@@ -291,15 +326,19 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
         if (nodeId != null) {
             ZWaveNode node = nodeMap.get(nodeId);
             if (node != null) {
-                node.onDataFrameReceived(this, applicationUpdate);
-                if (node.isStarted()) {
-                    onZWaveNodeUpdated(node);
-                }
+                onNodeUpdate(node, applicationUpdate);
             } else {
-                logger.error("Unable to find node " + applicationUpdate.getNodeId());
+                logger.error("Unable to find node: {}", nodeId);
             }
         } else {
             logger.error("Unable to determine node to route ApplicationUpdate to");
+        }
+    }
+
+    private void onNodeUpdate(ZWaveNode node, DataFrame df) {
+        node.onDataFrameReceived(this, df);
+        if (node.isStarted()) {
+            onZWaveNodeUpdated(node);
         }
     }
 

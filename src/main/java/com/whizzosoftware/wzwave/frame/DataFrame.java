@@ -23,6 +23,7 @@ abstract public class DataFrame extends Frame {
     private byte commandId;
     private byte[] data;
     private int sendCount;
+    private String transactionId;
 
     /**
      * Constructor
@@ -66,6 +67,18 @@ abstract public class DataFrame extends Frame {
         sendCount++;
     }
 
+    public boolean hasTransactionId() {
+        return (transactionId != null);
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    private void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
+    }
+
     protected void setData(byte[] data) {
         this.data = data;
     }
@@ -95,6 +108,12 @@ abstract public class DataFrame extends Frame {
         bytes[dataLen+4] = checksum;
 
         return bytes;
+    }
+
+    public DataFrameTransaction createWrapperTransaction() {
+        DataFrameTransaction t = createTransaction();
+        setTransactionId(t.getId());
+        return t;
     }
 
     abstract public DataFrameTransaction createTransaction();

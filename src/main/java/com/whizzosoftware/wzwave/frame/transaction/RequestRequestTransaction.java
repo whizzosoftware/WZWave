@@ -31,7 +31,7 @@ public class RequestRequestTransaction extends AbstractDataFrameTransaction {
 
     public RequestRequestTransaction(DataFrame startFrame) {
         super(startFrame);
-        this.state = STATE_REQUEST_SENT;
+        reset();
     }
 
     @Override
@@ -80,5 +80,11 @@ public class RequestRequestTransaction extends AbstractDataFrameTransaction {
     @Override
     public DataFrame getFinalFrame() {
         return finalFrame;
+    }
+
+    @Override
+    public void reset() {
+        finalFrame = null;
+        this.state = STATE_REQUEST_SENT;
     }
 }

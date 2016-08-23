@@ -42,8 +42,8 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
      */
     public SendDataTransaction(SendData startFrame, boolean isResponseExpected) {
         super(startFrame);
-        this.state = STATE_REQUEST_SENT;
         this.isResponseExpected = isResponseExpected;
+        reset();
     }
 
     public Byte getNodeId() {
@@ -63,7 +63,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                     setError("Received CAN; will re-send");
                     return true;
                 } else {
-                    logger.warn("Received unexpected frame for STATE_REQUEST_SENT: " + bs);
+                    logger.warn("Received unexpected frame for STATE_REQUEST_SENT: {}", bs);
                 }
                 break;
 
@@ -80,7 +80,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                         setError("Received frame but doesn't appear to be a response: " + bs);
                     }
                 } else {
-                    logger.warn("Received unexpected frame for STATE_ACK_RECEIVED");
+                    logger.warn("Received unexpected frame for STATE_ACK_RECEIVED: {}", bs);
                 }
                 break;
 
@@ -103,7 +103,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                         setError("Received data frame but doesn't appear to be a request: " + bs);
                     }
                 } else {
-                    logger.warn("Received unexpected frame for STATE_RETVAL_RECEIVED");
+                    logger.warn("Received unexpected frame for STATE_RETVAL_RECEIVED: {}", bs);
                 }
                 break;
 
@@ -117,7 +117,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                     finalFrame = (DataFrame)bs;
                     return true;
                 } else {
-                    logger.warn("Received unexpected frame for STATE_REQUEST_RECEIVED");
+                    logger.warn("Received unexpected frame for STATE_REQUEST_RECEIVED: {}", bs);
                 }
                 break;
         }
@@ -133,5 +133,11 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
     @Override
     public DataFrame getFinalFrame() {
         return finalFrame;
+    }
+
+    @Override
+    public void reset() {
+        finalFrame = null;
+        state = STATE_REQUEST_SENT;
     }
 }

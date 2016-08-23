@@ -68,4 +68,10 @@ public class NodeInclusionTransaction extends AbstractDataFrameTransaction {
     public DataFrame getFinalFrame() {
         return finalFrame;
     }
+
+    @Override
+    public void reset() {
+        finalFrame = null;
+        finished = false;
+    }
 }

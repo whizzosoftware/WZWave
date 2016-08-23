@@ -1,18 +1,21 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
-package com.whizzosoftware.wzwave.channel;
+ *******************************************************************************
+*/
+package com.whizzosoftware.wzwave.channel.inbound;
 
+import com.whizzosoftware.wzwave.channel.TransactionTimeoutHandler;
+import com.whizzosoftware.wzwave.channel.event.TransactionCompletedEvent;
 import com.whizzosoftware.wzwave.frame.*;
 import com.whizzosoftware.wzwave.frame.transaction.NodeInclusionTransaction;
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelPipeline;
 import io.netty.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +28,8 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Dan Noguerol
  */
-public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandlerAdapter {
-    private static final Logger logger = LoggerFactory.getLogger(ZWaveDataFrameTransactionInboundHandler.class);
+public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
+    private static final Logger logger = LoggerFactory.getLogger(TransactionInboundHandler.class);
 
     private static final int MAX_SEND_COUNT = 2;
 
@@ -40,15 +43,23 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
         this.handlerContext = ctx;
     }
 
+    /**
+     * Called when data is read from the Z-Wave network.
+     *
+     * @param ctx the handler context
+     * @param msg the message that was read
+     */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof Frame) {
             Frame frame = (Frame) msg;
             if (hasCurrentTransaction()) {
-                logger.trace("Received frame within transaction context: {}", frame);
+                String tid = currentDataFrameTransaction.getId();
+                logger.trace("Received frame within transaction ({}) context: {}", tid, frame);
 
                 if (currentDataFrameTransaction.addFrame(frame)) {
                     if (currentDataFrameTransaction.isComplete()) {
+
                         // cancel the timeout callback
                         if (timeoutFuture != null) {
                             timeoutFuture.cancel(true);
@@ -61,7 +72,7 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
 
                         if (!currentDataFrameTransaction.hasError()) {
                             DataFrame finalFrame = currentDataFrameTransaction.getFinalFrame();
-                            logger.trace("*** Data frame transaction completed with final frame: {}", finalFrame);
+                            logger.trace("*** Data frame transaction ({}) completed with final frame: {}", tid, finalFrame);
                             logger.trace("");
 
                             // if there's an ApplicationUpdate with no node ID (e.g. when there's a app update failure), attempt
@@ -78,27 +89,22 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
                                 ctx.fireChannelRead(finalFrame);
                             }
 
+                            // clear the current transaction
+                            clearTransaction();
+
+                            // now the frame transaction is truly done
+                            processingTransactionCompletion = false;
+
+                            // alert the pipeline that a frame transaction has been completed
+                            ctx.fireUserEventTriggered(new TransactionCompletedEvent(tid, false));
                         } else {
+                            logger.trace("Detected transaction error for {}", tid);
+                            processingTransactionCompletion = false;
                             attemptResend(ctx);
-                        }
-
-                        // clear the current transaction
-                        currentDataFrameTransaction = null;
-
-                        // now the frame transaction is truly done
-                        processingTransactionCompletion = false;
-
-                        // alert the outbound pipeline that a frame transaction has been completed
-                        ChannelPipeline pipeline = ctx.pipeline();
-                        if (pipeline != null) {
-                            ZWaveQueuedOutboundHandler writeHandler = (ZWaveQueuedOutboundHandler)ctx.pipeline().get("writeQueue");
-                            if (writeHandler != null) {
-                                writeHandler.onDataFrameTransactionComplete();
-                            }
                         }
                     }
                 } else {
-                    logger.trace("Transaction didn't consume frame so passing it along");
+                    logger.trace("Transaction ignored frame so passing it along");
                     ctx.fireChannelRead(msg);
                 }
             } else if (msg instanceof AddNodeToNetwork) {
@@ -108,33 +114,48 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
                 logger.trace("Received frame outside of transaction context: {}", frame);
                 ctx.fireChannelRead(msg);
             }
-        } else if (msg instanceof TransactionTimeout) {
-            // if a timeout is received for the current transaction, attempt to resend; otherwise ignore it
-            TransactionTimeout tt = (TransactionTimeout)msg;
-            if (tt.getId().equals(currentDataFrameTransaction.getId())) {
-                logger.trace("Transaction timed out");
-                attemptResend(ctx);
-            }
         }
     }
 
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (evt instanceof TransactionCompletedEvent) {
+            TransactionCompletedEvent tce = (TransactionCompletedEvent)evt;
+            if (tce.isTimeout()) {
+                if (tce.getId().equals(currentDataFrameTransaction.getId())) {
+                    logger.trace("Transaction timed out");
+                    attemptResend(ctx);
+                }
+            } else {
+                ctx.fireUserEventTriggered(evt);
+            }
+        } else {
+            ctx.fireUserEventTriggered(evt);
+        }
+    }
+
+    /**
+     * Called when a DataFrame is written to the Z-Wave network.
+     *
+     * @param frame the frame that was written
+     */
     public void onDataFrameWrite(DataFrame frame) {
         logger.trace("Detected data frame write: {}", frame);
         if (!hasCurrentTransaction()) {
-            currentDataFrameTransaction = frame.createTransaction();
+            currentDataFrameTransaction = frame.createWrapperTransaction();
             if (currentDataFrameTransaction != null) {
-                logger.trace("*** Data frame transaction started for {}", frame);
+                logger.trace("*** Data frame transaction started for {} with ID {}", frame, currentDataFrameTransaction.getId());
 
                 // start timeout
                 if (currentDataFrameTransaction.getTimeout() > 0 && handlerContext != null && handlerContext.executor() != null) {
                     timeoutFuture = handlerContext.executor().schedule(
-                            new TransactionTimeout(
-                                    currentDataFrameTransaction.getId(),
-                                    handlerContext,
-                                    this
-                            ),
-                            currentDataFrameTransaction.getTimeout(),
-                            TimeUnit.MILLISECONDS
+                        new TransactionTimeoutHandler(
+                            currentDataFrameTransaction.getId(),
+                            handlerContext,
+                            this
+                        ),
+                        currentDataFrameTransaction.getTimeout(),
+                        TimeUnit.MILLISECONDS
                     );
                 } else {
                     logger.warn("Unable to schedule transaction timeout callback");
@@ -145,17 +166,34 @@ public class ZWaveDataFrameTransactionInboundHandler extends ChannelInboundHandl
         }
     }
 
+    /**
+     * Indicated whether there is an active transaction.
+     *
+     * @return a boolean
+     */
     public boolean hasCurrentTransaction() {
         return (processingTransactionCompletion || (currentDataFrameTransaction != null && !currentDataFrameTransaction.isComplete()));
     }
 
-    protected void attemptResend(ChannelHandlerContext ctx) {
+    public String getCurrentTransactionId() {
+        return currentDataFrameTransaction != null ? currentDataFrameTransaction.getId() : null;
+    }
+
+    private void clearTransaction() {
+        currentDataFrameTransaction = null;
+    }
+
+    private void attemptResend(ChannelHandlerContext ctx) {
         DataFrame startFrame = currentDataFrameTransaction.getStartFrame();
         if (startFrame.getSendCount() < MAX_SEND_COUNT) {
-            logger.debug("Transaction has failed - resending initial request");
+            logger.debug("Transaction has failed - will reset transaction and resend initial request");
+            currentDataFrameTransaction.reset();
             ctx.channel().writeAndFlush(startFrame);
         } else {
             logger.debug("Transaction has failed and has exceeded max resends - aborting");
+            String id = currentDataFrameTransaction.getId();
+            clearTransaction();
+            ctx.fireUserEventTriggered(new TransactionCompletedEvent(id, true));
         }
     }
 }

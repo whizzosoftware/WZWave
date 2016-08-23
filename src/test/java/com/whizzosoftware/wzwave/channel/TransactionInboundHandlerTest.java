@@ -9,19 +9,21 @@
 */
 package com.whizzosoftware.wzwave.channel;
 
+import com.whizzosoftware.wzwave.channel.inbound.TransactionInboundHandler;
 import com.whizzosoftware.wzwave.frame.ACK;
 import com.whizzosoftware.wzwave.frame.AddNodeToNetwork;
 import com.whizzosoftware.wzwave.frame.RequestNodeInfo;
+import com.whizzosoftware.wzwave.frame.SendData;
 import io.netty.buffer.Unpooled;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-public class ZWaveDataFrameTransactionInboundHandlerTest {
+public class TransactionInboundHandlerTest {
     @Test
     public void testRequestNodeInfoFailure() {
         MockChannelHandlerContext ctx = new MockChannelHandlerContext();
-        ZWaveDataFrameTransactionInboundHandler h = new ZWaveDataFrameTransactionInboundHandler();
+        TransactionInboundHandler h = new TransactionInboundHandler();
 
         // initiate new RequestNodeInfo transaction
         RequestNodeInfo requestFrame = new RequestNodeInfo((byte)0x2c);
@@ -34,7 +36,7 @@ public class ZWaveDataFrameTransactionInboundHandlerTest {
 
         // receive unsuccessful send
         h.channelRead(ctx, new RequestNodeInfo(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x60, 0x00, (byte)0x9a})));
-        assertFalse(h.hasCurrentTransaction());
+        assertTrue(h.hasCurrentTransaction());
 
         // confirm request was re-queued
         assertEquals(1, ctx.getWriteQueue().size());
@@ -51,7 +53,7 @@ public class ZWaveDataFrameTransactionInboundHandlerTest {
 
         // receive unsuccessful send
         h.channelRead(ctx, new RequestNodeInfo(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x60, 0x00, (byte)0x9a})));
-        assertFalse(h.hasCurrentTransaction());
+        assertTrue(h.hasCurrentTransaction());
 
         // confirm request was re-queued
         assertEquals(2, ctx.getWriteQueue().size());
@@ -77,12 +79,19 @@ public class ZWaveDataFrameTransactionInboundHandlerTest {
     @Test
     public void testAddNodeToNetworkTransaction() {
         MockChannelHandlerContext ctx = new MockChannelHandlerContext();
-        ZWaveDataFrameTransactionInboundHandler h = new ZWaveDataFrameTransactionInboundHandler();
+        TransactionInboundHandler h = new TransactionInboundHandler();
         h.channelRead(ctx, new AddNodeToNetwork(Unpooled.wrappedBuffer(new byte[] {0x01, 0x07, 0x00, 0x4A, 0x01, 0x02, 0x00, 0x00, (byte)0xB1})));
         assertTrue(h.hasCurrentTransaction());
         h.channelRead(ctx, new AddNodeToNetwork(Unpooled.wrappedBuffer(new byte[] {0x01, 0x12, 0x00, 0x4A, 0x01, 0x03, 0x02, 0x0B, 0x04, 0x20, 0x01, 0x30, (byte)0x80, (byte)0x84, 0x71, 0x70, (byte)0x85, (byte)0x86, 0x72, (byte)0xCD})));
         assertTrue(h.hasCurrentTransaction());
         h.channelRead(ctx, new AddNodeToNetwork(Unpooled.wrappedBuffer(new byte[] {0x01, 0x12, 0x00, 0x4A, 0x01, 0x05, 0x02, 0x0B, 0x04, 0x20, 0x01, 0x30, (byte)0x80, (byte)0x84, 0x71, 0x70, (byte)0x85, (byte)0x86, 0x72, (byte)0xCB, 0x18})));
         assertFalse(h.hasCurrentTransaction());
+    }
+
+    @Test
+    public void testTransactionTimeout() {
+        MockChannelHandlerContext ctx = new MockChannelHandlerContext();
+        TransactionInboundHandler h = new TransactionInboundHandler();
+        h.onDataFrameWrite(new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x09, 0x00, 0x13, 0x03, 0x02, 0x20, 0x02, 0x05, 0x31, (byte)0xF2})));
     }
 }

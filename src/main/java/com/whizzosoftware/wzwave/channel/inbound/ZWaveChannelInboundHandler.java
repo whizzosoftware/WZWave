@@ -1,12 +1,16 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
-package com.whizzosoftware.wzwave.channel;
+ *******************************************************************************
+*/
+package com.whizzosoftware.wzwave.channel.inbound;
 
+import com.whizzosoftware.wzwave.channel.ZWaveChannelListener;
+import com.whizzosoftware.wzwave.channel.event.TransactionCompletedEvent;
 import com.whizzosoftware.wzwave.frame.*;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -23,7 +27,7 @@ import java.util.*;
 public class ZWaveChannelInboundHandler extends ChannelInboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(ZWaveChannelInboundHandler.class);
 
-    private final Queue<Byte> nodeProtocolInfoQueue = new LinkedList<Byte>();
+    private final Queue<Byte> nodeProtocolInfoQueue = new LinkedList<>();
     private ZWaveChannelListener listener;
 
     public ZWaveChannelInboundHandler(ZWaveChannelListener listener) {
@@ -78,6 +82,14 @@ public class ZWaveChannelInboundHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         logger.error("An exception occurred", cause);
+    }
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        logger.debug("User event received: {}", evt);
+        if (evt instanceof TransactionCompletedEvent) {
+            ctx.channel().write(evt);
+        }
     }
 
     private void processInitData(ChannelHandlerContext ctx, InitData initData) {
