@@ -27,12 +27,13 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
     private static final int STATE_REQUEST_SENT = 1;
     private static final int STATE_ACK_RECEIVED = 2;
     private static final int STATE_RESPONSE_RECEIVED = 3;
-    private static final int STATE_REQUEST_RECEIVED = 4;
+    private static final int STATE_CALLBACK_RECEIVED = 4;
     private static final int STATE_COMPLETE = 5;
 
     private DataFrame finalFrame;
     private int state;
     private boolean isResponseExpected;
+    private boolean applicationCommandReceived;
 
     /**
      * Constructor.
@@ -88,26 +89,29 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                 if (bs instanceof CAN) {
                     setError("Received CAN; will re-send");
                     return true;
-                } else if (bs instanceof DataFrame) {
-                    if (((DataFrame)bs).getType() == DataFrameType.REQUEST) {
-                        logger.trace("Response received for {}", getStartFrame().getClass().getName());
+                } else if (bs instanceof SendData) {
+                    if (((SendData)bs).getType() == DataFrameType.REQUEST) {
+                        logger.trace("SendData callback received for {}", getStartFrame().getClass().getName());
                         // if we shouldn't expect a response, the transaction is complete
-                        if (!isResponseExpected) {
+                        if (!isResponseExpected || applicationCommandReceived) {
                             state = STATE_COMPLETE;
-                        // otherwise, wait for the response
+                            // otherwise, wait for the response
                         } else {
-                            state = STATE_REQUEST_RECEIVED;
+                            state = STATE_CALLBACK_RECEIVED;
                         }
                         return true;
                     } else {
                         setError("Received data frame but doesn't appear to be a request: " + bs);
                     }
+                } else if (bs instanceof ApplicationCommand) {
+                    // sometimes the ApplicationCommand is returned before the SendData callback; flag that case here
+                    applicationCommandReceived = true;
                 } else {
                     logger.warn("Received unexpected frame for STATE_RETVAL_RECEIVED: {}", bs);
                 }
                 break;
 
-            case STATE_REQUEST_RECEIVED:
+            case STATE_CALLBACK_RECEIVED:
                 if (bs instanceof CAN) {
                     setError("Received CAN; will re-send");
                     return true;

@@ -135,4 +135,31 @@ public class SendDataTransactionTest {
         assertTrue(t.isComplete());
         assertTrue(t.hasError());
     }
+
+    @Test
+    public void testApplicationCommandReceivedBeforeSendDataCallback() {
+        byte[] b = new byte[] {0x01, 0x0D, 0x00, 0x13, 0x03, 0x06, 0x60, 0x0D, 0x00, 0x01, 0x20, 0x02, 0x05, 0x1B, (byte)0xB4};
+        SendData startFrame = new SendData(Unpooled.wrappedBuffer(b));
+        SendDataTransaction t = new SendDataTransaction(startFrame, true);
+        assertFalse(t.isComplete());
+
+        assertTrue(t.addFrame(new ACK()));
+        assertFalse(t.isComplete());
+        assertFalse(t.hasError());
+
+        b = new byte[] {0x01, 0x04, 0x01, 0x13, 0x01, (byte)0xE8};
+        assertTrue(t.addFrame(new SendData(Unpooled.wrappedBuffer(b))));
+        assertFalse(t.isComplete());
+        assertFalse(t.hasError());
+
+        assertFalse(t.addFrame(new ApplicationCommand(Unpooled.wrappedBuffer(new byte[] {0x01, 0x0D, 0x00, 0x04, 0x00, 0x03, 0x07, 0x60, 0x0D, 0x01, 0x00, 0x20, 0x03, (byte)0xFF, 0x42}))));
+        assertFalse(t.isComplete());
+        assertFalse(t.hasError());
+
+        b = new byte[] {0x01, 0x05, 0x00, 0x13, 0x1B, 0x01, (byte)0xF3};
+        assertTrue(t.addFrame(new SendData(Unpooled.wrappedBuffer(b))));
+        assertTrue(t.isComplete());
+        assertFalse(t.hasError());
+
+    }
 }
