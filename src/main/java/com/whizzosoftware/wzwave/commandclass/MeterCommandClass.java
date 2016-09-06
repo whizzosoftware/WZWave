@@ -25,25 +25,11 @@ public class MeterCommandClass extends CommandClass {
 
     public static final byte ID = 0x32;
 
-    public static final byte SCALE_ELECTRIC_KWH = 0x00;
-    public static final byte SCALE_ELECTRIC_KVAH = 0x01;
-    public static final byte SCALE_ELECTRIC_W = 0x02;
-    public static final byte SCALE_ELECTRIC_PULSES = 0x03;
-    public static final byte SCALE_GAS_CUBIC_M = 0x00;
-    public static final byte SCALE_GAS_CUBIC_FT = 0x01;
-    public static final byte SCALE_GAS_PULSES = 0x03;
-    public static final byte SCALE_WATER_CUBIC_M = 0x00;
-    public static final byte SCALE_WATER_CUBIC_FT = 0x01;
-    public static final byte SCALE_WATER_US_GAL = 0x02;
-    public static final byte SCALE_WATER_PULSES = 0x03;
-
     private static final byte METER_GET = 0x01;
     private static final byte METER_REPORT = 0x02;
-    private static final byte METER_SUPPORTED_GET = 0x03;
-    private static final byte METER_SUPPORTED_REPORT = 0x04;
-    private static final byte METER_RESET = 0x05;
 
-    private MeterType type;
+    private Type type;
+    private Scale scale;
     private Double currentValue;
     private Double previousValue;
     private Integer delta;
@@ -63,8 +49,12 @@ public class MeterCommandClass extends CommandClass {
         return 2;
     }
 
-    public MeterType getMeterType() {
+    public Type getType() {
         return type;
+    }
+
+    public Scale getScale() {
+        return scale;
     }
 
     public Double getCurrentValue() {
@@ -91,37 +81,85 @@ public class MeterCommandClass extends CommandClass {
 
     @Override
     public int queueStartupMessages(NodeContext context, byte nodeId) {
-        context.sendDataFrame(createGet(nodeId, (byte)0x00));
+        context.sendDataFrame(createGet(nodeId, null));
         return 1;
     }
 
     private void parseMeterReport(byte[] ccb, int startIndex, int version) {
-        // read meter type
-        int meterType;
+        // read meter type & scale
+        int t;
         if (version > 1) {
-            meterType = ccb[startIndex + 2] & 0x1F;
+            t = ccb[startIndex + 2] & 0x1F;
         } else {
-            meterType = ccb[startIndex + 2];
+            t = ccb[startIndex + 2];
         }
-        switch (meterType) {
+        int s = (ccb[startIndex + 3] >> 3) & 0x03;
+
+        switch (t) {
             case 1:
-                type = MeterType.Electric;
+                type = Type.Electric;
+                switch (s) {
+                    case 0:
+                        scale = Scale.KilowattHours;
+                        break;
+                    case 1:
+                        scale = Scale.KilovoltAmpereHours;
+                        break;
+                    case 2:
+                        scale = Scale.Watts;
+                        break;
+                    case 3:
+                        scale = Scale.PulseCount;
+                        break;
+                    default:
+                        scale = Scale.Reserved;
+                        break;
+                }
                 break;
             case 2:
-                type = MeterType.Gas;
+                type = Type.Gas;
+                switch (s) {
+                    case 0:
+                        scale = Scale.CubicMeters;
+                        break;
+                    case 1:
+                        scale = Scale.CubicFeet;
+                        break;
+                    case 3:
+                        scale = Scale.PulseCount;
+                        break;
+                    default:
+                        scale = Scale.Reserved;
+                        break;
+                }
                 break;
             case 3:
-                type = MeterType.Water;
+                type = Type.Water;
+                switch (s) {
+                    case 0:
+                        scale = Scale.CubicMeters;
+                        break;
+                    case 1:
+                        scale = Scale.CubicFeet;
+                        break;
+                    case 2:
+                        scale = Scale.USGallons;
+                        break;
+                    case 3:
+                        scale = Scale.PulseCount;
+                        break;
+                    default:
+                        scale = Scale.Reserved;
+                }
                 break;
             default:
-                logger.warn("Found unknown meter type: {}", meterType);
-                type = MeterType.Unknown;
+                logger.warn("Found unknown meter type: {}", t);
+                type = Type.Unknown;
                 break;
         }
 
         // read precision, scale and size
         int precision = (ccb[startIndex + 3] >> 5) & 0x07;
-        int scale = (ccb[startIndex + 3] >> 3) & 0x03;
         int size = ccb[startIndex + 3] & 0x07;
         logger.trace("{} meter precision: {}, size: {}, scale: {}", type, precision, size, scale);
 
@@ -142,15 +180,16 @@ public class MeterCommandClass extends CommandClass {
      * Create a Get data frame.
      *
      * @param nodeId the target node ID
-     * @param scale the scale (0x00 for version 1)
+     * @param s the scale (null for version 1)
      *
      * @return a DataFrame instance
      */
-    public DataFrame createGet(byte nodeId, byte scale) {
+    public DataFrame createGet(byte nodeId, Scale s) {
         switch (getVersion()) {
             case 1:
                 return createSendDataFrame("METER_GET", nodeId, new byte[]{MeterCommandClass.ID, METER_GET}, true);
             default: {
+                byte scale = scaleToByte(s);
                 byte b = (byte) ((scale << 3) & 0x18);
                 return createSendDataFrame("METER_GET", nodeId, new byte[]{MeterCommandClass.ID, METER_GET, b}, true);
             }
@@ -158,10 +197,40 @@ public class MeterCommandClass extends CommandClass {
         }
     }
 
-    public enum MeterType {
+    private byte scaleToByte(Scale s) {
+        switch (s) {
+            case KilowattHours:
+            case CubicMeters:
+                return 0;
+            case KilovoltAmpereHours:
+            case CubicFeet:
+                return 1;
+            case Watts:
+            case USGallons:
+            case Reserved:
+                return 2;
+            case PulseCount:
+                return 3;
+            default:
+                return 0;
+        }
+    }
+
+    public enum Type {
         Unknown,
         Electric,
         Gas,
         Water
+    }
+
+    public enum Scale {
+        KilowattHours,
+        KilovoltAmpereHours,
+        Watts,
+        PulseCount,
+        CubicMeters,
+        CubicFeet,
+        USGallons,
+        Reserved
     }
 }

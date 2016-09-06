@@ -100,7 +100,7 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
                         } else {
                             logger.trace("Detected transaction error for {}", tid);
                             processingTransactionCompletion = false;
-                            attemptResend(ctx);
+                            attemptResend(ctx, currentDataFrameTransaction.hasCAN());
                         }
                     }
                 } else {
@@ -124,7 +124,7 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
             if (tce.isTimeout()) {
                 if (tce.getId().equals(currentDataFrameTransaction.getId())) {
                     logger.trace("Transaction timed out");
-                    attemptResend(ctx);
+                    attemptResend(ctx, false);
                 }
             } else {
                 ctx.fireUserEventTriggered(evt);
@@ -183,11 +183,16 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
         currentDataFrameTransaction = null;
     }
 
-    private void attemptResend(ChannelHandlerContext ctx) {
+    private void attemptResend(ChannelHandlerContext ctx, boolean wasCANReceived) {
         DataFrame startFrame = currentDataFrameTransaction.getStartFrame();
         if (startFrame.getSendCount() < MAX_SEND_COUNT) {
             logger.debug("Transaction has failed - will reset transaction and resend initial request");
             currentDataFrameTransaction.reset();
+            // if a CAN was received, then we decrement the send count by one so this attempt doesn't count
+            // towards the maximum resend count
+            if (wasCANReceived) {
+                startFrame.decrementSendCount();
+            }
             ctx.channel().writeAndFlush(startFrame);
         } else {
             logger.debug("Transaction has failed and has exceeded max resends - aborting");

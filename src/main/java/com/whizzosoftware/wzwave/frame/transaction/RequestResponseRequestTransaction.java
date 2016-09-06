@@ -7,10 +7,7 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.frame.transaction;
 
-import com.whizzosoftware.wzwave.frame.ACK;
-import com.whizzosoftware.wzwave.frame.DataFrame;
-import com.whizzosoftware.wzwave.frame.DataFrameType;
-import com.whizzosoftware.wzwave.frame.Frame;
+import com.whizzosoftware.wzwave.frame.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,8 +46,11 @@ public class RequestResponseRequestTransaction extends AbstractDataFrameTransact
                     logger.trace("Received ACK as expected");
                     state = STATE_ACK_RECEIVED;
                     return true;
+                } else if (bs instanceof CAN) {
+                    setError("Received CAN; will re-send", true);
+                    return true;
                 } else {
-                    setError("Received unexpected frame for STATE_REQUEST_SENT: " + bs);
+                    setError("Received unexpected frame for STATE_REQUEST_SENT: " + bs, false);
                 }
                 break;
 
@@ -63,16 +63,19 @@ public class RequestResponseRequestTransaction extends AbstractDataFrameTransact
                             state = STATE_RESPONSE_RECEIVED;
                             return true;
                         } else {
-                            setError(getStartFrame().getClass().getName() + " not sent successfully");
+                            setError(getStartFrame().getClass().getName() + " not sent successfully", false);
                             state = STATE_FAILED;
                             return true;
                         }
                     } else {
-                        setError("Received frame but doesn't appear to be a response: " + bs);
+                        setError("Received frame but doesn't appear to be a response: " + bs, false);
                         state = STATE_FAILED;
                     }
+                } else if (bs instanceof CAN) {
+                    setError("Received CAN; will re-send", true);
+                    return true;
                 } else {
-                    setError("Received unexpected frame for STATE_ACK_RECEIVED");
+                    setError("Received unexpected frame for STATE_ACK_RECEIVED", false);
                     state = STATE_FAILED;
                 }
                 break;
@@ -85,11 +88,14 @@ public class RequestResponseRequestTransaction extends AbstractDataFrameTransact
                         finalFrame = (DataFrame)bs;
                         return true;
                     } else {
-                        setError("Received data frame but doesn't appear to be a request: " + bs);
+                        setError("Received data frame but doesn't appear to be a request: " + bs, false);
                         state = STATE_FAILED;
                     }
+                } else if (bs instanceof CAN) {
+                    setError("Received CAN; will re-send", true);
+                    return true;
                 } else {
-                    setError("Received unexpected frame for STATE_RETVAL_RECEIVED");
+                    setError("Received unexpected frame for STATE_RETVAL_RECEIVED", false);
                     state = STATE_FAILED;
                 }
                 break;

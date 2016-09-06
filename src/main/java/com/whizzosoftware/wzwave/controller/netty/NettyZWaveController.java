@@ -349,10 +349,12 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
                 case AddNodeToNetwork.ADD_NODE_STATUS_LEARN_READY:
                     onZWaveInclusionStarted();
                     break;
+                case AddNodeToNetwork.ADD_NODE_STATUS_DONE:
+                    onZWaveInclusionStopped();
+                    break;
                 case AddNodeToNetwork.ADD_NODE_STATUS_ADDING_CONTROLLER:
                 case AddNodeToNetwork.ADD_NODE_STATUS_ADDING_SLAVE:
                     onZWaveInclusion(update.getNodeInfo(), true);
-                    onZWaveInclusionStopped();
                     break;
                 case AddNodeToNetwork.ADD_NODE_STATUS_FAILED:
                     onZWaveInclusion(update.getNodeInfo(), false);

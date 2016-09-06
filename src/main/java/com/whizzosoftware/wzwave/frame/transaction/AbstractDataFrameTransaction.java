@@ -26,6 +26,7 @@ abstract public class AbstractDataFrameTransaction implements DataFrameTransacti
     private String id = UUID.randomUUID().toString();
     private DataFrame startFrame;
     private boolean hasError;
+    private boolean hasCAN;
 
     public AbstractDataFrameTransaction(DataFrame startFrame) {
         this.startFrame = startFrame;
@@ -47,8 +48,13 @@ abstract public class AbstractDataFrameTransaction implements DataFrameTransacti
         return hasError;
     }
 
-    protected void setError(String msg) {
+    public boolean hasCAN() {
+        return hasCAN;
+    }
+
+    protected void setError(String msg, boolean can) {
         logger.error(msg);
         this.hasError = true;
+        this.hasCAN = can;
     }
 }

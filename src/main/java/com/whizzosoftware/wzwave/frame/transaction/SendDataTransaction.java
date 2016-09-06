@@ -61,7 +61,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                     state = STATE_ACK_RECEIVED;
                     return true;
                 } else if (bs instanceof CAN) {
-                    setError("Received CAN; will re-send");
+                    setError("Received CAN; will re-send", true);
                     return true;
                 } else {
                     logger.warn("Received unexpected frame for STATE_REQUEST_SENT: {}", bs);
@@ -70,7 +70,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
 
             case STATE_ACK_RECEIVED:
                 if (bs instanceof CAN) {
-                    setError("Received CAN; will re-send");
+                    setError("Received CAN; will re-send", true);
                     return true;
                 } else if (bs instanceof SendData) {
                     if (((SendData)bs).getType() == DataFrameType.RESPONSE) {
@@ -78,7 +78,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                         state = STATE_RESPONSE_RECEIVED;
                         return true;
                     } else {
-                        setError("Received frame but doesn't appear to be a response: " + bs);
+                        setError("Received frame but doesn't appear to be a response: " + bs, false);
                     }
                 } else {
                     logger.warn("Received unexpected frame for STATE_ACK_RECEIVED: {}", bs);
@@ -87,7 +87,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
 
             case STATE_RESPONSE_RECEIVED:
                 if (bs instanceof CAN) {
-                    setError("Received CAN; will re-send");
+                    setError("Received CAN; will re-send", true);
                     return true;
                 } else if (bs instanceof SendData) {
                     if (((SendData)bs).getType() == DataFrameType.REQUEST) {
@@ -101,7 +101,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                         }
                         return true;
                     } else {
-                        setError("Received data frame but doesn't appear to be a request: " + bs);
+                        setError("Received data frame but doesn't appear to be a request: " + bs, false);
                     }
                 } else if (bs instanceof ApplicationCommand) {
                     // sometimes the ApplicationCommand is returned before the SendData callback; flag that case here
@@ -113,7 +113,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
 
             case STATE_CALLBACK_RECEIVED:
                 if (bs instanceof CAN) {
-                    setError("Received CAN; will re-send");
+                    setError("Received CAN; will re-send", true);
                     return true;
                 } else if (bs instanceof ApplicationCommand) {
                     logger.trace("Application command received for {}", getStartFrame().getClass().getName());

@@ -57,6 +57,13 @@ public interface DataFrameTransaction {
     boolean hasError();
 
     /**
+     * Indicates whether the transaction ended due to a CAN.
+     *
+     * @return a boolean
+     */
+    boolean hasCAN();
+
+    /**
      * Identifies whether the transaction is complete.
      *
      * @return a boolean

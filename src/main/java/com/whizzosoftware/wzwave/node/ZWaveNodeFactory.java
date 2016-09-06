@@ -12,7 +12,6 @@ package com.whizzosoftware.wzwave.node;
 import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.node.generic.*;
 import com.whizzosoftware.wzwave.node.specific.*;
-import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 
 /**
@@ -76,6 +75,13 @@ public class ZWaveNodeFactory {
                         return new SimpleMeter(context, info, newlyIncluded, listening, listener);
                     default:
                         return new Meter(context, info, newlyIncluded, listening, listener);
+                }
+            }
+
+            case MultilevelSensor.ID: {
+                switch (info.getSpecificDeviceClass()) {
+                    default:
+                        return new MultilevelSensor(context, info, newlyIncluded, listening, listener);
                 }
             }
 

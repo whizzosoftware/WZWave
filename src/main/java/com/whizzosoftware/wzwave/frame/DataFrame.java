@@ -67,6 +67,10 @@ abstract public class DataFrame extends Frame {
         sendCount++;
     }
 
+    public void decrementSendCount() {
+        sendCount--;
+    }
+
     public boolean hasTransactionId() {
         return (transactionId != null);
     }

@@ -17,7 +17,7 @@ public class MeterCommandClassTest {
     @Test
     public void testMeterGetv1() {
         MeterCommandClass mcc = new MeterCommandClass();
-        DataFrame frame = mcc.createGet((byte)3, (byte)0x00);
+        DataFrame frame = mcc.createGet((byte)3, null);
         byte[] b = frame.getBytes();
         assertEquals(11, b.length);
         assertEquals(0x01, b[0]); // SOF
@@ -35,7 +35,7 @@ public class MeterCommandClassTest {
     public void testMeterGetv2() {
         MeterCommandClass mcc = new MeterCommandClass();
         mcc.setVersion(2);
-        DataFrame frame = mcc.createGet((byte)4, MeterCommandClass.SCALE_ELECTRIC_W);
+        DataFrame frame = mcc.createGet((byte)4, MeterCommandClass.Scale.Watts);
         byte[] b = frame.getBytes();
         assertEquals(12, b.length);
         assertEquals(0x01, b[0]); // SOF
@@ -57,7 +57,7 @@ public class MeterCommandClassTest {
         cc.setVersion(2);
         cc.onApplicationCommand(null, ccb, 0);
 
-        assertEquals(MeterCommandClass.MeterType.Electric, cc.getMeterType());
+        assertEquals(MeterCommandClass.Type.Electric, cc.getType());
         assertEquals((Integer)130, cc.getDelta());
         assertEquals((Double)0.012, cc.getCurrentValue());
         assertEquals((Double)0.002, cc.getPreviousValue());
@@ -70,7 +70,7 @@ public class MeterCommandClassTest {
         cc.setVersion(2);
         cc.onApplicationCommand(null, ccb, 0);
 
-        assertEquals(MeterCommandClass.MeterType.Electric, cc.getMeterType());
+        assertEquals(MeterCommandClass.Type.Electric, cc.getType());
         assertEquals(600, (int)cc.getDelta());
         assertEquals(12065.298, cc.getCurrentValue(), 3);
         assertEquals(12060.678, cc.getPreviousValue(), 3);
@@ -83,7 +83,7 @@ public class MeterCommandClassTest {
         cc.setVersion(2);
         cc.onApplicationCommand(null, ccb, 0);
 
-        assertEquals(MeterCommandClass.MeterType.Electric, cc.getMeterType());
+        assertEquals(MeterCommandClass.Type.Electric, cc.getType());
         assertEquals((Double)0.03, cc.getCurrentValue());
         assertNull(cc.getPreviousValue());
         assertNull(cc.getDelta());

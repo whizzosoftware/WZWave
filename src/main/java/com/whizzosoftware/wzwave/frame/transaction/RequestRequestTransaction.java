@@ -43,7 +43,7 @@ public class RequestRequestTransaction extends AbstractDataFrameTransaction {
                     state = STATE_ACK_RECEIVED;
                     return true;
                 } else if (f instanceof CAN) {
-                    setError("Received CAN; will re-send");
+                    setError("Received CAN; will re-send", true);
                     return true;
                 } else {
                     logger.error("Received unexpected frame for STATE_REQUEST_SENT: " + f);
@@ -52,7 +52,7 @@ public class RequestRequestTransaction extends AbstractDataFrameTransaction {
 
             case STATE_ACK_RECEIVED:
                 if (f instanceof CAN) {
-                    setError("Received CAN; will re-send");
+                    setError("Received CAN; will re-send", true);
                     return true;
                 } else if (f instanceof DataFrame && f.getClass() == getStartFrame().getClass()) {
                     if (((DataFrame)f).getType() == DataFrameType.REQUEST) {
@@ -61,10 +61,10 @@ public class RequestRequestTransaction extends AbstractDataFrameTransaction {
                         finalFrame = ((DataFrame)f);
                         return true;
                     } else {
-                        setError("Expected frame received but does not appear to be a request: " + f);
+                        setError("Expected frame received but does not appear to be a request: " + f, false);
                     }
                 } else {
-                    setError("Received unexpected frame for STATE_ACK_RECEIVED: " + f);
+                    setError("Received unexpected frame for STATE_ACK_RECEIVED: " + f, false);
                 }
                 break;
         }
