@@ -7,12 +7,24 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.commandclass;
 
+import com.whizzosoftware.wzwave.frame.SendData;
+import com.whizzosoftware.wzwave.node.MockNodeContext;
+import com.whizzosoftware.wzwave.persist.MockPersistenceContext;
+import com.whizzosoftware.wzwave.persist.mapdb.MapDbPersistentStore;
 import com.whizzosoftware.wzwave.product.ProductInfo;
 import com.whizzosoftware.wzwave.product.ProductRegistry;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import java.io.IOException;
+
 import static org.junit.Assert.*;
 
 public class ManufacturerSpecificCommandClassTest {
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
+
     @Test
     public void testParseManufacturerSpecificData() throws CommandClassParseException {
         ManufacturerSpecificCommandClass mscc = new ManufacturerSpecificCommandClass();
@@ -63,5 +75,84 @@ public class ManufacturerSpecificCommandClassTest {
             fail("Should have thrown exception");
         } catch (CommandClassParseException ignored) {
         }
+    }
+
+    @Test
+    public void testQueuedStartupMessagesWithNoProductInfo() {
+        MockNodeContext ctx = new MockNodeContext((byte)0x02, null);
+        ManufacturerSpecificCommandClass c = new ManufacturerSpecificCommandClass();
+        c.queueStartupMessages(ctx, (byte)0x02);
+        assertEquals(1, ctx.getSentDataFrames().size());
+        assertEquals("MANUFACTURER_SPECIFIC_GET", ((SendData)ctx.getSentDataFrames().get(0)).getName());
+    }
+
+    @Test
+    public void testQueuedStartupMessagesWithProductInfo() {
+        MockNodeContext ctx = new MockNodeContext((byte)0x02, null);
+        ManufacturerSpecificCommandClass c = new ManufacturerSpecificCommandClass();
+        c.setProductInfo(ProductRegistry.lookupProduct(-122, 3, 6));
+        c.queueStartupMessages(ctx, (byte)0x02);
+        assertEquals(0, ctx.getSentDataFrames().size());
+        assertEquals(ProductRegistry.P_SMART_ENERGY_SWITCH, c.getProductInfo().getName());
+        assertEquals(ProductRegistry.M_AEON_LABS, c.getProductInfo().getManufacturer());
+    }
+
+    @Test
+    public void testQueuedStartupMessagesWithNullManufacturer() {
+        MockNodeContext ctx = new MockNodeContext((byte)0x02, null);
+        ManufacturerSpecificCommandClass c = new ManufacturerSpecificCommandClass();
+        c.setProductInfo(ProductRegistry.lookupProduct(null, null, null));
+        c.queueStartupMessages(ctx, (byte)0x02);
+        assertEquals(0, ctx.getSentDataFrames().size());
+        assertNull(c.getProductInfo().getName());
+        assertNull(c.getProductInfo().getManufacturer());
+    }
+
+    @Test
+    public void testQueuedStartupMessagesWithNullProductType() {
+        MockNodeContext ctx = new MockNodeContext((byte)0x02, null);
+        ManufacturerSpecificCommandClass c = new ManufacturerSpecificCommandClass();
+        c.setProductInfo(ProductRegistry.lookupProduct(-122, null, null));
+        c.queueStartupMessages(ctx, (byte)0x02);
+        assertEquals(0, ctx.getSentDataFrames().size());
+        assertEquals("Unknown", c.getProductInfo().getName());
+        assertEquals(ProductRegistry.M_AEON_LABS, c.getProductInfo().getManufacturer());
+    }
+
+    @Test
+    public void testQueuedStartupMessagesWithNullProduct() {
+        MockNodeContext ctx = new MockNodeContext((byte)0x02, null);
+        ManufacturerSpecificCommandClass c = new ManufacturerSpecificCommandClass();
+        c.setProductInfo(ProductRegistry.lookupProduct(-122, 3, null));
+        c.queueStartupMessages(ctx, (byte)0x02);
+        assertEquals(0, ctx.getSentDataFrames().size());
+        assertEquals("Unknown", c.getProductInfo().getName());
+        assertEquals(ProductRegistry.M_AEON_LABS, c.getProductInfo().getManufacturer());
+    }
+
+    @Test
+    public void testSaveAndRestoreWithProductInfo() throws IOException {
+        MapDbPersistentStore s = new MapDbPersistentStore(folder.newFolder());
+        ManufacturerSpecificCommandClass c = new ManufacturerSpecificCommandClass();
+        c.setProductInfo(ProductRegistry.lookupProduct(-122, 3, 6));
+        c.save(s.getContext(), (byte)0x02);
+        c = new ManufacturerSpecificCommandClass();
+        c.restore(s.getContext(), (byte)0x02);
+        assertNotNull(c.getProductInfo());
+        assertEquals(ProductRegistry.P_SMART_ENERGY_SWITCH, c.getProductInfo().getName());
+        assertEquals(ProductRegistry.M_AEON_LABS, c.getProductInfo().getManufacturer());
+    }
+
+    @Test
+    public void testSaveAndRestoreWithNullProductInfo() throws IOException {
+        MapDbPersistentStore s = new MapDbPersistentStore(folder.newFolder());
+        ManufacturerSpecificCommandClass c = new ManufacturerSpecificCommandClass();
+        c.setProductInfo(ProductRegistry.lookupProduct(null, null, null));
+        c.save(s.getContext(), (byte)0x02);
+        c = new ManufacturerSpecificCommandClass();
+        c.restore(s.getContext(), (byte)0x02);
+        assertNotNull(c.getProductInfo());
+        assertNull(c.getProductInfo().getName());
+        assertNull(c.getProductInfo().getManufacturer());
     }
 }

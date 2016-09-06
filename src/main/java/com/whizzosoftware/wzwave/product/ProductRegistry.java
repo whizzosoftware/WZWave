@@ -34,13 +34,17 @@ public class ProductRegistry {
 
         logger.debug("Looking up product info: {}, {}, {}", manufacturerId, productTypeId, productId);
 
-        switch (manufacturerId) {
+        int mid = manufacturerId != null ? manufacturerId : 0;
+        int ptid = productTypeId != null ? productTypeId : 0;
+        int pid = productId != null ? productId : 0;
+
+        switch (mid) {
             // Aeon Labs
             case -122:
                 info.setManufacturer(M_AEON_LABS);
-                switch (productTypeId) {
+                switch (ptid) {
                     case 2:
-                        switch (productId) {
+                        switch (pid) {
                             case 9:
                                 info.setName(P_HOME_ENERGY_METER);
                                 break;
@@ -50,7 +54,7 @@ public class ProductRegistry {
                         }
                         break;
                     case 3:
-                        switch (productId) {
+                        switch (pid) {
                             case 6:
                                 info.setName(P_SMART_ENERGY_SWITCH);
                                 break;
@@ -65,23 +69,23 @@ public class ProductRegistry {
             // GE/Jasco
             case 99:
                 info.setManufacturer(M_GE_JASCO);
-                switch (productTypeId) {
+                switch (ptid) {
                     case 17495:
-                        switch (productId) {
+                        switch (pid) {
                             case 12848:
                                 info.setName(P_45612_DIMMER_SWITCH);
                                 break;
                         }
                         break;
                     case 21072:
-                        switch (productId) {
+                        switch (pid) {
                             case 12592:
                                 info.setName(P_45604_OUTDOOR_MODULE);
                                 break;
                         }
                         break;
                     case 21079:
-                        switch (productId) {
+                        switch (pid) {
                             case 13619:
                                 info.setName(P_45609_RELAY_SWITCH);
                                 break;

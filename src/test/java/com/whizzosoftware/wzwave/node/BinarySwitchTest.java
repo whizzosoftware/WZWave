@@ -1,5 +1,6 @@
 package com.whizzosoftware.wzwave.node;
 
+import com.whizzosoftware.wzwave.persist.MockPersistenceContext;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
@@ -19,13 +20,12 @@ public class BinarySwitchTest {
         // make sure it's set to listening to startup commands don't go to wakeup queue
         MockZWaveControllerContext context = new MockZWaveControllerContext();
         BinarySwitch bs = new BinarySwitch(
-            context,
             new NodeInfo((byte)0x02, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID),
             false,
             true,
             null
         );
-
+        bs.startInterview(context);
         assertEquals(0, bs.getWakeupQueueCount());
         assertEquals(1, context.getSentFrameCount());
         assertTrue(context.getSentFrames().get(0) instanceof RequestNodeInfo);
@@ -97,7 +97,6 @@ public class BinarySwitchTest {
 
         // create new binary switch
         BinarySwitch bs = new BinarySwitch(
-            context,
             new NodeInfo((byte)0x01, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID),
             false,
             false,
@@ -120,7 +119,6 @@ public class BinarySwitchTest {
 
         // create new binary switch
         BinarySwitch bs = new BinarySwitch(
-            context,
             new NodeInfo((byte)0x01, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID),
             false,
             false,
@@ -146,12 +144,12 @@ public class BinarySwitchTest {
         // RequestNodeInfo, that it's flagged as both started and inactive.
         MockZWaveControllerContext context = new MockZWaveControllerContext();
         BinarySwitch bs = new BinarySwitch(
-            context,
             new NodeInfo((byte)0x02, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID),
             false,
             true,
             null
         );
+        bs.startInterview(context);
         assertEquals(0, bs.getWakeupQueueCount());
         assertEquals(1, context.getSentFrameCount());
         assertTrue(context.getSentFrames().get(0) instanceof RequestNodeInfo);

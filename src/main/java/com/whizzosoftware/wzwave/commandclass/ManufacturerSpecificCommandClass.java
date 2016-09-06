@@ -1,19 +1,24 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.commandclass;
 
 import com.whizzosoftware.wzwave.frame.DataFrame;
+import com.whizzosoftware.wzwave.persist.PersistenceContext;
 import com.whizzosoftware.wzwave.product.ProductInfo;
 import com.whizzosoftware.wzwave.node.NodeContext;
 import com.whizzosoftware.wzwave.product.ProductRegistry;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * Manufacturer Specific Command Class
@@ -29,6 +34,10 @@ public class ManufacturerSpecificCommandClass extends CommandClass {
     public static final byte ID = 0x72;
 
     private ProductInfo productInfo;
+
+    public DataFrame createGet(byte nodeId) {
+        return createSendDataFrame("MANUFACTURER_SPECIFIC_GET", nodeId, new byte[] {ManufacturerSpecificCommandClass.ID, MANUFACTURER_SPECIFIC_GET}, true);
+    }
 
     @Override
     public byte getId() {
@@ -60,25 +69,56 @@ public class ManufacturerSpecificCommandClass extends CommandClass {
         }
     }
 
-    @Override
-    public int queueStartupMessages(NodeContext context, byte nodeId) {
-        context.sendDataFrame(createGet(nodeId));
-        return 1;
-    }
-
-    public ProductInfo parseManufacturerSpecificData(byte[] ccb, int startIndex) throws CommandClassParseException {
+    ProductInfo parseManufacturerSpecificData(byte[] ccb, int startIndex) throws CommandClassParseException {
         if (ccb.length >= startIndex + 7) {
             return ProductRegistry.lookupProduct(
-                ByteUtil.convertTwoBytesToInt(ccb[startIndex + 2], ccb[startIndex + 3]),
-                ByteUtil.convertTwoBytesToInt(ccb[startIndex + 4], ccb[startIndex + 5]),
-                ByteUtil.convertTwoBytesToInt(ccb[startIndex + 6], ccb[startIndex + 7])
+                    ByteUtil.convertTwoBytesToInt(ccb[startIndex + 2], ccb[startIndex + 3]),
+                    ByteUtil.convertTwoBytesToInt(ccb[startIndex + 4], ccb[startIndex + 5]),
+                    ByteUtil.convertTwoBytesToInt(ccb[startIndex + 6], ccb[startIndex + 7])
             );
         } else {
             throw new CommandClassParseException("Manufacturer data is too short");
         }
     }
 
-    public DataFrame createGet(byte nodeId) {
-        return createSendDataFrame("MANUFACTURER_SPECIFIC_GET", nodeId, new byte[] {ManufacturerSpecificCommandClass.ID, MANUFACTURER_SPECIFIC_GET}, true);
+    @Override
+    public int queueStartupMessages(NodeContext context, byte nodeId) {
+        if (productInfo == null) {
+            context.sendDataFrame(createGet(nodeId));
+            return 1;
+        } else {
+            logger.trace("Skipping initial get since product info known: {}", productInfo);
+            return 0;
+        }
+    }
+
+    @Override
+    public Map<String,Object> restore(PersistenceContext ctx, byte nodeId) {
+        Map<String,Object> map = super.restore(ctx, nodeId);
+        productInfo = ProductRegistry.lookupProduct(
+            (Integer)map.get("manufacturerId"),
+            (Integer)map.get("productTypeId"),
+            (Integer)map.get("productId")
+        );
+        return map;
+    }
+
+    @Override
+    public Map<String,Object> save(PersistenceContext ctx, byte nodeId) {
+        Map<String,Object> map = super.save(ctx, nodeId);
+        if (productInfo.getManufacturerId() != null) {
+            map.put("manufacturerId", productInfo.getManufacturerId());
+        }
+        if (productInfo.getProductTypeId() != null) {
+            map.put("productTypeId", productInfo.getProductTypeId());
+        }
+        if (productInfo.getProductId() != null) {
+            map.put("productId", productInfo.getProductId());
+        }
+        return map;
+    }
+
+    void setProductInfo(ProductInfo productInfo) {
+        this.productInfo = productInfo;
     }
 }

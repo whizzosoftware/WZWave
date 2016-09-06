@@ -12,10 +12,10 @@ package com.whizzosoftware.wzwave.node.generic;
 import com.whizzosoftware.wzwave.commandclass.BasicCommandClass;
 import com.whizzosoftware.wzwave.commandclass.CommandClass;
 import com.whizzosoftware.wzwave.commandclass.MultilevelSensorCommandClass;
-import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.ZWaveNode;
+import com.whizzosoftware.wzwave.persist.PersistenceContext;
 
 /**
  * A Multilevel Sensor node.
@@ -25,11 +25,15 @@ import com.whizzosoftware.wzwave.node.ZWaveNode;
 public class MultilevelSensor extends ZWaveNode {
     public static final byte ID = 0x21;
 
-    public MultilevelSensor(ZWaveControllerContext context, NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(context, info, newlyIncluded, listening, listener);
+    public MultilevelSensor(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
+        super(info, newlyIncluded, listening, listener);
 
         addCommandClass(BasicCommandClass.ID, new BasicCommandClass());
         addCommandClass(MultilevelSensorCommandClass.ID, new MultilevelSensorCommandClass());
+    }
+
+    public MultilevelSensor(PersistenceContext pctx, Byte nodeId, NodeListener listener) {
+        super(pctx, nodeId, listener);
     }
 
     protected CommandClass performBasicCommandClassMapping(BasicCommandClass cc) {

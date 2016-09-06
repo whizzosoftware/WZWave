@@ -81,7 +81,7 @@ public class MeterCommandClass extends CommandClass {
 
     @Override
     public int queueStartupMessages(NodeContext context, byte nodeId) {
-        context.sendDataFrame(createGet(nodeId, null));
+        context.sendDataFrame(createGet(nodeId, scale));
         return 1;
     }
 
@@ -198,21 +198,25 @@ public class MeterCommandClass extends CommandClass {
     }
 
     private byte scaleToByte(Scale s) {
-        switch (s) {
-            case KilowattHours:
-            case CubicMeters:
-                return 0;
-            case KilovoltAmpereHours:
-            case CubicFeet:
-                return 1;
-            case Watts:
-            case USGallons:
-            case Reserved:
-                return 2;
-            case PulseCount:
-                return 3;
-            default:
-                return 0;
+        if (s != null) {
+            switch (s) {
+                case KilowattHours:
+                case CubicMeters:
+                    return 0;
+                case KilovoltAmpereHours:
+                case CubicFeet:
+                    return 1;
+                case Watts:
+                case USGallons:
+                case Reserved:
+                    return 2;
+                case PulseCount:
+                    return 3;
+                default:
+                    return 0;
+            }
+        } else {
+            return 0;
         }
     }
 

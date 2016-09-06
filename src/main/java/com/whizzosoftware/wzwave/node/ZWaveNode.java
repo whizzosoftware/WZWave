@@ -1,20 +1,24 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.node;
 
 import com.whizzosoftware.wzwave.commandclass.*;
 import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.frame.*;
+import com.whizzosoftware.wzwave.persist.PersistenceContext;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * Abstract base class for all Z-Wave nodes.
@@ -26,8 +30,9 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
 
     private Byte basicDeviceClass;
     private boolean listening;
+    private boolean nodeInfoNeeded;
     private Boolean available;
-    private final LinkedList<DataFrame> wakeupQueue = new LinkedList<DataFrame>();
+    private final LinkedList<DataFrame> wakeupQueue = new LinkedList<>();
     protected DataFrame lastSentData;
     protected ZWaveNodeState nodeState;
     private int stateRetries;
@@ -42,27 +47,41 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
     /**
      * Constructor.
      *
-     * @param context the controller context
      * @param info information about the new node
      * @param newlyIncluded whether this node has just been included on the network
      * @param listening indicates whether the node is a "actively listening" node
      * @param listener the listener for callbacks
      */
-    public ZWaveNode(ZWaveControllerContext context, NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
+    public ZWaveNode(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
         super(info.getNodeId(), info.getGenericDeviceClass(), info.getSpecificDeviceClass());
 
         this.listening = listening;
         this.listener = listener;
         this.basicDeviceClass = info.getBasicDeviceClass();
+        this.nodeInfoNeeded = true;
+    }
 
-        // if the device is listening, request its node info
-        if (listening && shouldSendRequestNodeInfo()) {
-            sendDataFrame(context, new RequestNodeInfo(info.getNodeId()));
+    public ZWaveNode(PersistenceContext pctx, Byte nodeId, NodeListener listener) {
+        super(pctx, nodeId);
+        this.listener = listener;
+        this.nodeInfoNeeded = false;
+    }
+
+    public void startInterview(ZWaveControllerContext context) {
+        // if the device is listening and we don't already know it, request its node info
+        if (listening && nodeInfoNeeded && shouldSendRequestNodeInfo()) {
             setState(context, ZWaveNodeState.NodeInfo);
+        // if the device is listening and we do know it, get its current state
+        } else if (listening) {
+            setState(context, ZWaveNodeState.RetrieveStatePending);
         // otherwise, set it to started since we won't be able to get its node info
         } else {
             setState(context, ZWaveNodeState.Started);
         }
+    }
+
+    public void setNodeInfoNeeded(boolean nodeInfoNeeded) {
+        this.nodeInfoNeeded = nodeInfoNeeded;
     }
 
     protected void setListening(ZWaveControllerContext context, boolean listening) {
@@ -86,6 +105,10 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
         return (nodeState == ZWaveNodeState.Started);
     }
 
+    public boolean isListening() {
+        return listening;
+    }
+
     public Byte getBasicDeviceClass() {
         return basicDeviceClass;
     }
@@ -100,6 +123,9 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
         this.stateRetries = 0;
 
         switch (nodeState) {
+            case NodeInfo:
+                sendDataFrame(context, new RequestNodeInfo(getNodeId()));
+                break;
             case RetrieveVersionPending:
                 CommandClass cc = getCommandClass(VersionCommandClass.ID);
                 pendingVersionResponses = cc.queueStartupMessages(new WrapperedNodeContext(context, this), getNodeId());
@@ -122,6 +148,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
                 if (listener != null) {
                     listener.onNodeStarted(this);
                 }
+                break;
         }
     }
 
@@ -228,6 +255,28 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
         while (wakeupQueue.size() > 0) {
             queueDataFrame(context, wakeupQueue.pop(), false);
         }
+    }
+
+    public Map<String,Object> restore(PersistenceContext ctx, byte nodeId) {
+        Map<String,Object> map = super.restore(ctx, nodeId);
+        if (map.containsKey("basicDeviceClass")) {
+            basicDeviceClass = (byte)map.get("basicDeviceClass");
+        }
+        this.listening = (boolean)map.get("listening");
+        return map;
+    }
+
+    public Map<String,Object> save(PersistenceContext ctx) {
+        Map<String,Object> map = super.save(ctx);
+        if (basicDeviceClass != null) {
+            map.put("basicDeviceClass", basicDeviceClass);
+        }
+        map.put("listening", listening);
+        return map;
+    }
+
+    public boolean matchesNodeProtocolInfo(NodeProtocolInfo info) {
+        return (getBasicDeviceClass() == info.getBasicDeviceClass() && getGenericDeviceClass() == info.getGenericDeviceClass() && getSpecificDeviceClass() == info.getSpecificDeviceClass());
     }
 
     /**

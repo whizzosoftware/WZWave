@@ -55,7 +55,7 @@ public interface ZWaveControllerListener {
 
     /**
      * Callback when a the Z-Wave controller has either successfully or unsuccessfully included a new node. This
-     * call will be received prior to device interrogation.
+     * call will be received prior to the node interview.
      *
      * @param nodeInfo information about the new node
      * @param success whether the inclusion was successful

@@ -11,7 +11,6 @@ package com.whizzosoftware.wzwave.node.specific;
 
 import com.whizzosoftware.wzwave.commandclass.ManufacturerSpecificCommandClass;
 import com.whizzosoftware.wzwave.commandclass.VersionCommandClass;
-import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.generic.Meter;
@@ -19,8 +18,8 @@ import com.whizzosoftware.wzwave.node.generic.Meter;
 public class SimpleMeter extends Meter {
     static public final byte ID = 0x01;
 
-    public SimpleMeter(ZWaveControllerContext context, NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(context, info, newlyIncluded , listening, listener);
+    public SimpleMeter(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
+        super(info, newlyIncluded , listening, listener);
 
         addCommandClass(ManufacturerSpecificCommandClass.ID, new ManufacturerSpecificCommandClass());
         addCommandClass(VersionCommandClass.ID, new VersionCommandClass());

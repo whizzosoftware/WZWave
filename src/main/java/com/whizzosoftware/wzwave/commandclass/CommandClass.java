@@ -12,6 +12,9 @@ package com.whizzosoftware.wzwave.commandclass;
 import com.whizzosoftware.wzwave.frame.DataFrame;
 import com.whizzosoftware.wzwave.frame.SendData;
 import com.whizzosoftware.wzwave.node.NodeContext;
+import com.whizzosoftware.wzwave.persist.PersistenceContext;
+
+import java.util.Map;
 
 /**
  * Abstract base class for all Command classes
@@ -19,7 +22,7 @@ import com.whizzosoftware.wzwave.node.NodeContext;
  * @author Dan Noguerol
  */
 abstract public class CommandClass {
-    private int version = 1; // always assume version 1 unless told otherwise
+    private Integer version; // always assume version 1 unless told otherwise
 
     /**
      * Returns the command class version
@@ -27,11 +30,21 @@ abstract public class CommandClass {
      * @return the version
      */
     public int getVersion() {
-        return version;
+        return (version != null) ? version : 1;
     }
 
     /**
-     * Returns the highest supported command class version
+     * Indicates whether the version has been set explicitly for this command class.
+     *
+     * @return a boolean
+     */
+    public boolean hasExplicitVersion() {
+        return (version != null);
+    }
+
+    /**
+     * Returns the highest supported command class version. This is determines whether the command class
+     * version needs to be obtained as part of the node interview.
      *
      * @return the version
      */
@@ -46,6 +59,34 @@ abstract public class CommandClass {
      */
     public void setVersion(int version) {
         this.version = version;
+    }
+
+    /**
+     * Restores details about this command class from a persistence context.
+     *
+     * @param ctx the persistence context
+     * @param nodeId the node ID associated with this command class
+     *
+     * @return a Map with the command class properties
+     */
+    public Map<String,Object> restore(PersistenceContext ctx, byte nodeId) {
+        Map<String,Object> map = ctx.getCommandClassMap(nodeId, getId());
+        this.version = (int)map.get("version");
+        return map;
+    }
+
+    /**
+     * Saves details about this command class to a persistence context.
+     *
+     * @param ctx the persistence context
+     * @param nodeId the node ID associated with this command class
+     *
+     * @return a Map with the command class properties
+     */
+    public Map<String,Object> save(PersistenceContext ctx, byte nodeId) {
+        Map<String,Object> map = ctx.getCommandClassMap(nodeId, getId());
+        map.put("version", getVersion());
+        return map;
     }
 
     /**

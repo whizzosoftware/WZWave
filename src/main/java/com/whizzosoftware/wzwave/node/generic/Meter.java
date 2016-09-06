@@ -10,18 +10,22 @@
 package com.whizzosoftware.wzwave.node.generic;
 
 import com.whizzosoftware.wzwave.commandclass.BasicCommandClass;
-import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.ZWaveNode;
+import com.whizzosoftware.wzwave.persist.PersistenceContext;
 
 public class Meter extends ZWaveNode {
     public static final byte ID = (byte)0x31;
 
-    public Meter(ZWaveControllerContext context, NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(context, info, newlyIncluded, listening, listener);
+    public Meter(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
+        super(info, newlyIncluded, listening, listener);
 
         addCommandClass(BasicCommandClass.ID, new BasicCommandClass());
+    }
+
+    public Meter(PersistenceContext pctx, Byte nodeId, NodeListener listener) {
+        super(pctx, nodeId, listener);
     }
 
     @Override

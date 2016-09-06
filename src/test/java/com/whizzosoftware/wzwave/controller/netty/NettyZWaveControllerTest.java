@@ -9,16 +9,31 @@
 */
 package com.whizzosoftware.wzwave.controller.netty;
 
+import com.whizzosoftware.wzwave.MockChannel;
 import com.whizzosoftware.wzwave.controller.ZWaveControllerListener;
-import com.whizzosoftware.wzwave.node.NodeInfo;
-import com.whizzosoftware.wzwave.node.ZWaveEndpoint;
+import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
+import com.whizzosoftware.wzwave.frame.RequestNodeInfo;
+import com.whizzosoftware.wzwave.node.*;
+import com.whizzosoftware.wzwave.node.generic.BinarySensor;
+import com.whizzosoftware.wzwave.node.generic.BinarySwitch;
+import com.whizzosoftware.wzwave.node.specific.BinaryPowerSwitch;
+import com.whizzosoftware.wzwave.node.specific.RoutingBinarySensor;
+import com.whizzosoftware.wzwave.persist.MockPersistentStore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import java.io.IOException;
+
 import static org.junit.Assert.*;
 
 public class NettyZWaveControllerTest {
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
+
     @Test
-    public void testOnZWaveControllerInfo() {
-        NettyZWaveController c = new NettyZWaveController("/dev/null");
+    public void testOnZWaveControllerInfo() throws IOException {
+        NettyZWaveController c = new NettyZWaveController("/dev/null", folder.newFolder());
         MockZWaveControllerListener l = new MockZWaveControllerListener();
         c.setListener(l);
         c.onLibraryInfo("Z-Wave 2.7.8\u0000");
@@ -26,6 +41,61 @@ public class NettyZWaveControllerTest {
         assertEquals("Z-Wave 2.7.8\u0000", l.getLibraryVersion());
         assertEquals(22727648, (int)l.getHomeId());
         assertEquals(1, (byte)l.getNodeId());
+    }
+
+    @Test
+    public void testNewPersistentListeningNodeInterview() throws IOException {
+        MockChannel channel = new MockChannel();
+        MockZWaveControllerListener l = new MockZWaveControllerListener();
+        NettyZWaveController c = new NettyZWaveController("/dev/null", folder.newFolder());
+        c.setChannel(channel);
+        c.setListener(l);
+        assertEquals(0, c.getNodes().size());
+        assertEquals(0, channel.getWrittenMessageCount());
+
+        c.onNodeProtocolInfo((byte)0x02, new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID, true));
+        assertEquals(1, c.getNodes().size());
+        assertEquals(1, channel.getWrittenMessageCount());
+        assertTrue(channel.getWrittenMessage(0) instanceof RequestNodeInfo);
+        assertEquals(ZWaveNodeState.NodeInfo, c.getNode((byte)0x02).getState());
+    }
+
+    @Test
+    public void testNewPersistentNonListeningNodeInterview() throws IOException {
+        MockChannel channel = new MockChannel();
+        MockZWaveControllerListener l = new MockZWaveControllerListener();
+        NettyZWaveController c = new NettyZWaveController("/dev/null", folder.newFolder());
+        c.setChannel(channel);
+        c.setListener(l);
+        assertEquals(0, c.getNodes().size());
+        assertEquals(0, channel.getWrittenMessageCount());
+
+        c.onNodeProtocolInfo((byte)0x02, new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID, true));
+        assertEquals(1, c.getNodes().size());
+        assertEquals(0, channel.getWrittenMessageCount());
+        assertEquals(ZWaveNodeState.Started, c.getNode((byte)0x02).getState());
+    }
+
+
+    @Test
+    public void testExistingPersistentListeningNodeInterview() throws IOException {
+        MockChannel channel = new MockChannel();
+        MockZWaveControllerListener l = new MockZWaveControllerListener();
+        MockPersistentStore store = new MockPersistentStore();
+        ZWaveNode node = new BinaryPowerSwitch(new NodeInfo((byte)0x02, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID), false, true, null);
+        node.setNodeInfoNeeded(false);
+        store.saveNode(node);
+        NettyZWaveController c = new NettyZWaveController("/dev/null", store);
+        c.setChannel(channel);
+        c.setListener(l);
+        assertEquals(0, c.getNodes().size());
+        assertEquals(0, channel.getWrittenMessageCount());
+        assertNull(node.getState());
+
+        c.onNodeProtocolInfo((byte)0x02, new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID, true));
+        assertEquals(1, c.getNodes().size());
+        assertEquals(2, channel.getWrittenMessageCount());
+        assertEquals(ZWaveNodeState.RetrieveStateSent, node.getState());
     }
 
     private class MockZWaveControllerListener implements ZWaveControllerListener {

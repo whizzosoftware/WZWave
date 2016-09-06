@@ -12,7 +12,7 @@ public class StaticControllerTest {
     @Test
     public void testNoRequestNodeInfo() {
         MockZWaveControllerContext ctx = new MockZWaveControllerContext();
-        PCController c = new PCController(ctx, new NodeInfo((byte)0x01, BasicDeviceClasses.ROUTING_SLAVE, StaticController.ID, PCController.ID), null);
+        PCController c = new PCController(new NodeInfo((byte)0x01, BasicDeviceClasses.ROUTING_SLAVE, StaticController.ID, PCController.ID), null);
         // PC Controller should not send out a RequestNodeInfo frame
         assertEquals(0, ctx.getSentFrameCount());
     }
