@@ -18,24 +18,24 @@ import static org.junit.Assert.*;
 public class ZWaveNodeFactoryTest {
     @Test
     public void testCreateDiscoveredNode() throws Exception {
-        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte)0x00, StaticController.ID, (byte)0x00), false, false, null) instanceof StaticController);
-        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte)0x00, StaticController.ID, (byte)0x02), false, false, null) instanceof StaticController);
-        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte)0x00, StaticController.ID, PCController.ID), false, false, null) instanceof StaticController);
+        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte)0x00, StaticController.ID, (byte)0x00), false, null) instanceof StaticController);
+        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte)0x00, StaticController.ID, (byte)0x02), false, null) instanceof StaticController);
+        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte)0x00, StaticController.ID, PCController.ID), false, null) instanceof StaticController);
 
-        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte)0x00, BinarySensor.ID, (byte)0x00), false, false, null) instanceof BinarySensor);
-        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte)0x00, BinarySensor.ID, RoutingBinarySensor.ID), false, false, null) instanceof RoutingBinarySensor);
+        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte)0x00, BinarySensor.ID, (byte)0x00), false, null) instanceof BinarySensor);
+        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte)0x00, BinarySensor.ID, RoutingBinarySensor.ID), false, null) instanceof RoutingBinarySensor);
 
-        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte)0x00, BinarySwitch.ID, (byte)0x00), false, false, null) instanceof BinarySwitch);
-        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte) 0x00, BinarySwitch.ID, BinaryPowerSwitch.ID), false, false, null) instanceof BinaryPowerSwitch);
+        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte)0x00, BinarySwitch.ID, (byte)0x00), false, null) instanceof BinarySwitch);
+        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte) 0x00, BinarySwitch.ID, BinaryPowerSwitch.ID), false, null) instanceof BinaryPowerSwitch);
 
-        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte) 0x00, MultilevelSwitch.ID, (byte)0x00), false, false, null) instanceof MultilevelSwitch);
-        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte) 0x00, MultilevelSwitch.ID, MultilevelPowerSwitch.ID), false, false, null) instanceof MultilevelPowerSwitch);
+        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte) 0x00, MultilevelSwitch.ID, (byte)0x00), false, null) instanceof MultilevelSwitch);
+        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte) 0x00, MultilevelSwitch.ID, MultilevelPowerSwitch.ID), false, null) instanceof MultilevelPowerSwitch);
     }
 
     @Test
     public void testCreatePersistedNode() throws NodeCreationException {
         MockPersistenceContext pctx = new MockPersistenceContext();
-        ZWaveNode node = ZWaveNodeFactory.createNode(new NodeInfo((byte)0x02, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID), false, true, null);
+        ZWaveNode node = ZWaveNodeFactory.createNode(new NodeInfo((byte)0x02, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID), true, null);
         node.save(pctx);
 
         node = ZWaveNodeFactory.createNode(pctx, (byte)0x02, null);

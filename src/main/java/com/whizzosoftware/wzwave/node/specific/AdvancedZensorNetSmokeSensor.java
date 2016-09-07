@@ -21,8 +21,8 @@ import com.whizzosoftware.wzwave.persist.PersistenceContext;
 public class AdvancedZensorNetSmokeSensor extends AlarmSensor {
     static public final byte ID = 0x0A;
 
-    public AdvancedZensorNetSmokeSensor(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(info, listening, newlyIncluded, listener);
+    public AdvancedZensorNetSmokeSensor(NodeInfo info, boolean listening, NodeListener listener) {
+        super(info, listening, listener);
 
         addCommandClass(AlarmSensor.ID, new AlarmSensorCommandClass());
         addCommandClass(ManufacturerSpecificCommandClass.ID, new ManufacturerSpecificCommandClass());

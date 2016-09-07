@@ -21,11 +21,10 @@ public class BinarySwitchTest {
         MockZWaveControllerContext context = new MockZWaveControllerContext();
         BinarySwitch bs = new BinarySwitch(
             new NodeInfo((byte)0x02, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID),
-            false,
             true,
             null
         );
-        bs.startInterview(context);
+        bs.startInterview(context, false);
         assertEquals(0, bs.getWakeupQueueCount());
         assertEquals(1, context.getSentFrameCount());
         assertTrue(context.getSentFrames().get(0) instanceof RequestNodeInfo);
@@ -99,7 +98,6 @@ public class BinarySwitchTest {
         BinarySwitch bs = new BinarySwitch(
             new NodeInfo((byte)0x01, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID),
             false,
-            false,
             null
         );
 
@@ -120,7 +118,6 @@ public class BinarySwitchTest {
         // create new binary switch
         BinarySwitch bs = new BinarySwitch(
             new NodeInfo((byte)0x01, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID),
-            false,
             false,
             null
         );
@@ -145,11 +142,10 @@ public class BinarySwitchTest {
         MockZWaveControllerContext context = new MockZWaveControllerContext();
         BinarySwitch bs = new BinarySwitch(
             new NodeInfo((byte)0x02, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID),
-            false,
             true,
             null
         );
-        bs.startInterview(context);
+        bs.startInterview(context, false);
         assertEquals(0, bs.getWakeupQueueCount());
         assertEquals(1, context.getSentFrameCount());
         assertTrue(context.getSentFrames().get(0) instanceof RequestNodeInfo);

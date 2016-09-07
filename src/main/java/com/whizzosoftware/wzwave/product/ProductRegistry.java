@@ -19,6 +19,7 @@ public class ProductRegistry {
     private static final Logger logger = LoggerFactory.getLogger(ProductRegistry.class);
 
     public final static String M_AEON_LABS = "Aeon Labs";
+    public final static String M_EVERSPRING = "Everspring";
     public final static String M_GE_JASCO = "GE/Jasco";
 
     public final static String P_45604_OUTDOOR_MODULE = "45604 Outdoor Module";
@@ -26,8 +27,10 @@ public class ProductRegistry {
     public final static String P_45612_DIMMER_SWITCH = "45612 Dimmer Switch";
     public final static String P_HOME_ENERGY_METER = "Home Energy Meter";
     public final static String P_HOME_ENERGY_METER_G2 = "Home Energy Meter G2";
+    public final static String P_SM103_DOOR_WINDOW_SENSOR = "SM103 Door/Window Sensor";
     public final static String P_SMART_ENERGY_SWITCH = "Smart Energy Switch";
     public final static String P_SMART_ENERGY_STRIP = "Smart Energy Strip";
+    public final static String P_WATER_SENSOR = "Water Sensor";
 
     static public ProductInfo lookupProduct(Integer manufacturerId, Integer productTypeId, Integer productId) {
         ProductInfo info = new ProductInfo(manufacturerId, productTypeId, productId);
@@ -51,6 +54,9 @@ public class ProductRegistry {
                             case 28:
                                 info.setName(P_HOME_ENERGY_METER_G2);
                                 break;
+                            case 45:
+                                info.setName(P_WATER_SENSOR);
+                                break;
                         }
                         break;
                     case 3:
@@ -60,6 +66,20 @@ public class ProductRegistry {
                                 break;
                             case 11:
                                 info.setName(P_SMART_ENERGY_STRIP);
+                                break;
+                        }
+                        break;
+                }
+                break;
+
+            // Everspring
+            case 96:
+                info.setManufacturer(M_EVERSPRING);
+                switch (ptid) {
+                    case 2:
+                        switch (pid) {
+                            case 1:
+                                info.setName(P_SM103_DOOR_WINDOW_SENSOR);
                                 break;
                         }
                         break;

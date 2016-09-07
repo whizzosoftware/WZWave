@@ -19,7 +19,6 @@ public class RoutingBinarySensorTest {
         RoutingBinarySensor sensor = new RoutingBinarySensor(
             new NodeInfo((byte)0x09, BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID),
             false,
-            false,
             null
         );
 
@@ -34,10 +33,9 @@ public class RoutingBinarySensorTest {
         RoutingBinarySensor sensor = new RoutingBinarySensor(
             new NodeInfo((byte)0x09, BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID),
             false,
-            false,
             null
         );
-        sensor.startInterview(context);
+        sensor.startInterview(context, false);
 
         // receive failed ApplicationUpdate
         sensor.onDataFrameReceived(context, new ApplicationUpdate(
@@ -68,10 +66,9 @@ public class RoutingBinarySensorTest {
         RoutingBinarySensor sensor = new RoutingBinarySensor(
             new NodeInfo((byte)0x09, BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID),
             false,
-            false,
             null
         );
-        sensor.startInterview(context);
+        sensor.startInterview(context, false);
         assertEquals(ZWaveNodeState.Started, sensor.getState());
 
         // make sure we have no messages waiting in the wakeup queue
@@ -101,7 +98,6 @@ public class RoutingBinarySensorTest {
         MockZWaveControllerContext context = new MockZWaveControllerContext();
         RoutingBinarySensor sensor = new RoutingBinarySensor(
             new NodeInfo((byte)0x0D, BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID),
-            false,
             false,
             null
         );

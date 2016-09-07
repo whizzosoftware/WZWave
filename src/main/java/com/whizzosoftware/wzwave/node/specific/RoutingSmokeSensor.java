@@ -16,16 +16,21 @@ import com.whizzosoftware.wzwave.commandclass.VersionCommandClass;
 import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.generic.AlarmSensor;
+import com.whizzosoftware.wzwave.persist.PersistenceContext;
 
 public class RoutingSmokeSensor extends AlarmSensor {
     static public final byte ID = 0x07;
 
-    public RoutingSmokeSensor(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(info, listening, newlyIncluded, listener);
+    public RoutingSmokeSensor(NodeInfo info, boolean listening, NodeListener listener) {
+        super(info, listening, listener);
 
         addCommandClass(AlarmSensor.ID, new AlarmSensorCommandClass());
         addCommandClass(ManufacturerSpecificCommandClass.ID, new ManufacturerSpecificCommandClass());
         addCommandClass(VersionCommandClass.ID, new VersionCommandClass());
         addCommandClass(BatteryCommandClass.ID, new BatteryCommandClass());
+    }
+
+    public RoutingSmokeSensor(PersistenceContext pctx, Byte nodeId, NodeListener listener) {
+        super(pctx, nodeId, listener);
     }
 }

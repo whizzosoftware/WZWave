@@ -20,8 +20,8 @@ import com.whizzosoftware.wzwave.persist.PersistenceContext;
 public class BasicRoutingAlarmSensor extends AlarmSensor {
     static public final byte ID = 0x01;
 
-    public BasicRoutingAlarmSensor(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(info, listening, newlyIncluded, listener);
+    public BasicRoutingAlarmSensor(NodeInfo info, boolean listening, NodeListener listener) {
+        super(info, listening, listener);
 
         addCommandClass(AlarmSensor.ID, new AlarmSensorCommandClass());
         addCommandClass(ManufacturerSpecificCommandClass.ID, new ManufacturerSpecificCommandClass());

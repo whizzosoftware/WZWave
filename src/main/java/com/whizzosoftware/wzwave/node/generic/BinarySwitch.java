@@ -26,8 +26,8 @@ import com.whizzosoftware.wzwave.persist.PersistenceContext;
 public class BinarySwitch extends ZWaveNode {
     public static final byte ID = 0x10;
 
-    public BinarySwitch(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(info, newlyIncluded, listening, listener);
+    public BinarySwitch(NodeInfo info, boolean listening, NodeListener listener) {
+        super(info, listening, listener);
 
         addCommandClass(BasicCommandClass.ID, new BasicCommandClass());
         addCommandClass(BinarySwitchCommandClass.ID, new BinarySwitchCommandClass());

@@ -23,8 +23,8 @@ import com.whizzosoftware.wzwave.persist.PersistenceContext;
 public class AlarmSensor extends ZWaveNode {
     public static final byte ID = (byte)0xA1;
 
-    public AlarmSensor(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(info, newlyIncluded, listening, listener);
+    public AlarmSensor(NodeInfo info, boolean listening, NodeListener listener) {
+        super(info, listening, listener);
 
         addCommandClass(BasicCommandClass.ID, new BasicCommandClass());
     }

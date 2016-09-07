@@ -16,6 +16,7 @@ import com.whizzosoftware.wzwave.channel.inbound.TransactionInboundHandler;
 import com.whizzosoftware.wzwave.channel.outbound.QueuedOutboundHandler;
 import com.whizzosoftware.wzwave.codec.ZWaveFrameDecoder;
 import com.whizzosoftware.wzwave.codec.ZWaveFrameEncoder;
+import com.whizzosoftware.wzwave.commandclass.WakeUpCommandClass;
 import com.whizzosoftware.wzwave.controller.ZWaveController;
 import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.controller.ZWaveControllerListener;
@@ -246,9 +247,9 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     public void onZWaveInclusion(NodeInfo nodeInfo, boolean success) {
         try {
             logger.trace("Inclusion of new node {}", ByteUtil.createString(nodeInfo.getNodeId()));
-            ZWaveNode node = ZWaveNodeFactory.createNode(nodeInfo, true, true, this);
+            ZWaveNode node = ZWaveNodeFactory.createNode(nodeInfo, !nodeInfo.hasCommandClass(WakeUpCommandClass.ID), this);
             logger.trace("Created new node [{}]: {}", node.getNodeId(), node);
-            addNode(node);
+            addNode(node, true);
             if (listener != null) {
                 listener.onZWaveInclusion(nodeInfo, success);
             }
@@ -310,7 +311,6 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
             if (node == null || !node.matchesNodeProtocolInfo(npi)) {
                 node = ZWaveNodeFactory.createNode(
                     new NodeInfo(nodeId, npi.getBasicDeviceClass(), npi.getGenericDeviceClass(), npi.getSpecificDeviceClass()),
-                    false,
                     npi.isListening(),
                     this
                 );
@@ -318,13 +318,13 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
             } else {
                 logger.debug("Node[{}] matches persistent node information; no need to interview", nodeId);
             }
-            addNode(node);
+            addNode(node, false);
         } catch (NodeCreationException e) {
             logger.error("Unable to create node", e);
         }
     }
 
-    private void addNode(ZWaveNode node) {
+    private void addNode(ZWaveNode node, boolean newlyIncluded) {
         ZWaveNode n = nodeMap.get(node.getNodeId());
         if (n != null) {
             nodes.remove(n);
@@ -332,7 +332,7 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
         }
         nodes.add(node);
         nodeMap.put(node.getNodeId(), node);
-        node.startInterview(this);
+        node.startInterview(this, newlyIncluded);
     }
 
     @Override

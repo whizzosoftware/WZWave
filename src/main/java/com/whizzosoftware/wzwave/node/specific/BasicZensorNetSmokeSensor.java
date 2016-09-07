@@ -20,8 +20,8 @@ import com.whizzosoftware.wzwave.persist.PersistenceContext;
 public class BasicZensorNetSmokeSensor extends AlarmSensor {
     static public final byte ID = 0x08;
 
-    public BasicZensorNetSmokeSensor(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(info, listening, newlyIncluded, listener);
+    public BasicZensorNetSmokeSensor(NodeInfo info, boolean listening, NodeListener listener) {
+        super(info, listening, listener);
 
         addCommandClass(AlarmSensor.ID, new AlarmSensorCommandClass());
         addCommandClass(ManufacturerSpecificCommandClass.ID, new ManufacturerSpecificCommandClass());

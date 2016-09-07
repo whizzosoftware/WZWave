@@ -41,6 +41,8 @@ public class CommandClassFactory {
                 return new MultilevelSensorCommandClass();
             case MultilevelSwitchCommandClass.ID:
                 return new MultilevelSwitchCommandClass();
+            case NoOperationCommandClass.ID:
+                return new NoOperationCommandClass();
             case VersionCommandClass.ID:
                 return new VersionCommandClass();
             case WakeUpCommandClass.ID:

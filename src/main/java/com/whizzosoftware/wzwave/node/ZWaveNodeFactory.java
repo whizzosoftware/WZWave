@@ -9,14 +9,12 @@
 */
 package com.whizzosoftware.wzwave.node;
 
-import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.node.generic.*;
 import com.whizzosoftware.wzwave.node.specific.*;
 import com.whizzosoftware.wzwave.persist.PersistenceContext;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 
 import java.lang.reflect.Constructor;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,76 +24,76 @@ import java.util.Map;
  */
 public class ZWaveNodeFactory {
 
-    public static ZWaveNode createNode(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) throws NodeCreationException {
+    public static ZWaveNode createNode(NodeInfo info, boolean listening, NodeListener listener) throws NodeCreationException {
         switch (info.getGenericDeviceClass()) {
 
             case AlarmSensor.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     case BasicRoutingAlarmSensor.ID:
-                        return new BasicRoutingAlarmSensor(info, newlyIncluded, listening, listener);
+                        return new BasicRoutingAlarmSensor(info, listening, listener);
                     case RoutingAlarmSensor.ID:
-                        return new RoutingAlarmSensor(info, newlyIncluded,  listening, listener);
+                        return new RoutingAlarmSensor(info, listening, listener);
                     case BasicZensorNetAlarmSensor.ID:
-                        return new BasicZensorNetAlarmSensor(info, newlyIncluded,  listening, listener);
+                        return new BasicZensorNetAlarmSensor(info, listening, listener);
                     case ZensorNetAlarmSensor.ID:
-                        return new ZensorNetAlarmSensor(info, newlyIncluded,  listening, listener);
+                        return new ZensorNetAlarmSensor(info, listening, listener);
                     case AdvancedZensorNetAlarmSensor.ID:
-                        return new AdvancedZensorNetAlarmSensor(info, newlyIncluded,  listening, listener);
+                        return new AdvancedZensorNetAlarmSensor(info, listening, listener);
                     case BasicRoutingSmokeSensor.ID:
-                        return new BasicRoutingSmokeSensor(info, newlyIncluded,  listening, listener);
+                        return new BasicRoutingSmokeSensor(info, listening, listener);
                     case RoutingSmokeSensor.ID:
-                        return new RoutingSmokeSensor(info, newlyIncluded,  listening, listener);
+                        return new RoutingSmokeSensor(info, listening, listener);
                     case BasicZensorNetSmokeSensor.ID:
-                        return new BasicZensorNetSmokeSensor(info, newlyIncluded,  listening, listener);
+                        return new BasicZensorNetSmokeSensor(info, listening, listener);
                     case ZensorNetSmokeSensor.ID:
-                        return new ZensorNetSmokeSensor(info, newlyIncluded,  listening, listener);
+                        return new ZensorNetSmokeSensor(info, listening, listener);
                     case AdvancedZensorNetSmokeSensor.ID:
-                        return new AdvancedZensorNetSmokeSensor(info, newlyIncluded,  listening, listener);
+                        return new AdvancedZensorNetSmokeSensor(info, listening, listener);
                     default:
-                        return new AlarmSensor(info, newlyIncluded,  listening, listener);
+                        return new AlarmSensor(info, listening, listener);
                 }
             }
 
             case BinarySensor.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     case RoutingBinarySensor.ID:
-                        return new RoutingBinarySensor(info, newlyIncluded,  listening, listener);
+                        return new RoutingBinarySensor(info, listening, listener);
                     default:
-                        return new BinarySensor(info, newlyIncluded,  listening, listener);
+                        return new BinarySensor(info, listening, listener);
                 }
             }
 
             case BinarySwitch.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     case BinaryPowerSwitch.ID:
-                        return new BinaryPowerSwitch(info, newlyIncluded, listening, listener);
+                        return new BinaryPowerSwitch(info, listening, listener);
                     default:
-                        return new BinarySwitch(info, newlyIncluded,  listening, listener);
+                        return new BinarySwitch(info, listening, listener);
                 }
             }
 
             case Meter.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     case SimpleMeter.ID:
-                        return new SimpleMeter(info, newlyIncluded, listening, listener);
+                        return new SimpleMeter(info, listening, listener);
                     default:
-                        return new Meter(info, newlyIncluded, listening, listener);
+                        return new Meter(info, listening, listener);
                 }
             }
 
             case MultilevelSensor.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     default:
-                        return new MultilevelSensor(info, newlyIncluded, listening, listener);
+                        return new MultilevelSensor(info, listening, listener);
                 }
             }
 
             case MultilevelSwitch.ID: {
                 switch (info.getSpecificDeviceClass()) {
                     case MultilevelPowerSwitch.ID:
-                        return new MultilevelPowerSwitch(info, newlyIncluded,  listening, listener);
+                        return new MultilevelPowerSwitch(info, listening, listener);
                     default:
-                        return new MultilevelSwitch(info, newlyIncluded,  listening, listener);
+                        return new MultilevelSwitch(info, listening, listener);
                 }
             }
 
@@ -104,7 +102,7 @@ public class ZWaveNodeFactory {
                     case PCController.ID:
                         return new PCController(info, listener);
                     default:
-                        return new StaticController(info, listening, listener);
+                        return new StaticController(info, listener);
                 }
             }
 

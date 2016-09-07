@@ -70,7 +70,7 @@ public class NettyZWaveControllerTest {
         assertEquals(0, c.getNodes().size());
         assertEquals(0, channel.getWrittenMessageCount());
 
-        c.onNodeProtocolInfo((byte)0x02, new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID, true));
+        c.onNodeProtocolInfo((byte)0x02, new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID, false));
         assertEquals(1, c.getNodes().size());
         assertEquals(0, channel.getWrittenMessageCount());
         assertEquals(ZWaveNodeState.Started, c.getNode((byte)0x02).getState());
@@ -82,7 +82,7 @@ public class NettyZWaveControllerTest {
         MockChannel channel = new MockChannel();
         MockZWaveControllerListener l = new MockZWaveControllerListener();
         MockPersistentStore store = new MockPersistentStore();
-        ZWaveNode node = new BinaryPowerSwitch(new NodeInfo((byte)0x02, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID), false, true, null);
+        ZWaveNode node = new BinaryPowerSwitch(new NodeInfo((byte)0x02, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID), true, null);
         node.setNodeInfoNeeded(false);
         store.saveNode(node);
         NettyZWaveController c = new NettyZWaveController("/dev/null", store);

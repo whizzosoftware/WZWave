@@ -28,7 +28,7 @@ public class MapDbPersistentStoreTest {
 
     @Test
     public void testSaveAndRestoreNode() throws Exception {
-        ZWaveNode node = new BinaryPowerSwitch(new NodeInfo((byte)0x02, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID), false, true, null);
+        ZWaveNode node = new BinaryPowerSwitch(new NodeInfo((byte)0x02, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID), true, null);
         MapDbPersistentStore store = new MapDbPersistentStore(folder.newFolder());
         store.saveNode(node);
         node = store.getNode((byte)0x02, null);
@@ -37,6 +37,6 @@ public class MapDbPersistentStoreTest {
         assertEquals(BinarySwitch.ID, (byte)node.getGenericDeviceClass());
         assertEquals(BinaryPowerSwitch.ID, (byte)node.getSpecificDeviceClass());
         assertEquals(2, node.getCommandClasses().size());
-        assertTrue(node.isListening());
+        assertTrue(node.isListeningNode());
     }
 }

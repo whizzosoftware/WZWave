@@ -25,8 +25,8 @@ import com.whizzosoftware.wzwave.persist.PersistenceContext;
 public class MultilevelSensor extends ZWaveNode {
     public static final byte ID = 0x21;
 
-    public MultilevelSensor(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(info, newlyIncluded, listening, listener);
+    public MultilevelSensor(NodeInfo info, boolean listening, NodeListener listener) {
+        super(info, listening, listener);
 
         addCommandClass(BasicCommandClass.ID, new BasicCommandClass());
         addCommandClass(MultilevelSensorCommandClass.ID, new MultilevelSensorCommandClass());

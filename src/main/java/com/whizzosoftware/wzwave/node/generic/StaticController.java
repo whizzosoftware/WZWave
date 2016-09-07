@@ -22,8 +22,8 @@ import com.whizzosoftware.wzwave.persist.PersistenceContext;
 public class StaticController extends ZWaveNode {
     public static final byte ID = 0x02;
 
-    public StaticController(NodeInfo info, boolean newlyIncluded, NodeListener listener) {
-        super(info, newlyIncluded, true, listener);
+    public StaticController(NodeInfo info, NodeListener listener) {
+        super(info, true, listener);
     }
 
     public StaticController(PersistenceContext pctx, Byte nodeId, NodeListener listener) {
@@ -35,7 +35,12 @@ public class StaticController extends ZWaveNode {
     }
 
     @Override
-    protected boolean shouldSendRequestNodeInfo() {
+    protected boolean shouldRequestNodeInfo() {
+        return false;
+    }
+
+    @Override
+    protected boolean shouldRequestState() {
         return false;
     }
 }

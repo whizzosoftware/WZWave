@@ -20,8 +20,8 @@ import com.whizzosoftware.wzwave.persist.PersistenceContext;
 public class BinaryPowerSwitch extends BinarySwitch {
     static public final byte ID = 0x01;
 
-    public BinaryPowerSwitch(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(info, newlyIncluded, listening, listener);
+    public BinaryPowerSwitch(NodeInfo info, boolean listening, NodeListener listener) {
+        super(info, listening, listener);
     }
 
     public BinaryPowerSwitch(PersistenceContext pctx, Byte nodeId, NodeListener listener) {

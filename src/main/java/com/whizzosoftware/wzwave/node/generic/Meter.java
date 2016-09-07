@@ -18,8 +18,8 @@ import com.whizzosoftware.wzwave.persist.PersistenceContext;
 public class Meter extends ZWaveNode {
     public static final byte ID = (byte)0x31;
 
-    public Meter(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(info, newlyIncluded, listening, listener);
+    public Meter(NodeInfo info, boolean listening, NodeListener listener) {
+        super(info, listening, listener);
 
         addCommandClass(BasicCommandClass.ID, new BasicCommandClass());
     }

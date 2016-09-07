@@ -22,8 +22,8 @@ import com.whizzosoftware.wzwave.persist.PersistenceContext;
 public class MultilevelPowerSwitch extends MultilevelSwitch {
     static public final byte ID = 0x01;
 
-    public MultilevelPowerSwitch(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(info, listening, newlyIncluded, listener);
+    public MultilevelPowerSwitch(NodeInfo info, boolean listening, NodeListener listener) {
+        super(info, listening, listener);
     }
 
     public MultilevelPowerSwitch(PersistenceContext pctx, Byte nodeId, NodeListener listener) {

@@ -22,6 +22,11 @@ import io.netty.buffer.ByteBuf;
 public class SendData extends DataFrame {
     public static final byte ID = 0x13;
 
+    public static final byte TRANSMIT_OPTION_ACK = 0x01;
+    public static final byte TRANSMIT_OPTION_LOW_POWER = 0x02;
+    public static final byte TRANSMIT_OPTION_AUTO_ROUTE = 0x04;
+    public static final byte TRANSMIT_OPTION_NO_ROUTE = 0x10;
+
     private static byte nextCallbackId;
 
     private String name;

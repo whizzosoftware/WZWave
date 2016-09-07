@@ -14,14 +14,19 @@ import com.whizzosoftware.wzwave.commandclass.VersionCommandClass;
 import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.generic.Meter;
+import com.whizzosoftware.wzwave.persist.PersistenceContext;
 
 public class SimpleMeter extends Meter {
     static public final byte ID = 0x01;
 
-    public SimpleMeter(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(info, newlyIncluded , listening, listener);
+    public SimpleMeter(NodeInfo info, boolean listening, NodeListener listener) {
+        super(info, listening, listener);
 
         addCommandClass(ManufacturerSpecificCommandClass.ID, new ManufacturerSpecificCommandClass());
         addCommandClass(VersionCommandClass.ID, new VersionCommandClass());
+    }
+
+    public SimpleMeter(PersistenceContext pctx, Byte nodeId, NodeListener listener) {
+        super(pctx, nodeId, listener);
     }
 }

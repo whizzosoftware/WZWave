@@ -27,8 +27,8 @@ public class BinarySensor extends ZWaveNode {
 
     private Byte value = null;
 
-    public BinarySensor(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(info, newlyIncluded, listening, listener);
+    public BinarySensor(NodeInfo info, boolean listening, NodeListener listener) {
+        super(info, listening, listener);
 
         addCommandClass(BasicCommandClass.ID, new BasicCommandClass());
         addCommandClass(BinarySensorCommandClass.ID, new BinarySensorCommandClass());

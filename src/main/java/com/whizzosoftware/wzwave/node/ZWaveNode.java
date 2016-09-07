@@ -29,7 +29,8 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private Byte basicDeviceClass;
-    private boolean listening;
+    private boolean isListeningNode;
+    private boolean isSleeping;
     private boolean nodeInfoNeeded;
     private Boolean available;
     private final LinkedList<DataFrame> wakeupQueue = new LinkedList<>();
@@ -46,19 +47,19 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
 
     /**
      * Constructor.
-     *
-     * @param info information about the new node
-     * @param newlyIncluded whether this node has just been included on the network
-     * @param listening indicates whether the node is a "actively listening" node
+     *  @param info information about the new node
+     * @param isListeningNode indicates whether the node is a "actively listening" node
      * @param listener the listener for callbacks
      */
-    public ZWaveNode(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
+    public ZWaveNode(NodeInfo info, boolean isListeningNode, NodeListener listener) {
         super(info.getNodeId(), info.getGenericDeviceClass(), info.getSpecificDeviceClass());
 
-        this.listening = listening;
+        this.isListeningNode = isListeningNode;
         this.listener = listener;
         this.basicDeviceClass = info.getBasicDeviceClass();
         this.nodeInfoNeeded = true;
+
+        addCommandClass(NoOperationCommandClass.ID, new NoOperationCommandClass());
     }
 
     public ZWaveNode(PersistenceContext pctx, Byte nodeId, NodeListener listener) {
@@ -67,12 +68,17 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
         this.nodeInfoNeeded = false;
     }
 
-    public void startInterview(ZWaveControllerContext context) {
-        // if the device is listening and we don't already know it, request its node info
-        if (listening && nodeInfoNeeded && shouldSendRequestNodeInfo()) {
+    public void startInterview(ZWaveControllerContext context, boolean newlyIncluded) {
+        // if the node was newly included, flag that it is actively listening
+        if (isListeningNode || newlyIncluded) {
+            isSleeping = false;
+        }
+
+        // if the device is listening and we don't already know about it, request its node info
+        if (nodeInfoNeeded && shouldRequestNodeInfo() && !isSleeping) {
             setState(context, ZWaveNodeState.NodeInfo);
-        // if the device is listening and we do know it, get its current state
-        } else if (listening) {
+        // if the device is listening and we do know about it, get its current state
+        } else if (!isSleeping && shouldRequestState()) {
             setState(context, ZWaveNodeState.RetrieveStatePending);
         // otherwise, set it to started since we won't be able to get its node info
         } else {
@@ -84,11 +90,11 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
         this.nodeInfoNeeded = nodeInfoNeeded;
     }
 
-    protected void setListening(ZWaveControllerContext context, boolean listening) {
-        this.listening = listening;
+    protected void setSleeping(ZWaveControllerContext context, boolean isSleeping) {
+        this.isSleeping = isSleeping;
 
         // if the node is set to listener, flush the wakeup queue
-        if (listening) {
+        if (!isSleeping) {
             flushWakeupQueue(context);
         }
     }
@@ -105,8 +111,12 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
         return (nodeState == ZWaveNodeState.Started);
     }
 
-    public boolean isListening() {
-        return listening;
+    public boolean isListeningNode() {
+        return isListeningNode;
+    }
+
+    public boolean isSleeping() {
+        return isSleeping;
     }
 
     public Byte getBasicDeviceClass() {
@@ -234,7 +244,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
      *                            is flagged as not listening
      */
     protected void queueDataFrame(ZWaveControllerContext context, DataFrame frame, boolean deferIfNotListening) {
-        if (listening || !deferIfNotListening) {
+        if (!isSleeping() || !deferIfNotListening) {
             logger.trace("Queueing data frame for write: {}", frame);
             context.sendDataFrame(frame);
             if (nodeState == ZWaveNodeState.RetrieveStateSent) {
@@ -262,7 +272,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
         if (map.containsKey("basicDeviceClass")) {
             basicDeviceClass = (byte)map.get("basicDeviceClass");
         }
-        this.listening = (boolean)map.get("listening");
+        this.isListeningNode = (boolean)map.get("listening");
         return map;
     }
 
@@ -271,7 +281,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
         if (basicDeviceClass != null) {
             map.put("basicDeviceClass", basicDeviceClass);
         }
-        map.put("listening", listening);
+        map.put("listening", isListeningNode());
         return map;
     }
 
@@ -280,11 +290,20 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
     }
 
     /**
-     * Indicates whether this node should send an initial RequestNodeInfo request.
+     * Indicates whether this node should request node information on startup.
      *
      * @return a boolean
      */
-    protected boolean shouldSendRequestNodeInfo() {
+    protected boolean shouldRequestNodeInfo() {
+        return true;
+    }
+
+    /**
+     * Indicates whether this node should send request state on startup.
+     *
+     * @return a boolean
+     */
+    protected boolean shouldRequestState() {
         return true;
     }
 
@@ -299,7 +318,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
                         sendDataFrame(context, new RequestNodeInfo(getNodeId()));
                         stateRetries++;
                     } else {
-                        if (listening) {
+                        if (isListeningNode()) {
                             logger.trace("Node {} provided no node info after {} retries; should be listening so flagging as unavailable and started", getNodeId(), stateRetries);
                             available = false;
                             setState(context, ZWaveNodeState.Started);
@@ -322,6 +341,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
                             }
                         }
                     }
+
                     // if this node has the Version command class, then we should retrieve version for information
                     // for all command classes it supports
                     if (getCommandClass(VersionCommandClass.ID) != null) {

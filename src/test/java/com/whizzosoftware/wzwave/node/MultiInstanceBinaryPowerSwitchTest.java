@@ -21,11 +21,10 @@ public class MultiInstanceBinaryPowerSwitchTest {
         MockZWaveControllerContext context = new MockZWaveControllerContext();
         BinaryPowerSwitch ps = new BinaryPowerSwitch(
             new NodeInfo(nodeId, BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID),
-            false,
             true,
             null
         );
-        ps.startInterview(context);
+        ps.startInterview(context, false);
 
         // confirm that a RequestNodeInfo frame was sent
         assertEquals(1, context.getSentFrameCount());

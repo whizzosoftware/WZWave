@@ -13,6 +13,7 @@ import com.whizzosoftware.wzwave.commandclass.WakeUpCommandClass;
 import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.generic.BinarySensor;
+import com.whizzosoftware.wzwave.persist.PersistenceContext;
 
 /**
  * A Routing Binary Sensor node.
@@ -22,10 +23,14 @@ import com.whizzosoftware.wzwave.node.generic.BinarySensor;
 public class RoutingBinarySensor extends BinarySensor {
     static public final byte ID = 0x01;
 
-    public RoutingBinarySensor(NodeInfo info, boolean newlyIncluded, boolean listening, NodeListener listener) {
-        super(info, listening, newlyIncluded, listener);
+    public RoutingBinarySensor(NodeInfo info, boolean listening, NodeListener listener) {
+        super(info, listening, listener);
 
         addCommandClass(WakeUpCommandClass.ID, new WakeUpCommandClass());
+    }
+
+    public RoutingBinarySensor(PersistenceContext pctx, Byte nodeId, NodeListener listener) {
+        super(pctx, nodeId, listener);
     }
 
     public Byte getBatteryLevel() {

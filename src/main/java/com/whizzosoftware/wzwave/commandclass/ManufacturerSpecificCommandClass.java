@@ -100,6 +100,7 @@ public class ManufacturerSpecificCommandClass extends CommandClass {
             (Integer)map.get("productTypeId"),
             (Integer)map.get("productId")
         );
+        logger.debug("Restored manufacturer information: {}", productInfo);
         return map;
     }
 
