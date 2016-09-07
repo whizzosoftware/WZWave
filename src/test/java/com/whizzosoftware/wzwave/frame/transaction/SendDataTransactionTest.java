@@ -162,4 +162,46 @@ public class SendDataTransactionTest {
         assertFalse(t.hasError());
 
     }
+
+    @Test
+    public void testTransactionWithNoACKCallback() {
+        SendData startFrame = new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x00, 0x00, 0x25, 0x0a, (byte)0xce}));
+        SendDataTransaction t = new SendDataTransaction(startFrame, true);
+        assertFalse(t.isComplete());
+        assertFalse(t.hasError());
+
+        assertTrue(t.addFrame(new ACK()));
+        assertFalse(t.isComplete());
+        assertFalse(t.hasError());
+
+        t.addFrame(new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x13, 0x01, (byte)0xe8})));
+        assertFalse(t.isComplete());
+        assertFalse(t.hasError());
+
+        t.addFrame(new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x05, 0x00, 0x13, 0x0a, 0x01, (byte)0xe2})));
+        assertTrue(t.isComplete());
+        assertTrue(t.hasError());
+        assertTrue(t.noACK());
+    }
+
+    @Test
+    public void testTransactionWithFailureCallback() {
+        SendData startFrame = new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x00, 0x00, 0x25, 0x0a, (byte)0xce}));
+        SendDataTransaction t = new SendDataTransaction(startFrame, true);
+        assertFalse(t.isComplete());
+        assertFalse(t.hasError());
+
+        assertTrue(t.addFrame(new ACK()));
+        assertFalse(t.isComplete());
+        assertFalse(t.hasError());
+
+        t.addFrame(new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x13, 0x01, (byte)0xe8})));
+        assertFalse(t.isComplete());
+        assertFalse(t.hasError());
+
+        t.addFrame(new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x05, 0x00, 0x13, 0x0a, 0x02, (byte)0xe2})));
+        assertTrue(t.isComplete());
+        assertTrue(t.hasError());
+    }
+
 }

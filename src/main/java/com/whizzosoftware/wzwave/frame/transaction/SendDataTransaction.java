@@ -30,6 +30,10 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
     private static final int STATE_CALLBACK_RECEIVED = 4;
     private static final int STATE_COMPLETE = 5;
 
+    private static final int TRANSMIT_COMPLETE_OK = 0;
+    private static final int TRANSMIT_COMPLETE_NO_ACK = 1;
+    private static final int TRANSMIT_COMPLETE_FAIL = 2;
+
     private DataFrame finalFrame;
     private int state;
     private boolean isResponseExpected;
@@ -90,18 +94,29 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                     setError("Received CAN; will re-send", true);
                     return true;
                 } else if (bs instanceof SendData) {
-                    if (((SendData)bs).getType() == DataFrameType.REQUEST) {
-                        logger.trace("SendData callback received for {}", getStartFrame().getClass().getName());
-                        // if we shouldn't expect a response, the transaction is complete
-                        if (!isResponseExpected || applicationCommandReceived) {
+                    SendData sd = (SendData)bs;
+                    if (sd.getType() == DataFrameType.REQUEST) {
+                        logger.trace("SendData callback received with Tx status {}", sd.getTx());
+                        // if the controller told us the transmission was ACKed, move on
+                        if (sd.getTx() == TRANSMIT_COMPLETE_OK) {
+                            // if we shouldn't expect a response, the transaction is complete
+                            if (!isResponseExpected || applicationCommandReceived) {
+                                state = STATE_COMPLETE;
+                                // otherwise, wait for the response
+                            } else {
+                                state = STATE_CALLBACK_RECEIVED;
+                            }
+                        } else if (sd.getTx() == TRANSMIT_COMPLETE_NO_ACK) {
                             state = STATE_COMPLETE;
-                            // otherwise, wait for the response
-                        } else {
-                            state = STATE_CALLBACK_RECEIVED;
+                            setNoACK(true);
+                            setError("Received no ACK from target node; possibly asleep", false);
+                        } else if (sd.getTx() == TRANSMIT_COMPLETE_FAIL){
+                            state = STATE_COMPLETE;
+                            setError("Transmission failure due to possible network congestion", false);
                         }
                         return true;
                     } else {
-                        setError("Received data frame but doesn't appear to be a request: " + bs, false);
+                        setError("Received data frame but doesn't appear to be a SendData callback: " + bs, false);
                     }
                 } else if (bs instanceof ApplicationCommand) {
                     // sometimes the ApplicationCommand is returned before the SendData callback; flag that case here
