@@ -27,6 +27,7 @@ abstract public class AbstractDataFrameTransaction implements DataFrameTransacti
     private DataFrame startFrame;
     private boolean hasError;
     private boolean hasCAN;
+    private boolean noACK;
 
     public AbstractDataFrameTransaction(DataFrame startFrame) {
         this.startFrame = startFrame;
@@ -50,6 +51,14 @@ abstract public class AbstractDataFrameTransaction implements DataFrameTransacti
 
     public boolean hasCAN() {
         return hasCAN;
+    }
+
+    public boolean noACK() {
+        return noACK;
+    }
+
+    protected void setNoACK(boolean noACK) {
+        this.noACK = noACK;
     }
 
     protected void setError(String msg, boolean can) {
