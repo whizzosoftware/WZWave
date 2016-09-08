@@ -9,7 +9,7 @@ import static org.junit.Assert.*;
 public class RequestResponseTransactionTest {
     @Test
     public void testSuccess() {
-        RequestResponseTransaction t = new RequestResponseTransaction(new Version());
+        RequestResponseTransaction t = new RequestResponseTransaction(new Version(), true);
         assertFalse(t.isComplete());
         assertFalse(t.hasError());
 
@@ -24,7 +24,7 @@ public class RequestResponseTransactionTest {
 
     @Test
     public void testCANBeforeACK() {
-        RequestResponseTransaction t = new RequestResponseTransaction(new Version());
+        RequestResponseTransaction t = new RequestResponseTransaction(new Version(), true);
         assertFalse(t.isComplete());
         assertFalse(t.hasError());
 
@@ -35,7 +35,7 @@ public class RequestResponseTransactionTest {
 
     @Test
     public void testCANAfterACK() {
-        RequestResponseTransaction t = new RequestResponseTransaction(new Version());
+        RequestResponseTransaction t = new RequestResponseTransaction(new Version(), true);
         assertFalse(t.isComplete());
         assertFalse(t.hasError());
 

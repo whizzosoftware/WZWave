@@ -68,7 +68,7 @@ public class ApplicationCommand extends DataFrame {
     }
 
     @Override
-    public DataFrameTransaction createTransaction() {
+    public DataFrameTransaction createTransaction(boolean listeningNode) {
         return null;
     }
 }

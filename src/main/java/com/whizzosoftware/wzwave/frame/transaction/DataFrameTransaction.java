@@ -1,10 +1,12 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.frame.transaction;
 
 import com.whizzosoftware.wzwave.frame.DataFrame;
@@ -56,12 +58,14 @@ public interface DataFrameTransaction {
      */
     boolean hasError();
 
+    boolean shouldRetry();
+
     /**
-     * Indicates whether the transaction ended due to a CAN.
+     * Indicates whether the destination node for this message transaction is known to be actively listening.
      *
      * @return a boolean
      */
-    boolean hasCAN();
+    boolean isListeningNode();
 
     /**
      * Identifies whether the transaction is complete.

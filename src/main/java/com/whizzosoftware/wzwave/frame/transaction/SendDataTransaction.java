@@ -1,10 +1,12 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.frame.transaction;
 
 import com.whizzosoftware.wzwave.frame.*;
@@ -45,8 +47,8 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
      * @param startFrame the frame that started the transaction
      * @param isResponseExpected indicates if a response is expected
      */
-    public SendDataTransaction(SendData startFrame, boolean isResponseExpected) {
-        super(startFrame);
+    public SendDataTransaction(SendData startFrame, boolean listeningNode, boolean isResponseExpected) {
+        super(startFrame, listeningNode);
         this.isResponseExpected = isResponseExpected;
         reset();
     }
@@ -78,7 +80,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                     return true;
                 } else if (bs instanceof SendData) {
                     if (((SendData)bs).getType() == DataFrameType.RESPONSE) {
-                        logger.trace("{} sent successfully", getStartFrame().getClass().getName());
+                        logger.trace("{} acknowledgement received", getStartFrame().getClass().getName());
                         state = STATE_RESPONSE_RECEIVED;
                         return true;
                     } else {
@@ -96,9 +98,9 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                 } else if (bs instanceof SendData) {
                     SendData sd = (SendData)bs;
                     if (sd.getType() == DataFrameType.REQUEST) {
-                        logger.trace("SendData callback received with Tx status {}", sd.getTx());
                         // if the controller told us the transmission was ACKed, move on
-                        if (sd.getTx() == TRANSMIT_COMPLETE_OK) {
+                        if (sd.hasTx() && sd.getTx() == TRANSMIT_COMPLETE_OK) {
+                            logger.trace("SendData sent successfully");
                             // if we shouldn't expect a response, the transaction is complete
                             if (!isResponseExpected || applicationCommandReceived) {
                                 state = STATE_COMPLETE;
@@ -106,13 +108,14 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                             } else {
                                 state = STATE_CALLBACK_RECEIVED;
                             }
-                        } else if (sd.getTx() == TRANSMIT_COMPLETE_NO_ACK) {
+                        } else if (sd.hasTx() && sd.getTx() == TRANSMIT_COMPLETE_NO_ACK) {
                             state = STATE_COMPLETE;
-                            setNoACK(true);
-                            setError("Received no ACK from target node; possibly asleep", false);
-                        } else if (sd.getTx() == TRANSMIT_COMPLETE_FAIL){
+                            setError("Received no ACK from target node; may be asleep so failing transaction", isListeningNode());
+                        } else if (sd.hasTx() && sd.getTx() == TRANSMIT_COMPLETE_FAIL){
                             state = STATE_COMPLETE;
-                            setError("Transmission failure due to possible network congestion", false);
+                            setError("Transmission failure due to possible network congestion", true);
+                        } else {
+                            setError("Received SendData callback with no transmission status", true);
                         }
                         return true;
                     } else {

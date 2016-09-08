@@ -9,6 +9,7 @@
 */
 package com.whizzosoftware.wzwave.channel;
 
+import com.whizzosoftware.wzwave.channel.event.*;
 import com.whizzosoftware.wzwave.channel.inbound.TransactionInboundHandler;
 import com.whizzosoftware.wzwave.frame.*;
 import io.netty.buffer.Unpooled;
@@ -18,13 +19,13 @@ import static org.junit.Assert.*;
 
 public class TransactionInboundHandlerTest {
     @Test
-    public void testRequestNodeInfoFailure() {
+    public void testRequestNodeInfoFailure() throws Exception {
         MockChannelHandlerContext ctx = new MockChannelHandlerContext();
         TransactionInboundHandler h = new TransactionInboundHandler();
 
         // initiate new RequestNodeInfo transaction
         RequestNodeInfo requestFrame = new RequestNodeInfo((byte)0x2c);
-        h.onDataFrameWrite(requestFrame);
+        h.userEventTriggered(ctx, new DataFrameSentEvent(requestFrame, true));
         assertEquals(0, ctx.getWriteQueue().size());
 
         // receive ACK
@@ -37,11 +38,12 @@ public class TransactionInboundHandlerTest {
 
         // confirm request was re-queued
         assertEquals(1, ctx.getWriteQueue().size());
-        assertTrue(ctx.getWriteQueue().get(0) instanceof RequestNodeInfo);
+        assertTrue(ctx.getWriteQueue().get(0) instanceof OutboundDataFrame);
+        assertTrue(((OutboundDataFrame)ctx.getWriteQueue().get(0)).getDataFrame() instanceof RequestNodeInfo);
 
         // simulate re-send
         requestFrame.incremenentSendCount();
-        h.onDataFrameWrite(requestFrame);
+        h.userEventTriggered(ctx, new DataFrameSentEvent(requestFrame, true));
         assertTrue(h.hasCurrentTransaction());
 
         // receive ACK
@@ -54,11 +56,12 @@ public class TransactionInboundHandlerTest {
 
         // confirm request was re-queued
         assertEquals(2, ctx.getWriteQueue().size());
-        assertTrue(ctx.getWriteQueue().get(1) instanceof RequestNodeInfo);
+        assertTrue(ctx.getWriteQueue().get(1) instanceof OutboundDataFrame);
+        assertTrue(((OutboundDataFrame)ctx.getWriteQueue().get(1)).getDataFrame() instanceof RequestNodeInfo);
 
         // simulate re-send
         requestFrame.incremenentSendCount();
-        h.onDataFrameWrite(requestFrame);
+        h.userEventTriggered(ctx, new DataFrameSentEvent(requestFrame, true));
         assertTrue(h.hasCurrentTransaction());
 
         // receive ACK
@@ -86,9 +89,91 @@ public class TransactionInboundHandlerTest {
     }
 
     @Test
-    public void testTransactionTimeout() {
+    public void testSendDataTransactionTimeout() throws Exception {
         MockChannelHandlerContext ctx = new MockChannelHandlerContext();
         TransactionInboundHandler h = new TransactionInboundHandler();
-        h.onDataFrameWrite(new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x09, 0x00, 0x13, 0x03, 0x02, 0x20, 0x02, 0x05, 0x31, (byte)0xF2})));
+        h.userEventTriggered(ctx, new DataFrameSentEvent(new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x09, 0x00, 0x13, 0x03, 0x02, 0x20, 0x02, 0x05, 0x31, (byte)0xF2})), true));
+    }
+
+    @Test
+    public void testSendDataSleepingNodeTransactionNoACKFailure() throws Exception {
+        MockChannelHandlerContext ctx = new MockChannelHandlerContext();
+        TransactionInboundHandler h = new TransactionInboundHandler();
+
+        h.userEventTriggered(ctx, new DataFrameSentEvent(new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x00, 0x00, 0x25, 0x0a, (byte)0xce})), false));
+        assertEquals(1, ctx.getUserEvents().size());
+        assertTrue(ctx.getUserEvents().get(0) instanceof TransactionStartedEvent);
+        h.channelRead(ctx, new ACK());
+        assertEquals(1, ctx.getUserEvents().size());
+        h.channelRead(ctx, new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x13, 0x01, (byte)0xe8})));
+        assertEquals(1, ctx.getUserEvents().size());
+        h.channelRead(ctx, new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x05, 0x00, 0x13, 0x0a, 0x01, (byte)0xe2})));
+        assertEquals(2, ctx.getUserEvents().size());
+        assertTrue(ctx.getUserEvents().get(1) instanceof TransactionFailedEvent);
+    }
+
+    @Test
+    public void testSendDataSleepingNodeTransactionNetworkCongestionFailure() throws Exception {
+        MockChannelHandlerContext ctx = new MockChannelHandlerContext();
+        TransactionInboundHandler h = new TransactionInboundHandler();
+
+        h.userEventTriggered(ctx, new DataFrameSentEvent(new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x00, 0x00, 0x25, 0x0a, (byte)0xce})), false));
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+        assertTrue(ctx.getUserEvents().get(0) instanceof TransactionStartedEvent);
+        h.channelRead(ctx, new ACK());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+        h.channelRead(ctx, new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x13, 0x01, (byte)0xe8})));
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+        h.channelRead(ctx, new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x05, 0x00, 0x13, 0x0a, 0x02, (byte)0xe2})));
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(1, ctx.getWriteQueue().size());
+        assertTrue(ctx.getWriteQueue().get(0) instanceof OutboundDataFrame);
+    }
+
+    @Test
+    public void testSendDataResponseFrameTimeout() throws Exception {
+        MockChannelHandlerContext ctx = new MockChannelHandlerContext();
+        TransactionInboundHandler h = new TransactionInboundHandler();
+
+        h.userEventTriggered(ctx, new DataFrameSentEvent(new SendData("", (byte)0x01, new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x00, 0x00, 0x25, 0x0a, (byte)0xce}, (byte)0x05, true), true));
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+        assertTrue(ctx.getUserEvents().get(0) instanceof TransactionStartedEvent);
+        h.channelRead(ctx, new ACK());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+        h.channelRead(ctx, new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x13, 0x01, (byte)0xe8})));
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+        h.channelRead(ctx, new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x05, 0x00, 0x13, 0x0a, 0x00, (byte)0xe2})));
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+        h.userEventTriggered(ctx, new TransactionTimeoutEvent(h.getCurrentTransaction().getId()));
+        assertEquals(1, ctx.getWriteQueue().size());
+        assertTrue(ctx.getWriteQueue().get(0) instanceof OutboundDataFrame);
+        assertTrue(((OutboundDataFrame)ctx.getWriteQueue().get(0)).getDataFrame() instanceof SendData);
+    }
+
+    @Test
+    public void testSendDataSuccessfulTransaction() throws Exception {
+        MockChannelHandlerContext ctx = new MockChannelHandlerContext();
+        TransactionInboundHandler h = new TransactionInboundHandler();
+
+        h.userEventTriggered(ctx, new DataFrameSentEvent(new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x00, 0x00, 0x25, 0x0a, (byte)0xce})), false));
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+        assertTrue(ctx.getUserEvents().get(0) instanceof TransactionStartedEvent);
+        h.channelRead(ctx, new ACK());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+        h.channelRead(ctx, new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x13, 0x01, (byte)0xe8})));
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+        h.channelRead(ctx, new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x05, 0x00, 0x13, 0x0a, 0x00, (byte)0xe2})));
+        assertEquals(2, ctx.getUserEvents().size());
+        assertTrue(ctx.getUserEvents().get(1) instanceof TransactionCompletedEvent);
     }
 }

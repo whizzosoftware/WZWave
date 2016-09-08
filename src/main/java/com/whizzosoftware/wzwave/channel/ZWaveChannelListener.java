@@ -7,6 +7,9 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.channel;
 
+import com.whizzosoftware.wzwave.channel.event.TransactionCompletedEvent;
+import com.whizzosoftware.wzwave.channel.event.TransactionFailedEvent;
+import com.whizzosoftware.wzwave.channel.event.TransactionStartedEvent;
 import com.whizzosoftware.wzwave.frame.*;
 
 /**
@@ -21,6 +24,9 @@ public interface ZWaveChannelListener {
     void onSendData(SendData sendData);
     void onApplicationCommand(ApplicationCommand cmd);
     void onApplicationUpdate(ApplicationUpdate update);
+    void onTransactionStarted(TransactionStartedEvent evt);
+    void onTransactionComplete(TransactionCompletedEvent evt);
+    void onTransactionFailed(TransactionFailedEvent evt);
 
     /**
      * Called when an AddNodeToNetwork frame is received.

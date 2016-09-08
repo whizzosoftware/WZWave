@@ -9,7 +9,7 @@
 */
 package com.whizzosoftware.wzwave.channel;
 
-import com.whizzosoftware.wzwave.channel.event.TransactionCompletedEvent;
+import com.whizzosoftware.wzwave.channel.event.TransactionTimeoutEvent;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
 import org.slf4j.Logger;
@@ -41,7 +41,7 @@ public class TransactionTimeoutHandler implements Runnable {
     @Override
     public void run() {
         try {
-            handler.userEventTriggered(context, new TransactionCompletedEvent(id, true));
+            handler.userEventTriggered(context, new TransactionTimeoutEvent(id));
         } catch (Exception e) {
             logger.error("Error timing out transaction", e);
         }

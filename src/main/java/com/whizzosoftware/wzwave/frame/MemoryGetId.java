@@ -42,8 +42,8 @@ public class MemoryGetId extends DataFrame {
     }
 
     @Override
-    public DataFrameTransaction createTransaction() {
-        return new RequestResponseTransaction(this);
+    public DataFrameTransaction createTransaction(boolean listeningNode) {
+        return new RequestResponseTransaction(this, listeningNode);
     }
 
     public String toString() {

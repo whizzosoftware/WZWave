@@ -30,7 +30,7 @@ public class NodeInclusionTransaction extends AbstractDataFrameTransaction {
     private boolean finished = false;
 
     public NodeInclusionTransaction(DataFrame startFrame) {
-        super(startFrame);
+        super(startFrame, true);
     }
 
     @Override

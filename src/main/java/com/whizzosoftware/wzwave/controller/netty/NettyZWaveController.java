@@ -10,10 +10,13 @@
 package com.whizzosoftware.wzwave.controller.netty;
 
 import com.whizzosoftware.wzwave.channel.*;
+import com.whizzosoftware.wzwave.channel.event.TransactionCompletedEvent;
+import com.whizzosoftware.wzwave.channel.event.TransactionFailedEvent;
+import com.whizzosoftware.wzwave.channel.event.TransactionStartedEvent;
 import com.whizzosoftware.wzwave.channel.inbound.ACKInboundHandler;
 import com.whizzosoftware.wzwave.channel.inbound.ZWaveChannelInboundHandler;
 import com.whizzosoftware.wzwave.channel.inbound.TransactionInboundHandler;
-import com.whizzosoftware.wzwave.channel.outbound.QueuedOutboundHandler;
+import com.whizzosoftware.wzwave.channel.outbound.FrameQueueHandler;
 import com.whizzosoftware.wzwave.codec.ZWaveFrameDecoder;
 import com.whizzosoftware.wzwave.codec.ZWaveFrameEncoder;
 import com.whizzosoftware.wzwave.commandclass.WakeUpCommandClass;
@@ -49,16 +52,21 @@ import java.util.*;
  *                                                        ChannelHandlerContext
  *                                                                  |
  * +----------------------------------------------------------------+-------------------+
- * |                           ChannelPipeline                      |                   |
- * |                                                               \|/                  |
- * |    +--------------------------------+            +-------------+--------------+    |
- * |    |    ZWaveChannelInboundHandler  |            |    QueuedOutboundHandler   |    |
- * |    +---------------+----------------+            +-------------+--------------+    |
+ * |                                      ChannelPipeline           |                   |
+ * |                                                                |                   |
+ * |    +--------------------------------+                          |                   |
+ * |    |    ZWaveChannelInboundHandler  |                          |                   |
+ * |    +---------------+----------------+                          |                   |
+ * |                   /|\                                          |                   |
+ * |                    |                                           |                   |
+ * |    +---------------+----------------+                          |                   |
+ * |    |    TransactionInboundHandler   |                          |                   |
+ * |    +---------------+----------------+                          |                   |
  * |                   /|\                                          |                   |
  * |                    |                                          \|/                  |
- * |    +---------------+----------------+            +-------------+--------------+    |
- * |    |    TransactionInboundHandler   |            |     ZWaveFrameEncoder      |    |
- * |    +---------------+----------------+            +-------------+--------------+    |
+ * |    +---------------+-------------------------------------------+--------------+    |
+ * |    |                                FrameQueueHandler                         |    |
+ * |    +---------------+-------------------------------------------+--------------+    |
  * |                   /|\                                          |                   |
  * |                    |                                           |                   |
  * |    +---------------+----------------+                          |                   |
@@ -66,9 +74,9 @@ import java.util.*;
  * |    +---------------+----------------+                          |                   |
  * |                   /|\                                          |                   |
  * |                    |                                           |                   |
- * |    +---------------+----------------+                          |                   |
- * |    |        ZWaveFrameDecoder       |                          |                   |
- * |    +---------------+----------------+                          |                   |
+ * |    +---------------+----------------+            +-------------+--------------+    |
+ * |    |       ZWaveFrameDecoder        |            |      ZWaveFrameEncoder     |    |
+ * |    +---------------+----------------+            +-------------+--------------+    |
  * |                   /|\                                          |                   |
  * +--------------------+-------------------------------------------+-------------------+
  * |                    |                                          \|/                  |
@@ -146,7 +154,7 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
                     channel.pipeline().addLast("decoder", new ZWaveFrameDecoder());
                     channel.pipeline().addLast("ack", new ACKInboundHandler());
                     channel.pipeline().addLast("encoder", new ZWaveFrameEncoder());
-                    channel.pipeline().addLast("writeQueue", new QueuedOutboundHandler());
+                    channel.pipeline().addLast("writeQueue", new FrameQueueHandler());
                     channel.pipeline().addLast("transaction", new TransactionInboundHandler());
                     channel.pipeline().addLast("handler", inboundHandler);
                 }
@@ -199,7 +207,7 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
 
     @Override
     public void sendDataFrame(DataFrame dataFrame) {
-        channel.write(dataFrame);
+        channel.write(new OutboundDataFrame(dataFrame, true));
     }
 
     /*
@@ -374,6 +382,24 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
         } else {
             logger.error("Unable to determine node to route ApplicationUpdate to");
         }
+    }
+
+    @Override
+    public void onTransactionStarted(TransactionStartedEvent evt) {
+        logger.trace("Detected start of new transaction: {}", evt.getId());
+        channel.write(evt);
+    }
+
+    @Override
+    public void onTransactionComplete(TransactionCompletedEvent evt) {
+        logger.trace("Detected end of transaction: {}", evt.getId());
+        channel.write(evt);
+    }
+
+    @Override
+    public void onTransactionFailed(TransactionFailedEvent evt) {
+        logger.trace("Detected transaction failure: {}", evt.getId());
+        channel.write(evt); // TODO: improve this logic
     }
 
     private void onNodeUpdate(ZWaveNode node, DataFrame df) {

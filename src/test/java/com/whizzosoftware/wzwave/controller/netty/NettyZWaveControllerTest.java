@@ -12,6 +12,7 @@ package com.whizzosoftware.wzwave.controller.netty;
 import com.whizzosoftware.wzwave.MockChannel;
 import com.whizzosoftware.wzwave.controller.ZWaveControllerListener;
 import com.whizzosoftware.wzwave.frame.NodeProtocolInfo;
+import com.whizzosoftware.wzwave.frame.OutboundDataFrame;
 import com.whizzosoftware.wzwave.frame.RequestNodeInfo;
 import com.whizzosoftware.wzwave.node.*;
 import com.whizzosoftware.wzwave.node.generic.BinarySensor;
@@ -56,7 +57,8 @@ public class NettyZWaveControllerTest {
         c.onNodeProtocolInfo((byte)0x02, new NodeProtocolInfo(BasicDeviceClasses.ROUTING_SLAVE, BinarySwitch.ID, BinaryPowerSwitch.ID, true));
         assertEquals(1, c.getNodes().size());
         assertEquals(1, channel.getWrittenMessageCount());
-        assertTrue(channel.getWrittenMessage(0) instanceof RequestNodeInfo);
+        assertTrue(channel.getWrittenMessage(0) instanceof OutboundDataFrame);
+        assertTrue(((OutboundDataFrame)channel.getWrittenMessage(0)).getDataFrame() instanceof RequestNodeInfo);
         assertEquals(ZWaveNodeState.NodeInfo, c.getNode((byte)0x02).getState());
     }
 

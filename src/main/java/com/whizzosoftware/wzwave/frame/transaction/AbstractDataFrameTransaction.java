@@ -1,15 +1,15 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.frame.transaction;
 
 import com.whizzosoftware.wzwave.frame.DataFrame;
-import com.whizzosoftware.wzwave.frame.Frame;
-import com.whizzosoftware.wzwave.frame.NAK;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,12 +25,13 @@ abstract public class AbstractDataFrameTransaction implements DataFrameTransacti
 
     private String id = UUID.randomUUID().toString();
     private DataFrame startFrame;
+    private boolean listeningNode;
     private boolean hasError;
-    private boolean hasCAN;
-    private boolean noACK;
+    private boolean shouldRetry = true;
 
-    public AbstractDataFrameTransaction(DataFrame startFrame) {
+    public AbstractDataFrameTransaction(DataFrame startFrame, boolean listeningNode) {
         this.startFrame = startFrame;
+        this.listeningNode = listeningNode;
     }
 
     public String getId() {
@@ -45,25 +46,23 @@ abstract public class AbstractDataFrameTransaction implements DataFrameTransacti
         return startFrame;
     }
 
+    @Override
+    public boolean isListeningNode() {
+        return listeningNode;
+    }
+
     public boolean hasError() {
         return hasError;
     }
 
-    public boolean hasCAN() {
-        return hasCAN;
+    @Override
+    public boolean shouldRetry() {
+        return shouldRetry;
     }
 
-    public boolean noACK() {
-        return noACK;
-    }
-
-    protected void setNoACK(boolean noACK) {
-        this.noACK = noACK;
-    }
-
-    protected void setError(String msg, boolean can) {
+    protected void setError(String msg, boolean shouldRetry) {
         logger.error(msg);
         this.hasError = true;
-        this.hasCAN = can;
+        this.shouldRetry = shouldRetry;
     }
 }

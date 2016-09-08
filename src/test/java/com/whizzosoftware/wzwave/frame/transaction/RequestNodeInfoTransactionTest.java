@@ -15,7 +15,7 @@ public class RequestNodeInfoTransactionTest {
         RequestNodeInfo startFrame = new RequestNodeInfo((byte)0x2c);
 
         // start transaction
-        RequestNodeInfoTransaction t = new RequestNodeInfoTransaction(startFrame);
+        RequestNodeInfoTransaction t = new RequestNodeInfoTransaction(startFrame, true);
 
         // receive ACK
         assertTrue(t.addFrame(new ACK()));
@@ -38,7 +38,7 @@ public class RequestNodeInfoTransactionTest {
         RequestNodeInfo startFrame = new RequestNodeInfo((byte)0x2c);
 
         // start transaction
-        RequestNodeInfoTransaction t = new RequestNodeInfoTransaction(startFrame);
+        RequestNodeInfoTransaction t = new RequestNodeInfoTransaction(startFrame, true);
 
         // receive ACK
         assertTrue(t.addFrame(new ACK()));

@@ -11,6 +11,8 @@ package com.whizzosoftware.wzwave.channel.inbound;
 
 import com.whizzosoftware.wzwave.channel.ZWaveChannelListener;
 import com.whizzosoftware.wzwave.channel.event.TransactionCompletedEvent;
+import com.whizzosoftware.wzwave.channel.event.TransactionFailedEvent;
+import com.whizzosoftware.wzwave.channel.event.TransactionStartedEvent;
 import com.whizzosoftware.wzwave.frame.*;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -87,8 +89,17 @@ public class ZWaveChannelInboundHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         logger.debug("User event received: {}", evt);
-        if (evt instanceof TransactionCompletedEvent) {
-            ctx.channel().write(evt);
+        if (evt instanceof TransactionStartedEvent) {
+            TransactionStartedEvent tse = (TransactionStartedEvent)evt;
+            listener.onTransactionStarted(tse);
+        } else if (evt instanceof TransactionCompletedEvent) {
+            TransactionCompletedEvent tce = (TransactionCompletedEvent)evt;
+            listener.onTransactionComplete(tce);
+            if (tce.hasFrame()) {
+                channelRead(ctx, tce.getFrame());
+            }
+        } else if (evt instanceof TransactionFailedEvent) {
+            listener.onTransactionFailed((TransactionFailedEvent)evt);
         }
     }
 
@@ -101,7 +112,7 @@ public class ZWaveChannelInboundHandler extends ChannelInboundHandlerAdapter {
             nodeProtocolInfoQueue.add(nodeId);
 
             // send the node protocol info request
-            ctx.channel().write(new NodeProtocolInfo(nodeId));
+            ctx.writeAndFlush(new OutboundDataFrame(new NodeProtocolInfo(nodeId), true));
         }
     }
 

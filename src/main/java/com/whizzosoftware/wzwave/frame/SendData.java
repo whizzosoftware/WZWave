@@ -98,6 +98,10 @@ public class SendData extends DataFrame {
         return callbackId;
     }
 
+    public boolean hasTx() {
+        return (tx != null);
+    }
+
     public Byte getTx() {
         return tx;
     }
@@ -117,7 +121,7 @@ public class SendData extends DataFrame {
     }
 
     @Override
-    public DataFrameTransaction createTransaction() {
-        return new SendDataTransaction(this, isResponseExpected);
+    public DataFrameTransaction createTransaction(boolean listeningNode) {
+        return new SendDataTransaction(this, listeningNode, isResponseExpected);
     }
 }

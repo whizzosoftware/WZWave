@@ -34,7 +34,7 @@ public class GetRoutingInfo extends DataFrame {
     }
 
     @Override
-    public DataFrameTransaction createTransaction() {
+    public DataFrameTransaction createTransaction(boolean listeningNode) {
         return null;
     }
 }

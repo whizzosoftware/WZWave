@@ -1,6 +1,5 @@
 package com.whizzosoftware.wzwave.node;
 
-import com.whizzosoftware.wzwave.persist.MockPersistenceContext;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
@@ -162,7 +161,7 @@ public class BinarySwitchTest {
         // simulate receiving of failed RequestNodeInfo response
         bs.onDataFrameReceived(context, new ApplicationUpdate(DataFrameType.RESPONSE, ApplicationUpdate.UPDATE_STATE_NODE_INFO_REQ_FAILED, (byte)0x00));
 
-        assertEquals(ZWaveNodeState.Started, bs.nodeState);
+        assertEquals(ZWaveNodeState.Started, bs.getState());
         assertFalse(bs.isAvailable());
     }
 }

@@ -83,7 +83,7 @@ public class RemoveNodeFromNetwork extends DataFrame {
     }
 
     @Override
-    public DataFrameTransaction createTransaction() {
-        return new RequestRequestTransaction(this);
+    public DataFrameTransaction createTransaction(boolean listeningNode) {
+        return new RequestRequestTransaction(this, listeningNode);
     }
 }

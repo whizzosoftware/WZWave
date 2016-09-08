@@ -118,6 +118,12 @@ public class ProductRegistry {
                 break;
         }
 
+        if (!info.isComplete() && manufacturerId != null && productTypeId != null && productId != null) {
+            logger.error("You are using a product that is not in WZWave's product registry. If the product is " +
+                    "working properly with WZWave, please submit the following to the project so it can be " +
+                    "added to the registry: {},{},{}", manufacturerId, productTypeId, productId);
+        }
+
         return info;
     }
 }

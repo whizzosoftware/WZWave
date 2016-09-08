@@ -65,6 +65,10 @@ public class ProductInfo {
         this.name = name;
     }
 
+    public boolean isComplete() {
+        return (manufacturer != null && name != null);
+    }
+
     public String toString() {
         if (manufacturer != null) {
             if (name == null) {

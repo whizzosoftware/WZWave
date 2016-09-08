@@ -36,7 +36,7 @@ public class MapDbPersistentStoreTest {
         assertEquals(BasicDeviceClasses.ROUTING_SLAVE, (byte)node.getBasicDeviceClass());
         assertEquals(BinarySwitch.ID, (byte)node.getGenericDeviceClass());
         assertEquals(BinaryPowerSwitch.ID, (byte)node.getSpecificDeviceClass());
-        assertEquals(2, node.getCommandClasses().size());
+        assertEquals(3, node.getCommandClasses().size());
         assertTrue(node.isListeningNode());
     }
 }

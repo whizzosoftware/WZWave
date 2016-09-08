@@ -9,31 +9,19 @@
 */
 package com.whizzosoftware.wzwave.channel.event;
 
-import com.whizzosoftware.wzwave.frame.DataFrame;
-
 /**
- * A user event that indicates a Z-Wave data frame transaction has completed.
+ * A user event that indicates a Z-Wave data frame transaction has timed out.
  *
  * @author Dan Noguerol
  */
-public class TransactionCompletedEvent {
+public class TransactionTimeoutEvent {
     private String id;
-    private DataFrame frame;
 
-    public TransactionCompletedEvent(String id, DataFrame frame) {
+    public TransactionTimeoutEvent(String id) {
         this.id = id;
-        this.frame = frame;
     }
 
     public String getId() {
         return id;
-    }
-
-    public boolean hasFrame() {
-        return (frame != null);
-    }
-
-    public DataFrame getFrame() {
-        return frame;
     }
 }

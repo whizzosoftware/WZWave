@@ -29,8 +29,8 @@ public class RequestRequestTransaction extends AbstractDataFrameTransaction {
     private DataFrame finalFrame;
     private int state;
 
-    public RequestRequestTransaction(DataFrame startFrame) {
-        super(startFrame);
+    public RequestRequestTransaction(DataFrame startFrame, boolean listeningNode) {
+        super(startFrame, listeningNode);
         reset();
     }
 

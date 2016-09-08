@@ -46,8 +46,8 @@ public class RequestNodeInfo extends DataFrame {
     }
 
     @Override
-    public DataFrameTransaction createTransaction() {
-        return new RequestNodeInfoTransaction(this);
+    public DataFrameTransaction createTransaction(boolean listeningNode) {
+        return new RequestNodeInfoTransaction(this, listeningNode);
     }
 
     public String toString() {

@@ -11,10 +11,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MockChannelHandlerContext implements ChannelHandlerContext {
-    private final List<Object> writeQueue = new ArrayList<Object>();
+    private final List<Object> writeQueue = new ArrayList<>();
+    private final List<Object> userEvents = new ArrayList<>();
 
     public List<Object> getWriteQueue() {
         return writeQueue;
+    }
+
+    public List<Object> getUserEvents() {
+        return userEvents;
     }
 
     @Override
@@ -268,6 +273,7 @@ public class MockChannelHandlerContext implements ChannelHandlerContext {
 
     @Override
     public ChannelHandlerContext fireUserEventTriggered(Object event) {
+        userEvents.add(event);
         return null;
     }
 

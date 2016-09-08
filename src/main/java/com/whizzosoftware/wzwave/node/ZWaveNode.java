@@ -30,12 +30,18 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
 
     private Byte basicDeviceClass;
     private boolean isListeningNode;
-    private boolean isSleeping;
+    private ZWaveNodeState nodeState;
     private boolean nodeInfoNeeded;
+    /**
+     * Indicates whether a non-listening node is sleeping.
+     */
+    private boolean isSleeping;
+    /**
+     * Indicates that the node is available. This means it is either a listening node and has been contacted recently
+     * or is a sleeping node and has checked in before its wakeup interval has expired.
+     */
     private Boolean available;
     private final LinkedList<DataFrame> wakeupQueue = new LinkedList<>();
-    protected DataFrame lastSentData;
-    protected ZWaveNodeState nodeState;
     private int stateRetries;
     /**
      * Indicates whether the Version command class has sent its startup messages
@@ -70,9 +76,7 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
 
     public void startInterview(ZWaveControllerContext context, boolean newlyIncluded) {
         // if the node was newly included, flag that it is actively listening
-        if (isListeningNode || newlyIncluded) {
-            isSleeping = false;
-        }
+        isSleeping = !(isListeningNode || newlyIncluded);
 
         // if the device is listening and we don't already know about it, request its node info
         if (nodeInfoNeeded && shouldRequestNodeInfo() && !isSleeping) {
@@ -207,10 +211,8 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
             } else {
                 logger.error("Received message for unsupported command class ID: {}", ByteUtil.createString(commandClassId));
             }
-            lastSentData = null;
         } else if (dataFrame instanceof ApplicationUpdate) {
             processApplicationUpdate(context, (ApplicationUpdate)dataFrame);
-            lastSentData = null;
         }
     }
 

@@ -3,6 +3,7 @@ package com.whizzosoftware.wzwave.node;
 import com.whizzosoftware.wzwave.commandclass.BasicCommandClass;
 import com.whizzosoftware.wzwave.commandclass.BinarySwitchCommandClass;
 import com.whizzosoftware.wzwave.commandclass.CommandClass;
+import com.whizzosoftware.wzwave.commandclass.NoOperationCommandClass;
 import com.whizzosoftware.wzwave.node.generic.BinarySensor;
 import com.whizzosoftware.wzwave.node.generic.BinarySwitch;
 import com.whizzosoftware.wzwave.node.generic.MultilevelSwitch;
@@ -43,9 +44,9 @@ public class ZWaveNodeFactoryTest {
         assertEquals(BasicDeviceClasses.ROUTING_SLAVE, (byte)node.getBasicDeviceClass());
         assertEquals(BinarySwitch.ID, (byte)node.getGenericDeviceClass());
         assertEquals(BinaryPowerSwitch.ID, (byte)node.getSpecificDeviceClass());
-        assertEquals(2, node.getCommandClasses().size());
+        assertEquals(3, node.getCommandClasses().size());
         for (CommandClass cc : node.getCommandClasses()) {
-            assertTrue(cc.getId() == BasicCommandClass.ID || cc.getId() == BinarySwitchCommandClass.ID);
+            assertTrue(cc.getId() == NoOperationCommandClass.ID || cc.getId() == BasicCommandClass.ID || cc.getId() == BinarySwitchCommandClass.ID);
         }
     }
 }

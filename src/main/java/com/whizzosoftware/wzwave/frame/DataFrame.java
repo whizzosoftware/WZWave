@@ -1,10 +1,12 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.frame;
 
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
@@ -26,7 +28,7 @@ abstract public class DataFrame extends Frame {
     private String transactionId;
 
     /**
-     * Constructor
+     * Constructor.
      *
      * @param buffer the readable byte buffer
      */
@@ -43,7 +45,7 @@ abstract public class DataFrame extends Frame {
     }
 
     /**
-     * Constructor
+     * Constructor.
      *
      * @param type the data frame type (TYPE_REQUEST or TYPE_RESPONSE)
      * @param commandId the command ID
@@ -114,11 +116,11 @@ abstract public class DataFrame extends Frame {
         return bytes;
     }
 
-    public DataFrameTransaction createWrapperTransaction() {
-        DataFrameTransaction t = createTransaction();
+    public DataFrameTransaction createWrapperTransaction(boolean listeningNode) {
+        DataFrameTransaction t = createTransaction(listeningNode);
         setTransactionId(t.getId());
         return t;
     }
 
-    abstract public DataFrameTransaction createTransaction();
+    abstract public DataFrameTransaction createTransaction(boolean listeningNode);
 }
