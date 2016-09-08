@@ -16,8 +16,8 @@ import org.slf4j.LoggerFactory;
  *
  * 1. An ACK is received
  * 2. A response is received with retVal == 0x01
- * 3. An request is received
- * 4. (Optional) An ApplicationCommand is received
+ * 3. A callback is received
+ * 4. An ApplicationCommand is received (if the original SendData frame was flagged as requiring a response)
  *
  * @author Dan Noguerol
  */

@@ -52,12 +52,12 @@ import java.util.*;
  * |                           ChannelPipeline                      |                   |
  * |                                                               \|/                  |
  * |    +--------------------------------+            +-------------+--------------+    |
- * |    |    ZWaveChannelInboundHandler  |            |      ZWaveFrameEncoder     |    |
+ * |    |    ZWaveChannelInboundHandler  |            |    QueuedOutboundHandler   |    |
  * |    +---------------+----------------+            +-------------+--------------+    |
  * |                   /|\                                          |                   |
  * |                    |                                          \|/                  |
  * |    +---------------+----------------+            +-------------+--------------+    |
- * |    |    TransactionInboundHandler   |            |    QueuedOutboundHandler   |    |
+ * |    |    TransactionInboundHandler   |            |     ZWaveFrameEncoder      |    |
  * |    +---------------+----------------+            +-------------+--------------+    |
  * |                   /|\                                          |                   |
  * |                    |                                           |                   |
@@ -145,10 +145,10 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
                     channel.config().setStopbits(RxtxChannelConfig.Stopbits.STOPBITS_1);
                     channel.pipeline().addLast("decoder", new ZWaveFrameDecoder());
                     channel.pipeline().addLast("ack", new ACKInboundHandler());
-                    channel.pipeline().addLast("transaction", new TransactionInboundHandler());
-                    channel.pipeline().addLast("handler", inboundHandler);
                     channel.pipeline().addLast("encoder", new ZWaveFrameEncoder());
                     channel.pipeline().addLast("writeQueue", new QueuedOutboundHandler());
+                    channel.pipeline().addLast("transaction", new TransactionInboundHandler());
+                    channel.pipeline().addLast("handler", inboundHandler);
                 }
             });
 
@@ -156,9 +156,9 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (future.isSuccess()) {
-                        channel.write(new Version());
-                        channel.write(new MemoryGetId());
-                        channel.write(new InitData());
+                        sendDataFrame(new Version());
+                        sendDataFrame(new MemoryGetId());
+                        sendDataFrame(new InitData());
                     } else {
                         onZWaveConnectionFailure(future.cause());
                     }
