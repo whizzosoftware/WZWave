@@ -104,8 +104,8 @@ public class ManufacturerSpecificCommandClassTest {
         c.setProductInfo(ProductRegistry.lookupProduct(null, null, null));
         c.queueStartupMessages(ctx, (byte)0x02);
         assertEquals(0, ctx.getSentDataFrames().size());
-        assertNull(c.getProductInfo().getName());
-        assertNull(c.getProductInfo().getManufacturer());
+        assertEquals("Unknown", c.getProductInfo().getName());
+        assertEquals("Unknown", c.getProductInfo().getManufacturer());
     }
 
     @Test
@@ -152,7 +152,7 @@ public class ManufacturerSpecificCommandClassTest {
         c = new ManufacturerSpecificCommandClass();
         c.restore(s.getContext(), (byte)0x02);
         assertNotNull(c.getProductInfo());
-        assertNull(c.getProductInfo().getName());
-        assertNull(c.getProductInfo().getManufacturer());
+        assertEquals("Unknown", c.getProductInfo().getName());
+        assertEquals("Unknown", c.getProductInfo().getManufacturer());
     }
 }

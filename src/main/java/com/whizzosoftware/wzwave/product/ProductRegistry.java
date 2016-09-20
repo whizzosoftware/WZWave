@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 public class ProductRegistry {
     private static final Logger logger = LoggerFactory.getLogger(ProductRegistry.class);
 
+    public final static String UNKNOWN = "Unknown";
+
     // Find info here: http://www.cd-jackson.com/index.php/zwave/zwave-device-database/zwave-device-list
     public final static String M_PHILIO = "Philio Technology Corporation ";
     public final static String M_AEON_LABS = "Aeon Labs";
@@ -37,6 +39,8 @@ public class ProductRegistry {
 
     static public ProductInfo lookupProduct(Integer manufacturerId, Integer productTypeId, Integer productId) {
         ProductInfo info = new ProductInfo(manufacturerId, productTypeId, productId);
+        info.setManufacturer(UNKNOWN);
+        info.setName(UNKNOWN);
 
         logger.debug("Looking up product info: {}, {}, {}", manufacturerId, productTypeId, productId);
 

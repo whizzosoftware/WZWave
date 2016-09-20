@@ -45,6 +45,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
      * Constructor.
      *
      * @param startFrame the frame that started the transaction
+     * @param listeningNode indicates whether the target node is a listening node
      * @param isResponseExpected indicates if a response is expected
      */
     public SendDataTransaction(SendData startFrame, boolean listeningNode, boolean isResponseExpected) {
