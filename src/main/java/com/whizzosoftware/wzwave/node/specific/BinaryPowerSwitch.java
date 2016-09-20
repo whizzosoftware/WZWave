@@ -7,8 +7,11 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.node.specific;
 
+import com.whizzosoftware.wzwave.commandclass.MeterCommandClass;
+import com.whizzosoftware.wzwave.commandclass.MultilevelSensorCommandClass;
 import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
+import com.whizzosoftware.wzwave.node.ZWaveEndpoint;
 import com.whizzosoftware.wzwave.node.generic.BinarySwitch;
 import com.whizzosoftware.wzwave.persist.PersistenceContext;
 
@@ -22,9 +25,20 @@ public class BinaryPowerSwitch extends BinarySwitch {
 
     public BinaryPowerSwitch(NodeInfo info, boolean listening, NodeListener listener) {
         super(info, listening, listener);
+        addCommandClass(MeterCommandClass.ID, new MeterCommandClass());
+        addCommandClass(MultilevelSensorCommandClass.ID, new MultilevelSensorCommandClass());
     }
 
     public BinaryPowerSwitch(PersistenceContext pctx, Byte nodeId, NodeListener listener) {
         super(pctx, nodeId, listener);
+    }
+
+    static public Double getCurrentValue(ZWaveEndpoint endpoint) {
+        MeterCommandClass cc = (MeterCommandClass) endpoint.getCommandClass(MeterCommandClass.ID);
+        if (cc != null) {
+            return cc.getCurrentValue();
+        } else {
+            return null;
+        }
     }
 }
