@@ -21,9 +21,13 @@ between manufacturers (something that can't be said for some other wireless home
 
 ### Why WZWave?
 
-The biggest drawback with Z-Wave is the PC controller serial protocol is not freely available. To obtain official
+The biggest drawback with Z-Wave is the PC controller serial protocol is not freely available. ~~To obtain official
 information requires signing an NDA and paying a hefty fee to get the Z-Wave SDK. As I understand it, software
-developed under the NDA cannot be made freely available. Hence the need for projects like this.
+developed under the NDA cannot be made freely available.~~ Hence the need for projects like this.
+
+**Update:** Sigma Designs has made a good portion of the Z-Wave API public and available without requiring an NDA. It 
+is available from the 
+[Z-Wave Public Specification website](http://z-wave.sigmadesigns.com/design-z-wave/z-wave-public-specification/).
 
 In my research, I was unable to find any native Java libraries that would interface with a Z-Wave controller. Granted,
 there were libraries that used JNI to wrapper the excellent
@@ -33,8 +37,8 @@ library. Thus, WZWave was created to be a fully Java-native solution.
 WZWave was created using a combination of studying online resources, studying the open-zwave project as well as
 copious amounts of reverse engineering.
 
-Note: The project is not affiliated or endorsed by Sigma Designs and none of their IP was used in the creation of this
-library.
+Note: The project is not affiliated or endorsed by Sigma Designs and only publicly available resources were used in
+its creation.
 
 ### Status
 
