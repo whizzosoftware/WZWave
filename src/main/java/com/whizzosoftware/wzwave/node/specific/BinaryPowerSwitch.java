@@ -25,20 +25,9 @@ public class BinaryPowerSwitch extends BinarySwitch {
 
     public BinaryPowerSwitch(NodeInfo info, boolean listening, NodeListener listener) {
         super(info, listening, listener);
-        addCommandClass(MeterCommandClass.ID, new MeterCommandClass());
-        addCommandClass(MultilevelSensorCommandClass.ID, new MultilevelSensorCommandClass());
     }
 
     public BinaryPowerSwitch(PersistenceContext pctx, Byte nodeId, NodeListener listener) {
         super(pctx, nodeId, listener);
-    }
-
-    static public Double getCurrentValue(ZWaveEndpoint endpoint) {
-        MeterCommandClass cc = (MeterCommandClass) endpoint.getCommandClass(MeterCommandClass.ID);
-        if (cc != null) {
-            return cc.getCurrentValue();
-        } else {
-            return null;
-        }
     }
 }
