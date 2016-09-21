@@ -7,11 +7,8 @@
  *******************************************************************************/
 package com.whizzosoftware.wzwave.node.specific;
 
-import com.whizzosoftware.wzwave.commandclass.MeterCommandClass;
-import com.whizzosoftware.wzwave.commandclass.MultilevelSensorCommandClass;
 import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
-import com.whizzosoftware.wzwave.node.ZWaveEndpoint;
 import com.whizzosoftware.wzwave.node.generic.BinarySwitch;
 import com.whizzosoftware.wzwave.persist.PersistenceContext;
 
