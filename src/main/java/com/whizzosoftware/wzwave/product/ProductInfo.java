@@ -13,6 +13,8 @@ package com.whizzosoftware.wzwave.product;
  * @author Dan Noguerol
  */
 public class ProductInfo {
+    public static final String UNKNOWN = "Unknown";
+
     private Integer manufacturerId;
     private String manufacturer;
     private Integer productTypeId;
@@ -66,17 +68,18 @@ public class ProductInfo {
     }
 
     public boolean isComplete() {
-        return (manufacturer != null && name != null);
+        return (manufacturer != null && name != null && !UNKNOWN.equals(manufacturer) && !UNKNOWN.equals(name));
     }
 
     public String toString() {
         if (manufacturer != null) {
             if (name == null) {
-                name = "Unknown";
+                name = UNKNOWN;
             }
             return manufacturer + " " + name;
         } else {
-            return "Unknown";
+            return UNKNOWN;
         }
     }
 }
+
