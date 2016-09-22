@@ -136,4 +136,11 @@ abstract public class CommandClass {
     static protected DataFrame createSendDataFrame(String name, byte nodeId, byte[] data, boolean isResponseExpected) {
         return new SendData(name, nodeId, data, (byte)(SendData.TRANSMIT_OPTION_ACK | SendData.TRANSMIT_OPTION_AUTO_ROUTE), isResponseExpected);
     }
+
+    @Override
+    public String toString() {
+        return "CommandClass{" +
+                "version=" + version +
+                '}';
+    }
 }

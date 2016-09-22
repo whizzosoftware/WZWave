@@ -73,4 +73,11 @@ public class BinarySwitchCommandClass extends CommandClass {
     public DataFrame createSet(byte nodeId, boolean isOn) {
         return createSendDataFrame("SWITCH_BINARY_SET", nodeId, new byte[]{BinarySwitchCommandClass.ID, SWITCH_BINARY_SET, isOn ? (byte) 0xFF : (byte) 0x00}, false);
     }
+
+    @Override
+    public String toString() {
+        return "BinarySwitchCommandClass{" +
+                "isOn=" + isOn +
+                '}';
+    }
 }

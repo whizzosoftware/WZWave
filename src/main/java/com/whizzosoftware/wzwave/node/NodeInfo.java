@@ -8,6 +8,7 @@
 package com.whizzosoftware.wzwave.node;
 
 import io.netty.buffer.ByteBuf;
+import java.util.Arrays;
 
 /**
  * Encapsulates Z-Wave node information.
@@ -72,4 +73,11 @@ public class NodeInfo {
     public byte[] getCommandClasses() {
         return commandClasses;
     }
+
+    @Override
+    public String toString() {
+        return "NodeInfo [nodeId=" + nodeId + ", basicDeviceClass=" + basicDeviceClass + ", genericDeviceClass=" + genericDeviceClass
+                + ", specificDeviceClass=" + specificDeviceClass + ", commandClasses=" + Arrays.toString(commandClasses) + "]";
+    }
+
 }

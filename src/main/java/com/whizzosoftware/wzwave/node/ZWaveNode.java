@@ -363,4 +363,20 @@ abstract public class ZWaveNode extends ZWaveEndpoint {
                 break;
         }
     }
+
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        for (CommandClass cc : getCommandClasses()) {
+            sb.append(cc.toString());
+        }
+        return "ZWaveNode{" +
+                "nodeId=" + getNodeId() +
+                ", isListeningNode=" + isListeningNode +
+                ", nodeState=" + nodeState +
+                ", isSleeping=" + isSleeping +
+                ", available=" + available +
+                ", commandClasses=" + sb.toString() +
+                '}';
+    }
 }

@@ -194,4 +194,13 @@ public class MultilevelSensorCommandClass extends CommandClass {
         Reserved,
         Watt
     }
+
+    @Override
+    public String toString() {
+        return "MultilevelSensorCommandClass{" +
+                "type=" + type +
+                ", scale=" + scale +
+                ", values=" + values +
+                '}';
+    }
 }

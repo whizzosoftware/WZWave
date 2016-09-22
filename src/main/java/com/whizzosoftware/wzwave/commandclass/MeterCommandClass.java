@@ -237,4 +237,15 @@ public class MeterCommandClass extends CommandClass {
         USGallons,
         Reserved
     }
+
+    @Override
+    public String toString() {
+        return "MeterCommandClass{" +
+                "type=" + type +
+                ", scale=" + scale +
+                ", currentValue=" + currentValue +
+                ", previousValue=" + previousValue +
+                ", delta=" + delta +
+                '}';
+    }
 }
