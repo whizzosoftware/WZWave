@@ -1,12 +1,15 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.frame;
 
+import com.whizzosoftware.wzwave.channel.ZWaveChannelContext;
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import com.whizzosoftware.wzwave.frame.transaction.RequestResponseTransaction;
 import com.whizzosoftware.wzwave.util.ByteUtil;
@@ -50,7 +53,7 @@ public class NodeProtocolInfo extends DataFrame {
 
         byte b4 = buffer.readByte();
         byte b5 = buffer.readByte();
-        byte b6 = buffer.readByte();
+        buffer.readByte(); // b6
         byte b7 = buffer.readByte();
         byte b8 = buffer.readByte();
         byte b9 = buffer.readByte();
@@ -111,8 +114,8 @@ public class NodeProtocolInfo extends DataFrame {
     }
 
     @Override
-    public DataFrameTransaction createTransaction(boolean listeningNode) {
-        return new RequestResponseTransaction(this, listeningNode);
+    public DataFrameTransaction createTransaction(ZWaveChannelContext ctx, boolean listeningNode) {
+        return new RequestResponseTransaction(ctx, this, listeningNode);
     }
 
     public String toString() {

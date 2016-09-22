@@ -19,10 +19,29 @@ import com.whizzosoftware.wzwave.frame.DataFrame;
 public class TransactionCompletedEvent {
     private String id;
     private DataFrame frame;
+    private Byte nodeId;
 
+    /**
+     * Constructor.
+     *
+     * @param id the transaction ID
+     * @param frame the data frame associated with the completed transaction
+     */
     public TransactionCompletedEvent(String id, DataFrame frame) {
         this.id = id;
         this.frame = frame;
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param id the transaction ID
+     * @param frame the data frame associated with the completed transaction
+     * @param nodeId the node ID associated with the transaction
+     */
+    public TransactionCompletedEvent(String id, DataFrame frame, byte nodeId) {
+        this(id, frame);
+        this.nodeId = nodeId;
     }
 
     public String getId() {
@@ -35,5 +54,9 @@ public class TransactionCompletedEvent {
 
     public DataFrame getFrame() {
         return frame;
+    }
+
+    public Byte getNodeId() {
+        return nodeId;
     }
 }

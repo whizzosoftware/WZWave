@@ -7,9 +7,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************
 */
-package com.whizzosoftware.wzwave.channel.inbound;
+package com.whizzosoftware.wzwave.channel;
 
-import com.whizzosoftware.wzwave.channel.TransactionTimeoutHandler;
 import com.whizzosoftware.wzwave.channel.event.*;
 import com.whizzosoftware.wzwave.frame.*;
 import com.whizzosoftware.wzwave.frame.transaction.NodeInclusionTransaction;
@@ -20,6 +19,8 @@ import io.netty.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -30,8 +31,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(TransactionInboundHandler.class);
-
-    private static final int MAX_SEND_COUNT = 2;
 
     private ChannelHandlerContext handlerContext;
     private DataFrameTransaction currentDataFrameTransaction;
@@ -57,39 +56,19 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
                 logger.trace("Received frame within transaction ({}) context: {}", tid, frame);
 
                 // give new frame to current transaction
-                if (currentDataFrameTransaction.addFrame(frame)) {
+                NettyZWaveChannelContext zctx = new NettyZWaveChannelContext();
+                if (currentDataFrameTransaction.addFrame(zctx, frame)) {
                     if (currentDataFrameTransaction.isComplete()) {
+                        logger.trace("*** Data frame transaction ({}) completed", tid);
+                        logger.trace("");
+
                         // cancel the timeout callback
                         if (timeoutFuture != null) {
                             timeoutFuture.cancel(true);
                             timeoutFuture = null;
                         }
-
-                        if (!currentDataFrameTransaction.hasError()) {
-                            DataFrame finalFrame = currentDataFrameTransaction.getFinalFrame();
-                            logger.trace("*** Data frame transaction ({}) completed with final frame: {}", tid, finalFrame);
-                            logger.trace("");
-
-                            // if there's an ApplicationUpdate with no node ID (e.g. when there's a app update failure), attempt
-                            // to set the node ID based on the request frame that triggered it
-                            if (finalFrame instanceof ApplicationUpdate) {
-                                ApplicationUpdate update = (ApplicationUpdate)finalFrame;
-                                if ((update.getNodeId() == null || update.getNodeId() == 0) && currentDataFrameTransaction.getStartFrame() instanceof RequestNodeInfo) {
-                                    update.setNodeId(((RequestNodeInfo)currentDataFrameTransaction.getStartFrame()).getNodeId());
-                                }
-                            }
-
-                            clearTransaction();
-                            ctx.fireUserEventTriggered(new TransactionCompletedEvent(tid, finalFrame));
-                        } else if (currentDataFrameTransaction.shouldRetry()) {
-                            attemptResend(ctx);
-                        } else {
-                            logger.trace("*** Data frame transaction ({}) failed", tid);
-                            logger.trace("");
-                            clearTransaction();
-                            ctx.fireUserEventTriggered(new TransactionFailedEvent(tid));
-                        }
                     }
+                    zctx.process(ctx);
                 // if transaction didn't consume frame, then pass it down the pipeline
                 } else {
                     logger.trace("Transaction ignored frame so passing it along");
@@ -97,7 +76,9 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
                 }
             } else if (msg instanceof AddNodeToNetwork) {
                 logger.trace("Received ADD_NODE_STATUS_NODE_FOUND; starting transaction");
-                currentDataFrameTransaction = new NodeInclusionTransaction((DataFrame)msg);
+                NettyZWaveChannelContext zctx = new NettyZWaveChannelContext();
+                currentDataFrameTransaction = new NodeInclusionTransaction(zctx, (DataFrame)msg);
+                zctx.process(ctx);
             } else {
                 logger.trace("Received frame outside of transaction context so passing it along: {}", frame);
                 ctx.fireChannelRead(msg);
@@ -105,18 +86,18 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    public DataFrameTransaction getCurrentTransaction() {
+    DataFrameTransaction getCurrentTransaction() {
         return currentDataFrameTransaction;
     }
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        logger.trace("User event received: {}", evt);
         if (evt instanceof DataFrameSentEvent) {
             DataFrameSentEvent dfse = (DataFrameSentEvent)evt;
             logger.trace("Detected data frame write event: {}", dfse.getDataFrame());
             if (!hasCurrentTransaction()) {
-                currentDataFrameTransaction = dfse.getDataFrame().createWrapperTransaction(dfse.isListeningNode());
+                NettyZWaveChannelContext zctx = new NettyZWaveChannelContext();
+                currentDataFrameTransaction = dfse.getDataFrame().createWrapperTransaction(zctx, dfse.isListeningNode());
                 if (currentDataFrameTransaction != null) {
                     logger.trace("*** Data frame transaction started for {} with ID {}", dfse.getDataFrame(), currentDataFrameTransaction.getId());
                     // start timeout timer
@@ -133,7 +114,7 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
                     } else {
                         logger.warn("Unable to schedule transaction timeout callback");
                     }
-                    ctx.fireUserEventTriggered(new TransactionStartedEvent(currentDataFrameTransaction.getId()));
+                    zctx.process(ctx);
                 }
             } else {
                 logger.trace("Wrote a data frame with a current transaction: {}", dfse.getDataFrame());
@@ -142,12 +123,9 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
             TransactionTimeoutEvent tte = (TransactionTimeoutEvent)evt;
             if (tte.getId().equals(currentDataFrameTransaction.getId())) {
                 logger.trace("Detected transaction timeout");
-                if (currentDataFrameTransaction.shouldRetry()) {
-                    attemptResend(ctx);
-                } else {
-                    clearTransaction();
-                    ctx.fireUserEventTriggered(new TransactionFailedEvent(tte.getId()));
-                }
+                NettyZWaveChannelContext zctx = new NettyZWaveChannelContext();
+                currentDataFrameTransaction.timeout(zctx);
+                zctx.process(ctx);
             } else {
                 logger.error("Received timeout event for unknown transaction: {}", tte.getId());
             }
@@ -157,31 +135,45 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
     }
 
     /**
-     * Indicated whether there is an active transaction.
+     * Indicates whether there is an active transaction.
      *
      * @return a boolean
      */
-    public boolean hasCurrentTransaction() {
+    boolean hasCurrentTransaction() {
         return (currentDataFrameTransaction != null && !currentDataFrameTransaction.isComplete());
     }
 
-    private void clearTransaction() {
-        currentDataFrameTransaction = null;
-    }
+    private class NettyZWaveChannelContext implements ZWaveChannelContext {
+        private List<Object> events;
+        private List<OutboundDataFrame> frames;
 
-    private void attemptResend(ChannelHandlerContext ctx) {
-        DataFrame startFrame = currentDataFrameTransaction.getStartFrame();
-        if (startFrame.getSendCount() < MAX_SEND_COUNT) {
-            logger.debug("Transaction has failed - will reset and resend initial request");
-            currentDataFrameTransaction.reset();
-            // if a CAN was received, then we decrement the send count by one so this attempt doesn't count
-            // towards the maximum resend count
-            ctx.channel().writeAndFlush(new OutboundDataFrame(startFrame, currentDataFrameTransaction.isListeningNode()));
-        } else {
-            logger.debug("Transaction has failed and has exceeded max resends");
-            String id = currentDataFrameTransaction.getId();
-            clearTransaction();
-            ctx.fireUserEventTriggered(new TransactionFailedEvent(id));
+        void process(ChannelHandlerContext ctx) {
+            if (events != null) {
+                for (Object o : events) {
+                    ctx.fireUserEventTriggered(o);
+                }
+            }
+            if (frames != null) {
+                for (OutboundDataFrame f : frames) {
+                    ctx.writeAndFlush(f);
+                }
+            }
+        }
+
+        @Override
+        public void fireEvent(Object o) {
+            if (events == null) {
+                events = new ArrayList<>();
+            }
+            events.add(o);
+        }
+
+        @Override
+        public void writeFrame(OutboundDataFrame f) {
+            if (frames == null) {
+                frames = new ArrayList<>();
+            }
+            frames.add(f);
         }
     }
 }

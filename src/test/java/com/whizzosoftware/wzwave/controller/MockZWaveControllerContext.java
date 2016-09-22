@@ -23,8 +23,13 @@ public class MockZWaveControllerContext implements ZWaveControllerContext {
     }
 
     @Override
-    public void sendDataFrame(DataFrame frame) {
+    public void sendDataFrame(DataFrame frame, boolean isListeningNode) {
         sentFrames.add(frame);
+    }
+
+    @Override
+    public void sendEvent(Object e) {
+
     }
 
     public int getSentFrameCount() {

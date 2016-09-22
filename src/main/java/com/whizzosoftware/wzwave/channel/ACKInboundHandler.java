@@ -7,7 +7,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************
 */
-package com.whizzosoftware.wzwave.channel.inbound;
+package com.whizzosoftware.wzwave.channel;
 
 import com.whizzosoftware.wzwave.frame.ACK;
 import com.whizzosoftware.wzwave.frame.DataFrame;

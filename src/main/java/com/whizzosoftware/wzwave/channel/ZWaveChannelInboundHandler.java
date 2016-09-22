@@ -7,9 +7,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************
 */
-package com.whizzosoftware.wzwave.channel.inbound;
+package com.whizzosoftware.wzwave.channel;
 
-import com.whizzosoftware.wzwave.channel.ZWaveChannelListener;
 import com.whizzosoftware.wzwave.channel.event.TransactionCompletedEvent;
 import com.whizzosoftware.wzwave.channel.event.TransactionFailedEvent;
 import com.whizzosoftware.wzwave.channel.event.TransactionStartedEvent;
@@ -52,10 +51,6 @@ public class ZWaveChannelInboundHandler extends ChannelInboundHandlerAdapter {
             processInitData(ctx, (InitData)frame);
         } else if (frame instanceof NodeProtocolInfo) {
             processNodeProtocolInfo((NodeProtocolInfo)frame);
-        } else if (frame instanceof SendData) {
-            if (listener != null) {
-                listener.onSendData((SendData) frame);
-            }
         } else if (frame instanceof ApplicationCommand) {
             if (listener != null) {
                 listener.onApplicationCommand((ApplicationCommand)frame);

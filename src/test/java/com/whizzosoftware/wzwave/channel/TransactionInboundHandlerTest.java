@@ -9,8 +9,9 @@
 */
 package com.whizzosoftware.wzwave.channel;
 
+import com.whizzosoftware.wzwave.channel.MockChannelHandlerContext;
+import com.whizzosoftware.wzwave.channel.TransactionInboundHandler;
 import com.whizzosoftware.wzwave.channel.event.*;
-import com.whizzosoftware.wzwave.channel.inbound.TransactionInboundHandler;
 import com.whizzosoftware.wzwave.frame.*;
 import io.netty.buffer.Unpooled;
 
@@ -18,6 +19,84 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class TransactionInboundHandlerTest {
+    @Test
+    public void testRequestNodeInfoApplicationUpdate() throws Exception {
+        MockChannelHandlerContext ctx = new MockChannelHandlerContext();
+        TransactionInboundHandler h = new TransactionInboundHandler();
+
+        // initiate new RequestNodeInfo transaction
+        RequestNodeInfo requestFrame = new RequestNodeInfo((byte)0x02);
+        h.userEventTriggered(ctx, new DataFrameSentEvent(requestFrame, true));
+        assertEquals(0, ctx.getWriteQueue().size());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertTrue(ctx.getUserEvents().get(0) instanceof TransactionStartedEvent);
+        assertFalse(h.getCurrentTransaction().isComplete());
+
+        // receive ACK
+        h.channelRead(ctx, new ACK());
+        assertEquals(0, ctx.getWriteQueue().size());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertFalse(h.getCurrentTransaction().isComplete());
+
+        // receive successful send
+        h.channelRead(ctx, new RequestNodeInfo(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x60, RequestNodeInfo.UPDATE_STATE_NODE_INFO_RECEIVED, (byte)0x9a})));
+        assertEquals(0, ctx.getWriteQueue().size());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertTrue(h.hasCurrentTransaction());
+        assertFalse(h.getCurrentTransaction().isComplete());
+
+        // receive application update callback
+        h.channelRead(ctx, new ApplicationUpdate(Unpooled.wrappedBuffer(new byte[] {0x01, 16, 0x00, 0x49, (byte)0x84, 0x02, 0x0a, 0x04, 0x10, 0x01, 0x25, 0x27, 0x75, 0x73, (byte)0x86, 0x72, 0x77, (byte)0xb8})));
+        assertEquals(0, ctx.getWriteQueue().size());
+        assertEquals(2, ctx.getUserEvents().size());
+        assertTrue(ctx.getUserEvents().get(1) instanceof TransactionCompletedEvent);
+        assertFalse(h.hasCurrentTransaction());
+
+        TransactionCompletedEvent tce = (TransactionCompletedEvent)ctx.getUserEvents().get(1);
+        assertTrue(tce.hasFrame());
+        assertTrue(tce.getFrame() instanceof ApplicationUpdate);
+        assertEquals(0x02, (byte)((ApplicationUpdate)tce.getFrame()).getNodeId());
+    }
+
+    @Test
+    public void testRequestNodeInfoApplicationUpdateWithNoNodeId() throws Exception {
+        MockChannelHandlerContext ctx = new MockChannelHandlerContext();
+        TransactionInboundHandler h = new TransactionInboundHandler();
+
+        // initiate new RequestNodeInfo transaction
+        RequestNodeInfo requestFrame = new RequestNodeInfo((byte)0x02);
+        h.userEventTriggered(ctx, new DataFrameSentEvent(requestFrame, true));
+        assertEquals(0, ctx.getWriteQueue().size());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertTrue(ctx.getUserEvents().get(0) instanceof TransactionStartedEvent);
+        assertFalse(h.getCurrentTransaction().isComplete());
+
+        // receive ACK
+        h.channelRead(ctx, new ACK());
+        assertEquals(0, ctx.getWriteQueue().size());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertFalse(h.getCurrentTransaction().isComplete());
+
+        // receive successful send
+        h.channelRead(ctx, new RequestNodeInfo(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x60, RequestNodeInfo.UPDATE_STATE_NODE_INFO_RECEIVED, (byte)0x9a})));
+        assertEquals(0, ctx.getWriteQueue().size());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertTrue(h.hasCurrentTransaction());
+        assertFalse(h.getCurrentTransaction().isComplete());
+
+        // receive application update callback
+        h.channelRead(ctx, new ApplicationUpdate(Unpooled.wrappedBuffer(new byte[] {0x01, 16, 0x00, 0x49, (byte)0x84, 0x00, 0x0a, 0x04, 0x10, 0x01, 0x25, 0x27, 0x75, 0x73, (byte)0x86, 0x72, 0x77, (byte)0xb8})));
+        assertEquals(0, ctx.getWriteQueue().size());
+        assertEquals(2, ctx.getUserEvents().size());
+        assertTrue(ctx.getUserEvents().get(1) instanceof TransactionCompletedEvent);
+        assertFalse(h.hasCurrentTransaction());
+
+        TransactionCompletedEvent tce = (TransactionCompletedEvent)ctx.getUserEvents().get(1);
+        assertTrue(tce.hasFrame());
+        assertTrue(tce.getFrame() instanceof ApplicationUpdate);
+        assertEquals(0x02, (byte)((ApplicationUpdate)tce.getFrame()).getNodeId());
+    }
+
     @Test
     public void testRequestNodeInfoFailure() throws Exception {
         MockChannelHandlerContext ctx = new MockChannelHandlerContext();
@@ -33,7 +112,7 @@ public class TransactionInboundHandlerTest {
         assertEquals(0, ctx.getWriteQueue().size());
 
         // receive unsuccessful send
-        h.channelRead(ctx, new RequestNodeInfo(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x60, 0x00, (byte)0x9a})));
+        h.channelRead(ctx, new RequestNodeInfo(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x60, RequestNodeInfo.UPDATE_STATE_NODE_INFO_REQ_FAILED, (byte)0x9a})));
         assertTrue(h.hasCurrentTransaction());
 
         // confirm request was re-queued
@@ -72,7 +151,7 @@ public class TransactionInboundHandlerTest {
         h.channelRead(ctx, new RequestNodeInfo(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x60, 0x00, (byte)0x9a})));
         assertFalse(h.hasCurrentTransaction());
 
-        // confirm request was not requeued
+        // confirm request was not re-queued
         assertEquals(2, ctx.getWriteQueue().size());
     }
 

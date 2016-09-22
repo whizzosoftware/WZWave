@@ -9,6 +9,7 @@
 */
 package com.whizzosoftware.wzwave.frame.transaction;
 
+import com.whizzosoftware.wzwave.channel.ZWaveChannelContext;
 import com.whizzosoftware.wzwave.frame.DataFrame;
 import com.whizzosoftware.wzwave.frame.Frame;
 
@@ -45,20 +46,19 @@ public interface DataFrameTransaction {
     /**
      * Add a Frame to the transaction.
      *
+     * @param ctx the channel context
      * @param f the next frame
      *
      * @return indicates whether the frame was consumed by the transaction
      */
-    boolean addFrame(Frame f);
+    boolean addFrame(ZWaveChannelContext ctx, Frame f);
 
     /**
-     * Indicates whether the transaction is in an error state.
+     * Forces a transaction timeout.
      *
-     * @return a boolean
+     * @param ctx the channel context
      */
-    boolean hasError();
-
-    boolean shouldRetry();
+    void timeout(ZWaveChannelContext ctx);
 
     /**
      * Indicates whether the destination node for this message transaction is known to be actively listening.
@@ -73,14 +73,6 @@ public interface DataFrameTransaction {
      * @return a boolean
      */
     boolean isComplete();
-
-    /**
-     * Returns the final frame of the transaction. This is what is passed along to the various listeners in order
-     * to process the request's response.
-     *
-     * @return a DataFrame
-     */
-    DataFrame getFinalFrame();
 
     /**
      * Resets the transaction to its initial state.

@@ -1,12 +1,15 @@
-/*******************************************************************************
+/*
+ ********************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.frame;
 
+import com.whizzosoftware.wzwave.channel.ZWaveChannelContext;
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import com.whizzosoftware.wzwave.frame.transaction.RequestNodeInfoTransaction;
 import com.whizzosoftware.wzwave.util.ByteUtil;
@@ -19,6 +22,9 @@ import io.netty.buffer.ByteBuf;
  */
 public class RequestNodeInfo extends DataFrame {
     public static final byte ID = 0x60;
+
+    public static final byte UPDATE_STATE_NODE_INFO_REQ_FAILED = 0x00;
+    public static final byte UPDATE_STATE_NODE_INFO_RECEIVED = 0x01;
 
     private Byte nodeId;
     private Byte retVal;
@@ -46,8 +52,8 @@ public class RequestNodeInfo extends DataFrame {
     }
 
     @Override
-    public DataFrameTransaction createTransaction(boolean listeningNode) {
-        return new RequestNodeInfoTransaction(this, listeningNode);
+    public DataFrameTransaction createTransaction(ZWaveChannelContext ctx, boolean listeningNode) {
+        return new RequestNodeInfoTransaction(ctx, this, listeningNode);
     }
 
     public String toString() {
@@ -55,9 +61,9 @@ public class RequestNodeInfo extends DataFrame {
             return "REQUEST_NODE_INFO(" + ByteUtil.createString(nodeId) + ")";
         } else {
             switch (retVal) {
-                case 0:
+                case UPDATE_STATE_NODE_INFO_REQ_FAILED:
                     return "REQUEST_NODE_INFO[failed]";
-                case 1:
+                case UPDATE_STATE_NODE_INFO_RECEIVED:
                     return "REQUEST_NODE_INFO[success]";
                 default:
                     return "REQUEST_NODE_INFO: " + retVal;

@@ -104,8 +104,8 @@ public class ManufacturerSpecificCommandClassTest {
         c.setProductInfo(ProductRegistry.lookupProduct(null, null, null));
         c.queueStartupMessages(ctx, (byte)0x02);
         assertEquals(0, ctx.getSentDataFrames().size());
-        assertEquals("Unknown", c.getProductInfo().getName());
-        assertEquals("Unknown", c.getProductInfo().getManufacturer());
+        assertEquals(ProductInfo.UNKNOWN, c.getProductInfo().getName());
+        assertEquals(ProductInfo.UNKNOWN, c.getProductInfo().getManufacturer());
     }
 
     @Test
@@ -115,7 +115,7 @@ public class ManufacturerSpecificCommandClassTest {
         c.setProductInfo(ProductRegistry.lookupProduct(-122, null, null));
         c.queueStartupMessages(ctx, (byte)0x02);
         assertEquals(0, ctx.getSentDataFrames().size());
-        assertEquals("Unknown", c.getProductInfo().getName());
+        assertEquals(ProductInfo.UNKNOWN, c.getProductInfo().getName());
         assertEquals(ProductRegistry.M_AEON_LABS, c.getProductInfo().getManufacturer());
     }
 
@@ -126,7 +126,7 @@ public class ManufacturerSpecificCommandClassTest {
         c.setProductInfo(ProductRegistry.lookupProduct(-122, 3, null));
         c.queueStartupMessages(ctx, (byte)0x02);
         assertEquals(0, ctx.getSentDataFrames().size());
-        assertEquals("Unknown", c.getProductInfo().getName());
+        assertEquals(ProductInfo.UNKNOWN, c.getProductInfo().getName());
         assertEquals(ProductRegistry.M_AEON_LABS, c.getProductInfo().getManufacturer());
     }
 
@@ -152,7 +152,7 @@ public class ManufacturerSpecificCommandClassTest {
         c = new ManufacturerSpecificCommandClass();
         c.restore(s.getContext(), (byte)0x02);
         assertNotNull(c.getProductInfo());
-        assertEquals("Unknown", c.getProductInfo().getName());
-        assertEquals("Unknown", c.getProductInfo().getManufacturer());
+        assertEquals(ProductInfo.UNKNOWN, c.getProductInfo().getName());
+        assertEquals(ProductInfo.UNKNOWN, c.getProductInfo().getManufacturer());
     }
 }

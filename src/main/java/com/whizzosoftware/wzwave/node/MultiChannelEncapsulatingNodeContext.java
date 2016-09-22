@@ -46,8 +46,8 @@ public class MultiChannelEncapsulatingNodeContext implements NodeContext {
     }
 
     @Override
-    public void flushWakeupQueue() {
-        context.flushWakeupQueue();
+    public void setSleeping(boolean sleeping) {
+        context.setSleeping(sleeping);
     }
 
     @Override

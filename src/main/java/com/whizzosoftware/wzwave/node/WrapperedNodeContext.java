@@ -33,8 +33,8 @@ public class WrapperedNodeContext implements NodeContext {
     }
 
     @Override
-    public void flushWakeupQueue() {
-        node.flushWakeupQueue(context);
+    public void setSleeping(boolean sleeping) {
+        node.setSleeping(context, sleeping);
     }
 
     @Override

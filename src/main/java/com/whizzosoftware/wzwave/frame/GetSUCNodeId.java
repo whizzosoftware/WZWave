@@ -1,5 +1,6 @@
 package com.whizzosoftware.wzwave.frame;
 
+import com.whizzosoftware.wzwave.channel.ZWaveChannelContext;
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import io.netty.buffer.ByteBuf;
 
@@ -18,7 +19,7 @@ public class GetSUCNodeId extends DataFrame {
     }
 
     @Override
-    public DataFrameTransaction createTransaction(boolean listeningNode) {
+    public DataFrameTransaction createTransaction(ZWaveChannelContext ctx, boolean listeningNode) {
         return null;
     }
 }

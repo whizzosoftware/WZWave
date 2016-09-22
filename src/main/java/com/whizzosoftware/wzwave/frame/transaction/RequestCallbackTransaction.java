@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (c) 2013 Whizzo Software, LLC.
+ * Copyright (c) 2016 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,14 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A RequestResponseTransaction is a transaction that is considered complete when:
+ * A RequestCallbackTransaction is a transaction that is considered complete when:
  *
  * 1. An ACK is received
- * 2. A response is received with the same type as the request
+ * 2. A callback is received (the same frame type as the one that started the transaction)
  *
  * @author Dan Noguerol
  */
-public class RequestResponseTransaction extends AbstractDataFrameTransaction {
+public class RequestCallbackTransaction extends AbstractDataFrameTransaction {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private static final int STATE_REQUEST_SENT = 1;
@@ -33,7 +33,7 @@ public class RequestResponseTransaction extends AbstractDataFrameTransaction {
 
     private int state;
 
-    public RequestResponseTransaction(ZWaveChannelContext ctx, DataFrame startFrame, boolean listeningNode) {
+    public RequestCallbackTransaction(ZWaveChannelContext ctx, DataFrame startFrame, boolean listeningNode) {
         super(ctx, startFrame, listeningNode);
         reset();
     }
@@ -61,12 +61,12 @@ public class RequestResponseTransaction extends AbstractDataFrameTransaction {
                     failTransaction(ctx, true);
                     return true;
                 } else if (f instanceof DataFrame && f.getClass() == getStartFrame().getClass()) {
-                    if (((DataFrame)f).getType() == DataFrameType.RESPONSE) {
+                    if (((DataFrame)f).getType() == DataFrameType.REQUEST) {
                         logger.trace("Received expected message response");
                         completeTransaction(ctx, (DataFrame)f);
                         return true;
                     } else {
-                        logger.trace("Expected frame received but does not appear to be a response: {}", f);
+                        logger.trace("Expected frame received but does not appear to be a request: {}", f);
                         failTransaction(ctx, false);
                         return true;
                     }

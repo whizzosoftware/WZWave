@@ -9,6 +9,7 @@
 */
 package com.whizzosoftware.wzwave.frame;
 
+import com.whizzosoftware.wzwave.channel.ZWaveChannelContext;
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import com.whizzosoftware.wzwave.frame.transaction.SendDataTransaction;
 import com.whizzosoftware.wzwave.util.ByteUtil;
@@ -121,7 +122,7 @@ public class SendData extends DataFrame {
     }
 
     @Override
-    public DataFrameTransaction createTransaction(boolean listeningNode) {
-        return new SendDataTransaction(this, listeningNode, isResponseExpected);
+    public DataFrameTransaction createTransaction(ZWaveChannelContext ctx, boolean listeningNode) {
+        return new SendDataTransaction(ctx, this, listeningNode, isResponseExpected);
     }
 }

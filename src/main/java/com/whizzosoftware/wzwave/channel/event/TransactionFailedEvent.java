@@ -9,6 +9,8 @@
 */
 package com.whizzosoftware.wzwave.channel.event;
 
+import com.whizzosoftware.wzwave.frame.DataFrame;
+
 /**
  * A user event that indicates a Z-Wave data frame transaction has failed.
  *
@@ -16,12 +18,44 @@ package com.whizzosoftware.wzwave.channel.event;
  */
 public class TransactionFailedEvent {
     private String id;
+    private Byte nodeId;
+    private DataFrame startFrame;
 
-    public TransactionFailedEvent(String id) {
+    /**
+     * Constructor.
+     *
+     * @param id the transaction ID
+     */
+    public TransactionFailedEvent(String id, DataFrame startFrame) {
+        this(id, startFrame, null);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param id the transaction ID
+     * @param startFrame the data frame that initiated the transaction
+     * @param nodeId the node ID associated with the transaction
+     */
+    public TransactionFailedEvent(String id, DataFrame startFrame, Byte nodeId) {
         this.id = id;
+        this.nodeId = nodeId;
+        this.startFrame = startFrame;
     }
 
     public String getId() {
         return id;
+    }
+
+    public Byte getNodeId() {
+        return nodeId;
+    }
+
+    public boolean hasStartFrame() {
+        return (startFrame != null);
+    }
+
+    public DataFrame getStartFrame() {
+        return startFrame;
     }
 }

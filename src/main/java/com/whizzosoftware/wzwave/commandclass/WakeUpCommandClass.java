@@ -1,10 +1,12 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.commandclass;
 
 import com.whizzosoftware.wzwave.node.NodeContext;
@@ -42,7 +44,7 @@ public class WakeUpCommandClass extends CommandClass {
     public void onApplicationCommand(NodeContext context, byte[] ccb, int startIndex) {
         if (ccb[startIndex+1] == WAKE_UP_NOTIFICATION) {
             logger.debug("Received wake up notification; flushing wakeup command queue");
-            context.flushWakeupQueue();
+            context.setSleeping(false);
         } else {
             logger.warn("Ignoring unsupported command: {}", ByteUtil.createString(ccb[startIndex+1]));
         }

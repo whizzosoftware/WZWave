@@ -10,13 +10,11 @@
 package com.whizzosoftware.wzwave.controller.netty;
 
 import com.whizzosoftware.wzwave.channel.*;
-import com.whizzosoftware.wzwave.channel.event.TransactionCompletedEvent;
-import com.whizzosoftware.wzwave.channel.event.TransactionFailedEvent;
-import com.whizzosoftware.wzwave.channel.event.TransactionStartedEvent;
-import com.whizzosoftware.wzwave.channel.inbound.ACKInboundHandler;
-import com.whizzosoftware.wzwave.channel.inbound.ZWaveChannelInboundHandler;
-import com.whizzosoftware.wzwave.channel.inbound.TransactionInboundHandler;
-import com.whizzosoftware.wzwave.channel.outbound.FrameQueueHandler;
+import com.whizzosoftware.wzwave.channel.event.*;
+import com.whizzosoftware.wzwave.channel.ACKInboundHandler;
+import com.whizzosoftware.wzwave.channel.ZWaveChannelInboundHandler;
+import com.whizzosoftware.wzwave.channel.TransactionInboundHandler;
+import com.whizzosoftware.wzwave.channel.FrameQueueHandler;
 import com.whizzosoftware.wzwave.codec.ZWaveFrameDecoder;
 import com.whizzosoftware.wzwave.codec.ZWaveFrameEncoder;
 import com.whizzosoftware.wzwave.commandclass.WakeUpCommandClass;
@@ -46,7 +44,7 @@ import java.util.*;
 /**
  * A Netty implementation of a ZWaveController.
  *
- * The pipelines look like this:
+ * The pipeline looks like this:
  *
  *                                                      I/O Request via Channel or
  *                                                        ChannelHandlerContext
@@ -92,7 +90,6 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
 
     private String serialPort;
     private PersistentStore store;
-    private Bootstrap bootstrap;
     private Channel channel;
     private String libraryVersion;
     private Integer homeId;
@@ -118,7 +115,7 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
      * @param serialPort the serial port for Z-Wave controller is accessible from
      * @param store the persistent store to use for storing/retrieving node information
      */
-    public NettyZWaveController(String serialPort, PersistentStore store) {
+    NettyZWaveController(String serialPort, PersistentStore store) {
         this.serialPort = serialPort;
         this.store = store;
         this.inboundHandler = new ZWaveChannelInboundHandler(this);
@@ -140,7 +137,7 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     public void start() {
         if (channel == null) {
             // set up Netty bootstrap
-            bootstrap = new Bootstrap();
+            Bootstrap bootstrap = new Bootstrap();
             bootstrap.group(new OioEventLoopGroup());
             bootstrap.channel(RxtxChannel.class);
             bootstrap.handler(new ChannelInitializer<RxtxChannel>() {
@@ -205,9 +202,17 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
         return nodeMap.get(nodeId);
     }
 
+    public void sendDataFrame(DataFrame frame) {
+        channel.write(new OutboundDataFrame(frame, true));
+    }
+
+    public void sendDataFrame(DataFrame frame, boolean isListeningNode) {
+        channel.write(new OutboundDataFrame(frame, isListeningNode));
+    }
+
     @Override
-    public void sendDataFrame(DataFrame dataFrame) {
-        channel.write(new OutboundDataFrame(dataFrame, true));
+    public void sendEvent(Object e) {
+        channel.write(e);
     }
 
     /*
@@ -257,7 +262,7 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
             logger.trace("Inclusion of new node {}", ByteUtil.createString(nodeInfo.getNodeId()));
             ZWaveNode node = ZWaveNodeFactory.createNode(nodeInfo, !nodeInfo.hasCommandClass(WakeUpCommandClass.ID), this);
             logger.trace("Created new node [{}]: {}", node.getNodeId(), node);
-            addNode(node, true);
+            addNode(node);
             if (listener != null) {
                 listener.onZWaveInclusion(nodeInfo, success);
             }
@@ -326,13 +331,13 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
             } else {
                 logger.debug("Node[{}] matches persistent node information; no need to interview", nodeId);
             }
-            addNode(node, false);
+            addNode(node);
         } catch (NodeCreationException e) {
             logger.error("Unable to create node", e);
         }
     }
 
-    private void addNode(ZWaveNode node, boolean newlyIncluded) {
+    private void addNode(ZWaveNode node) {
         ZWaveNode n = nodeMap.get(node.getNodeId());
         if (n != null) {
             nodes.remove(n);
@@ -340,25 +345,17 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
         }
         nodes.add(node);
         nodeMap.put(node.getNodeId(), node);
-        node.startInterview(this, newlyIncluded);
-    }
-
-    @Override
-    public void onSendData(SendData sendData) {
-        byte nodeId = sendData.getNodeId();
-        ZWaveNode node = nodeMap.get(nodeId);
-        if (node != null) {
-            node.onDataFrameReceived(this, sendData);
-        } else {
-            logger.error("Unable to find node " + nodeId);
-        }
+        node.startInterview(this);
     }
 
     @Override
     public void onApplicationCommand(ApplicationCommand applicationCommand) {
         ZWaveNode node = nodeMap.get(applicationCommand.getNodeId());
         if (node != null) {
-            onNodeUpdate(node, applicationCommand);
+            node.onApplicationCommand(this, applicationCommand);
+            if (node.isStarted()) {
+                onZWaveNodeUpdated(node);
+            }
         } else {
             logger.error("Unable to find node: {}", nodeId);
         }
@@ -375,7 +372,10 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
         if (nodeId != null) {
             ZWaveNode node = nodeMap.get(nodeId);
             if (node != null) {
-                onNodeUpdate(node, applicationUpdate);
+                node.onApplicationUpdate(this, applicationUpdate);
+                if (node.isStarted()) {
+                    onZWaveNodeUpdated(node);
+                }
             } else {
                 logger.error("Unable to find node: {}", nodeId);
             }
@@ -393,20 +393,29 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     @Override
     public void onTransactionComplete(TransactionCompletedEvent evt) {
         logger.trace("Detected end of transaction: {}", evt.getId());
+        if (evt instanceof SendDataTransactionCompletedEvent) {
+            ZWaveNode node = nodeMap.get(evt.getNodeId());
+            if (node != null) {
+                node.onSendDataCallback(this, true);
+            } else {
+                logger.error("Unable to find node: {}", evt.getNodeId());
+            }
+        }
         channel.write(evt);
     }
 
     @Override
     public void onTransactionFailed(TransactionFailedEvent evt) {
         logger.trace("Detected transaction failure: {}", evt.getId());
-        channel.write(evt); // TODO: improve this logic
-    }
-
-    private void onNodeUpdate(ZWaveNode node, DataFrame df) {
-        node.onDataFrameReceived(this, df);
-        if (node.isStarted()) {
-            onZWaveNodeUpdated(node);
+        if (evt instanceof SendDataTransactionFailedEvent) {
+            ZWaveNode node = nodeMap.get(evt.getNodeId());
+            if (node != null) {
+                node.onSendDataCallback(this, ((SendDataTransactionFailedEvent)evt).isTargetNodeACKReceived());
+            } else {
+                logger.error("Unable to find node: {}", evt.getNodeId());
+            }
         }
+        channel.write(evt);
     }
 
     @Override

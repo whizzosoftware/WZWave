@@ -23,14 +23,19 @@ public class BinarySwitchTest {
             true,
             null
         );
-        bs.startInterview(context, false);
-        assertEquals(0, bs.getWakeupQueueCount());
+        bs.startInterview(context);
+        assertEquals(1, context.getSentFrameCount());
+        assertTrue(context.getSentFrames().get(0) instanceof SendData);
+        context.clearSentFrames();
+
+        // response with successful ping
+        bs.onSendDataCallback(context, true);
         assertEquals(1, context.getSentFrameCount());
         assertTrue(context.getSentFrames().get(0) instanceof RequestNodeInfo);
         context.clearSentFrames();
 
         // response with two command classes
-        bs.onDataFrameReceived(context, new ApplicationUpdate(
+        bs.onApplicationUpdate(context, new ApplicationUpdate(
             DataFrameType.REQUEST,
             ApplicationUpdate.UPDATE_STATE_NODE_INFO_RECEIVED,
             (byte)0x02,
@@ -52,7 +57,7 @@ public class BinarySwitchTest {
         context.clearSentFrames();
 
         // respond with first version response (node)
-        bs.onDataFrameReceived(context, new ApplicationCommand(
+        bs.onApplicationCommand(context, new ApplicationCommand(
             DataFrameType.REQUEST,
             (byte)0x00,
             (byte)0x29,
@@ -67,7 +72,7 @@ public class BinarySwitchTest {
         context.clearSentFrames();
 
         // respond with basic get response
-        bs.onDataFrameReceived(context, new ApplicationCommand(
+        bs.onApplicationCommand(context, new ApplicationCommand(
                 DataFrameType.REQUEST,
                 (byte)0x00,
                 (byte)0x29,
@@ -78,7 +83,7 @@ public class BinarySwitchTest {
         assertEquals(0, context.getSentFrameCount());
 
         // respond with switch binary get response
-        bs.onDataFrameReceived(context, new ApplicationCommand(
+        bs.onApplicationCommand(context, new ApplicationCommand(
                 DataFrameType.REQUEST,
                 (byte)0x00,
                 (byte)0x29,
@@ -105,7 +110,7 @@ public class BinarySwitchTest {
 
         // since BASIC_REPORT is supposed to get mapped to SWITCH_BINARY_REPORT, send a new SWITCH_BINARY_REPORT (value=0xFF)
         // message to node and verify COMMAND_CLASS_SWITCH_BINARY is updated properly
-        bs.onDataFrameReceived(context, new ApplicationCommand(DataFrameType.REQUEST, (byte)0x00, (byte)0x02, new byte[] {BasicCommandClass.ID, BasicCommandClass.BASIC_REPORT, (byte)0xFF}));
+        bs.onApplicationCommand(context, new ApplicationCommand(DataFrameType.REQUEST, (byte)0x00, (byte)0x02, new byte[] {BasicCommandClass.ID, BasicCommandClass.BASIC_REPORT, (byte)0xFF}));
 
         assertTrue(BinarySwitch.isOn(bs));
     }
@@ -126,11 +131,11 @@ public class BinarySwitchTest {
         assertNull(BinarySwitch.isOn(bs));
 
         // send a new SWITCH_BINARY_REPORT (value=0xFF) to node and verify COMMAND_CLASS_SWITCH_BINARY is updated properly
-        bs.onDataFrameReceived(context, new ApplicationCommand(DataFrameType.REQUEST, (byte)0x00, (byte)0x02, new byte[] {BinarySwitchCommandClass.ID, BinarySwitchCommandClass.SWITCH_BINARY_REPORT, (byte)0xFF}));
+        bs.onApplicationCommand(context, new ApplicationCommand(DataFrameType.REQUEST, (byte)0x00, (byte)0x02, new byte[] {BinarySwitchCommandClass.ID, BinarySwitchCommandClass.SWITCH_BINARY_REPORT, (byte)0xFF}));
         assertTrue(BinarySwitch.isOn(bs));
 
         // send a new SWITCH_BINARY_REPORT (off) to node and verify COMMAND_CLASS_SWITCH_BINARY is updated properly
-        bs.onDataFrameReceived(context, new ApplicationCommand(DataFrameType.REQUEST, (byte) 0x00, (byte) 0x02, new byte[]{BinarySwitchCommandClass.ID, BinarySwitchCommandClass.SWITCH_BINARY_REPORT, (byte) 0x00}));
+        bs.onApplicationCommand(context, new ApplicationCommand(DataFrameType.REQUEST, (byte) 0x00, (byte) 0x02, new byte[]{BinarySwitchCommandClass.ID, BinarySwitchCommandClass.SWITCH_BINARY_REPORT, (byte) 0x00}));
         assertFalse(BinarySwitch.isOn(bs));
     }
 
@@ -144,22 +149,27 @@ public class BinarySwitchTest {
             true,
             null
         );
-        bs.startInterview(context, false);
-        assertEquals(0, bs.getWakeupQueueCount());
+        bs.startInterview(context);
+        assertEquals(1, context.getSentFrameCount());
+        assertTrue(context.getSentFrames().get(0) instanceof SendData);
+        assertNull(bs.isAvailable());
+        context.clearSentFrames();
+
+        bs.onSendDataCallback(context, true);
         assertEquals(1, context.getSentFrameCount());
         assertTrue(context.getSentFrames().get(0) instanceof RequestNodeInfo);
-        assertNull(bs.isAvailable());
+        assertTrue(bs.isAvailable());
 
         // simulate receiving of failed RequestNodeInfo response
-        bs.onDataFrameReceived(context, new ApplicationUpdate(DataFrameType.RESPONSE, ApplicationUpdate.UPDATE_STATE_NODE_INFO_REQ_FAILED, (byte)0x00));
-        assertNull(bs.isAvailable());
+        bs.onApplicationUpdate(context, new ApplicationUpdate(DataFrameType.RESPONSE, ApplicationUpdate.UPDATE_STATE_NODE_INFO_REQ_FAILED, (byte)0x00));
+        assertTrue(bs.isAvailable());
 
         // assert that a retry was sent
         assertEquals(2, context.getSentFrameCount());
         assertTrue(context.getSentFrames().get(1) instanceof RequestNodeInfo);
 
         // simulate receiving of failed RequestNodeInfo response
-        bs.onDataFrameReceived(context, new ApplicationUpdate(DataFrameType.RESPONSE, ApplicationUpdate.UPDATE_STATE_NODE_INFO_REQ_FAILED, (byte)0x00));
+        bs.onApplicationUpdate(context, new ApplicationUpdate(DataFrameType.RESPONSE, ApplicationUpdate.UPDATE_STATE_NODE_INFO_REQ_FAILED, (byte)0x00));
 
         assertEquals(ZWaveNodeState.Started, bs.getState());
         assertFalse(bs.isAvailable());

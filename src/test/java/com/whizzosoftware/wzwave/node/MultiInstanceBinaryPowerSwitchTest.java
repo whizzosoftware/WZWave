@@ -24,16 +24,23 @@ public class MultiInstanceBinaryPowerSwitchTest {
             true,
             null
         );
-        ps.startInterview(context, false);
+        ps.startInterview(context);
+
+        // send successful ping
+        assertEquals(1, context.getSentFrameCount());
+        assertTrue(context.getSentFrames().get(0) instanceof SendData);
+        assertEquals(ZWaveNodeState.Ping, ps.getState());
+        context.clearSentFrames();
 
         // confirm that a RequestNodeInfo frame was sent
+        ps.onSendDataCallback(context, true);
         assertEquals(1, context.getSentFrameCount());
         assertTrue(context.getSentFrames().get(0) instanceof RequestNodeInfo);
         assertEquals(ZWaveNodeState.NodeInfo, ps.getState());
         context.clearSentFrames();
 
         // respond with an ApplictionUpdate indicating the device has two command classes
-        ps.onDataFrameReceived(context, new ApplicationUpdate(
+        ps.onApplicationUpdate(context, new ApplicationUpdate(
             DataFrameType.REQUEST,
             ApplicationUpdate.UPDATE_STATE_NODE_INFO_RECEIVED,
             nodeId,
@@ -56,7 +63,7 @@ public class MultiInstanceBinaryPowerSwitchTest {
         context.clearSentFrames();
 
         // respond with the device version
-        ps.onDataFrameReceived(context, new ApplicationCommand(
+        ps.onApplicationCommand(context, new ApplicationCommand(
             DataFrameType.REQUEST,
             rxStatus,
             nodeId,
@@ -66,7 +73,7 @@ public class MultiInstanceBinaryPowerSwitchTest {
         assertEquals(ZWaveNodeState.RetrieveVersionSent, ps.getState());
 
         // respond with the MICC version (version 2)
-        ps.onDataFrameReceived(context, new ApplicationCommand(
+        ps.onApplicationCommand(context, new ApplicationCommand(
             DataFrameType.REQUEST,
             rxStatus,
             nodeId,
@@ -85,7 +92,7 @@ public class MultiInstanceBinaryPowerSwitchTest {
         context.clearSentFrames();
 
         // response with basic report
-        ps.onDataFrameReceived(context, new ApplicationCommand(
+        ps.onApplicationCommand(context, new ApplicationCommand(
             DataFrameType.REQUEST,
             rxStatus,
             nodeId,
@@ -95,7 +102,7 @@ public class MultiInstanceBinaryPowerSwitchTest {
         assertEquals(ZWaveNodeState.RetrieveStateSent, ps.getState());
 
         // respond with SWITCH_BINARY_REPORT
-        ps.onDataFrameReceived(context, new ApplicationCommand(
+        ps.onApplicationCommand(context, new ApplicationCommand(
             DataFrameType.REQUEST,
             rxStatus,
             nodeId,
@@ -106,7 +113,7 @@ public class MultiInstanceBinaryPowerSwitchTest {
 
         // respond with MULTI_CHANNEL_END_POINT_REPORT with 2 identical endpoints
         byte endpointCount = 0x02;
-        ps.onDataFrameReceived(context, new ApplicationCommand(
+        ps.onApplicationCommand(context, new ApplicationCommand(
             DataFrameType.REQUEST,
             rxStatus,
             nodeId,
@@ -126,7 +133,7 @@ public class MultiInstanceBinaryPowerSwitchTest {
         context.clearSentFrames();
 
         // respond with MULTI_CHANNEL_CAPABILITY_REPORT
-        ps.onDataFrameReceived(context, new ApplicationCommand(
+        ps.onApplicationCommand(context, new ApplicationCommand(
             DataFrameType.REQUEST,
             rxStatus,
             nodeId,
@@ -152,7 +159,7 @@ public class MultiInstanceBinaryPowerSwitchTest {
         context.clearSentFrames();
 
         // respond with first SWITCH_BINARY_GET wrappered in a MULTI_CHANNEL_CMD_ENCAP
-        ps.onDataFrameReceived(context, new ApplicationCommand(
+        ps.onApplicationCommand(context, new ApplicationCommand(
             DataFrameType.REQUEST,
             rxStatus,
             nodeId,
@@ -168,7 +175,7 @@ public class MultiInstanceBinaryPowerSwitchTest {
         ));
 
         // respond with second SWITCH_BINARY_GET wrappered in a MULTI_CHANNEL_CMD_ENCAP
-        ps.onDataFrameReceived(context, new ApplicationCommand(
+        ps.onApplicationCommand(context, new ApplicationCommand(
             DataFrameType.REQUEST,
             rxStatus,
             nodeId,

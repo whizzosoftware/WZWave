@@ -13,6 +13,7 @@ package com.whizzosoftware.wzwave.node;
  * @author Dan Noguerol
  */
 public enum ZWaveNodeState {
+    Ping,
     NodeInfo,
     RetrieveVersionPending,
     RetrieveVersionSent,

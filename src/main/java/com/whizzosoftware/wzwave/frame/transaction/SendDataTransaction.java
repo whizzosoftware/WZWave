@@ -9,6 +9,9 @@
 */
 package com.whizzosoftware.wzwave.frame.transaction;
 
+import com.whizzosoftware.wzwave.channel.ZWaveChannelContext;
+import com.whizzosoftware.wzwave.channel.event.SendDataTransactionCompletedEvent;
+import com.whizzosoftware.wzwave.channel.event.SendDataTransactionFailedEvent;
 import com.whizzosoftware.wzwave.frame.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +39,6 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
     private static final int TRANSMIT_COMPLETE_NO_ACK = 1;
     private static final int TRANSMIT_COMPLETE_FAIL = 2;
 
-    private DataFrame finalFrame;
     private int state;
     private boolean isResponseExpected;
     private boolean applicationCommandReceived;
@@ -45,11 +47,11 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
      * Constructor.
      *
      * @param startFrame the frame that started the transaction
-     * @param listeningNode indicates whether the target node is a listening node
+     * @param listeningNode indicates whether the target node is a listening node or not
      * @param isResponseExpected indicates if a response is expected
      */
-    public SendDataTransaction(SendData startFrame, boolean listeningNode, boolean isResponseExpected) {
-        super(startFrame, listeningNode);
+    public SendDataTransaction(ZWaveChannelContext ctx, SendData startFrame, boolean listeningNode, boolean isResponseExpected) {
+        super(ctx, startFrame, listeningNode);
         this.isResponseExpected = isResponseExpected;
         reset();
     }
@@ -59,7 +61,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
     }
 
     @Override
-    public boolean addFrame(Frame bs) {
+    public boolean addFrame(ZWaveChannelContext ctx, Frame bs) {
         switch (state) {
 
             case STATE_REQUEST_SENT:
@@ -68,7 +70,8 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                     state = STATE_ACK_RECEIVED;
                     return true;
                 } else if (bs instanceof CAN) {
-                    setError("Received CAN; will re-send", true);
+                    logger.trace("Received CAN; will attempt re-send");
+                    failTransaction(ctx, true, false, false);
                     return true;
                 } else {
                     logger.warn("Received unexpected frame for STATE_REQUEST_SENT: {}", bs);
@@ -77,15 +80,17 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
 
             case STATE_ACK_RECEIVED:
                 if (bs instanceof CAN) {
-                    setError("Received CAN; will re-send", true);
+                    logger.trace("Received CAN; will attempt re-send");
+                    failTransaction(ctx, true, false, false);
                     return true;
                 } else if (bs instanceof SendData) {
                     if (((SendData)bs).getType() == DataFrameType.RESPONSE) {
-                        logger.trace("{} acknowledgement received", getStartFrame().getClass().getName());
+                        logger.trace("SendData acknowledgement received");
                         state = STATE_RESPONSE_RECEIVED;
                         return true;
                     } else {
-                        setError("Received frame but doesn't appear to be a response: " + bs, false);
+                        logger.trace("Received SendData frame but doesn't appear to be an acknowledgement: {}", bs);
+                        failTransaction(ctx, false, false, false);
                     }
                 } else {
                     logger.warn("Received unexpected frame for STATE_ACK_RECEIVED: {}", bs);
@@ -94,7 +99,8 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
 
             case STATE_RESPONSE_RECEIVED:
                 if (bs instanceof CAN) {
-                    setError("Received CAN; will re-send", true);
+                    logger.trace("Received CAN; will attempt re-send");
+                    failTransaction(ctx, true, false, false);
                     return true;
                 } else if (bs instanceof SendData) {
                     SendData sd = (SendData)bs;
@@ -104,23 +110,29 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                             logger.trace("SendData sent successfully");
                             // if we shouldn't expect a response, the transaction is complete
                             if (!isResponseExpected || applicationCommandReceived) {
-                                state = STATE_COMPLETE;
-                                // otherwise, wait for the response
+                                completeTransaction(ctx, null);
+                            // otherwise, wait for the response
                             } else {
                                 state = STATE_CALLBACK_RECEIVED;
                             }
                         } else if (sd.hasTx() && sd.getTx() == TRANSMIT_COMPLETE_NO_ACK) {
-                            state = STATE_COMPLETE;
-                            setError("Received no ACK from target node; may be asleep so failing transaction", isListeningNode());
+                            if (isListeningNode()) {
+                                logger.trace("Received no ACK from target node; should be listening");
+                            } else {
+                                logger.trace("Received no ACK from target node; may be asleep");
+                            }
+                            failTransaction(ctx, false, false, false);
                         } else if (sd.hasTx() && sd.getTx() == TRANSMIT_COMPLETE_FAIL){
-                            state = STATE_COMPLETE;
-                            setError("Transmission failure due to possible network congestion", true);
+                            logger.error("Transmission failure due to possible network congestion");
+                            failTransaction(ctx, false, true, true);
                         } else {
-                            setError("Received SendData callback with no transmission status", true);
+                            logger.error("Received SendData callback with no transmission status");
+                            failTransaction(ctx, false, false, false);
                         }
                         return true;
                     } else {
-                        setError("Received data frame but doesn't appear to be a SendData callback: " + bs, false);
+                        logger.error("Received data frame but doesn't appear to be a SendData callback: {}", bs, false);
+                        failTransaction(ctx, false, false, false);
                     }
                 } else if (bs instanceof ApplicationCommand) {
                     // sometimes the ApplicationCommand is returned before the SendData callback; flag that case here
@@ -132,12 +144,12 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
 
             case STATE_CALLBACK_RECEIVED:
                 if (bs instanceof CAN) {
-                    setError("Received CAN; will re-send", true);
+                    logger.trace("Received CAN; will attempt re-send");
+                    failTransaction(ctx, true, false, true);
                     return true;
                 } else if (bs instanceof ApplicationCommand) {
                     logger.trace("Application command received for {}", getStartFrame().getClass().getName());
-                    state = STATE_COMPLETE;
-                    finalFrame = (DataFrame)bs;
+                    completeTransaction(ctx, (DataFrame)bs);
                     return true;
                 } else {
                     logger.warn("Received unexpected frame for STATE_REQUEST_RECEIVED: {}", bs);
@@ -150,17 +162,28 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
 
     @Override
     public boolean isComplete() {
-        return (state == STATE_COMPLETE || hasError());
-    }
-
-    @Override
-    public DataFrame getFinalFrame() {
-        return finalFrame;
+        return (state == STATE_COMPLETE);
     }
 
     @Override
     public void reset() {
-        finalFrame = null;
         state = STATE_REQUEST_SENT;
+    }
+
+    private void completeTransaction(ZWaveChannelContext ctx, DataFrame finalFrame) {
+        state = STATE_COMPLETE;
+        ctx.fireEvent(new SendDataTransactionCompletedEvent(getId(), finalFrame, getNodeId()));
+    }
+
+    private void failTransaction(ZWaveChannelContext ctx, boolean canReceived, boolean networkError, boolean targetNodeACKReceived) {
+        boolean fail = true;
+        if ((canReceived || networkError || isListeningNode() || targetNodeACKReceived)) {
+            fail = !attemptResend(ctx, canReceived);
+        }
+        if (fail) {
+            state = STATE_COMPLETE;
+            logger.trace("Failing transaction {}", getId());
+            ctx.fireEvent(new SendDataTransactionFailedEvent(getId(), getStartFrame(), getNodeId(), isListeningNode(), targetNodeACKReceived));
+        }
     }
 }

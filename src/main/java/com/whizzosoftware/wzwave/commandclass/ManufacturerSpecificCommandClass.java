@@ -107,13 +107,13 @@ public class ManufacturerSpecificCommandClass extends CommandClass {
     @Override
     public Map<String,Object> save(PersistenceContext ctx, byte nodeId) {
         Map<String,Object> map = super.save(ctx, nodeId);
-        if (productInfo.getManufacturerId() != null) {
+        if (productInfo != null && productInfo.getManufacturerId() != null) {
             map.put("manufacturerId", productInfo.getManufacturerId());
         }
-        if (productInfo.getProductTypeId() != null) {
+        if (productInfo != null && productInfo.getProductTypeId() != null) {
             map.put("productTypeId", productInfo.getProductTypeId());
         }
-        if (productInfo.getProductId() != null) {
+        if (productInfo != null && productInfo.getProductId() != null) {
             map.put("productId", productInfo.getProductId());
         }
         return map;

@@ -1,15 +1,15 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.node;
 
 import com.whizzosoftware.wzwave.commandclass.CommandClass;
-import com.whizzosoftware.wzwave.controller.ZWaveController;
-import com.whizzosoftware.wzwave.controller.ZWaveControllerContext;
 import com.whizzosoftware.wzwave.frame.DataFrame;
 
 import java.util.Collection;
@@ -25,20 +25,21 @@ public interface NodeContext {
      *
      * @return a node ID
      */
-    public byte getNodeId();
+    byte getNodeId();
 
     /**
      * Queue a data frame for sending.
      *
      * @param d the data frame
      */
-    public void sendDataFrame(DataFrame d);
+    void sendDataFrame(DataFrame d);
 
     /**
-     * Forces any data frames that have accumulated while the node was considered asleep
-     * to be queued for immediate sending.
+     * Sets the sleeping status of the node.
+     *
+     * @param sleeping whether the node is sleeping or not
      */
-    public void flushWakeupQueue();
+    void setSleeping(boolean sleeping);
 
     /**
      * Retrieve a command class for the node associated with this context.
@@ -47,12 +48,12 @@ public interface NodeContext {
      *
      * @return a CommandClass instance of none if not found
      */
-    public CommandClass getCommandClass(byte commandClassId);
+    CommandClass getCommandClass(byte commandClassId);
 
     /**
      * Retrieve all command classes for the node associated with this context.
      *
      * @return a Collection of CommandClass instances
      */
-    public Collection<CommandClass> getCommandClasses();
+    Collection<CommandClass> getCommandClasses();
 }

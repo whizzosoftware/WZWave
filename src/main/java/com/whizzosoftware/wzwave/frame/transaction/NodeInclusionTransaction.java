@@ -9,6 +9,9 @@
 */
 package com.whizzosoftware.wzwave.frame.transaction;
 
+import com.whizzosoftware.wzwave.channel.ZWaveChannelContext;
+import com.whizzosoftware.wzwave.channel.event.TransactionCompletedEvent;
+import com.whizzosoftware.wzwave.channel.event.TransactionFailedEvent;
 import com.whizzosoftware.wzwave.frame.AddNodeToNetwork;
 import com.whizzosoftware.wzwave.frame.DataFrame;
 import com.whizzosoftware.wzwave.frame.Frame;
@@ -29,12 +32,12 @@ public class NodeInclusionTransaction extends AbstractDataFrameTransaction {
     private DataFrame finalFrame;
     private boolean finished = false;
 
-    public NodeInclusionTransaction(DataFrame startFrame) {
-        super(startFrame, true);
+    public NodeInclusionTransaction(ZWaveChannelContext ctx, DataFrame startFrame) {
+        super(ctx, startFrame, true);
     }
 
     @Override
-    public boolean addFrame(Frame f) {
+    public boolean addFrame(ZWaveChannelContext ctx, Frame f) {
         if (f instanceof AddNodeToNetwork) {
             switch (((AddNodeToNetwork)f).getStatus()) {
                 case AddNodeToNetwork.ADD_NODE_STATUS_ADDING_CONTROLLER:
@@ -45,12 +48,12 @@ public class NodeInclusionTransaction extends AbstractDataFrameTransaction {
                 case AddNodeToNetwork.ADD_NODE_STATUS_PROTOCOL_DONE:
                     logger.trace("AddNodeToNetwork is complete");
                     finished = true;
+                    ctx.fireEvent(new TransactionCompletedEvent(getId(), finalFrame));
                     return true;
                 case AddNodeToNetwork.ADD_NODE_STATUS_FAILED:
                     logger.error("AddNodeToNetwork failed");
-                    finalFrame = (DataFrame)f;
                     finished = true;
-                    setError("Node addition failed", false);
+                    ctx.fireEvent(new TransactionFailedEvent(getId(), (DataFrame)f));
                     return true;
                 default:
                     logger.trace("Unknown frame received in transaction; passing it along");
@@ -65,13 +68,7 @@ public class NodeInclusionTransaction extends AbstractDataFrameTransaction {
     }
 
     @Override
-    public DataFrame getFinalFrame() {
-        return finalFrame;
-    }
-
-    @Override
     public void reset() {
-        finalFrame = null;
         finished = false;
     }
 }

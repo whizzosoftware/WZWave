@@ -9,6 +9,7 @@
 */
 package com.whizzosoftware.wzwave.frame;
 
+import com.whizzosoftware.wzwave.channel.ZWaveChannelContext;
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import io.netty.buffer.ByteBuf;
 
@@ -20,7 +21,7 @@ import io.netty.buffer.ByteBuf;
 abstract public class DataFrame extends Frame {
     public static final byte START_OF_FRAME = 0x01;
 
-    protected int dataFrameLength;
+    int dataFrameLength;
     private DataFrameType type;
     private byte commandId;
     private byte[] data;
@@ -73,15 +74,11 @@ abstract public class DataFrame extends Frame {
         sendCount--;
     }
 
-    public boolean hasTransactionId() {
-        return (transactionId != null);
-    }
-
-    public String getTransactionId() {
+    String getTransactionId() {
         return transactionId;
     }
 
-    private void setTransactionId(String transactionId) {
+    public void setTransactionId(String transactionId) {
         this.transactionId = transactionId;
     }
 
@@ -116,11 +113,11 @@ abstract public class DataFrame extends Frame {
         return bytes;
     }
 
-    public DataFrameTransaction createWrapperTransaction(boolean listeningNode) {
-        DataFrameTransaction t = createTransaction(listeningNode);
+    public DataFrameTransaction createWrapperTransaction(ZWaveChannelContext ctx, boolean listeningNode) {
+        DataFrameTransaction t = createTransaction(ctx, listeningNode);
         setTransactionId(t.getId());
         return t;
     }
 
-    abstract public DataFrameTransaction createTransaction(boolean listeningNode);
+    abstract public DataFrameTransaction createTransaction(ZWaveChannelContext ctx, boolean listeningNode);
 }

@@ -1,3 +1,12 @@
+/*
+ *******************************************************************************
+ * Copyright (c) 2013 Whizzo Software, LLC.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.node;
 
 import com.whizzosoftware.wzwave.commandclass.BasicCommandClass;
@@ -35,10 +44,10 @@ public class RoutingBinarySensorTest {
             false,
             null
         );
-        sensor.startInterview(context, false);
+        sensor.startInterview(context);
 
         // receive failed ApplicationUpdate
-        sensor.onDataFrameReceived(context, new ApplicationUpdate(
+        sensor.onApplicationUpdate(context, new ApplicationUpdate(
             DataFrameType.REQUEST,
             ApplicationUpdate.UPDATE_STATE_NODE_INFO_REQ_FAILED,
             (byte)0x00
@@ -48,7 +57,7 @@ public class RoutingBinarySensorTest {
         assertNull(sensor.isSensorIdle());
 
         // receive application update
-        sensor.onDataFrameReceived(context, new ApplicationCommand(
+        sensor.onApplicationCommand(context, new ApplicationCommand(
                 DataFrameType.REQUEST,
                 (byte) 0x00,
                 (byte) 0x09,
@@ -57,40 +66,6 @@ public class RoutingBinarySensorTest {
 
         // make sure idle is updated
         assertTrue(sensor.isSensorIdle());
-    }
-
-    @Test
-    public void testWakeupQueue() {
-        MockZWaveControllerContext context = new MockZWaveControllerContext();
-
-        RoutingBinarySensor sensor = new RoutingBinarySensor(
-            new NodeInfo((byte)0x09, BasicDeviceClasses.ROUTING_SLAVE, BinarySensor.ID, RoutingBinarySensor.ID),
-            false,
-            null
-        );
-        sensor.startInterview(context, false);
-        assertEquals(ZWaveNodeState.Started, sensor.getState());
-
-        // make sure we have no messages waiting in the wakeup queue
-        assertEquals(0, sensor.getWakeupQueueCount());
-        assertEquals(0, context.getSentFrameCount());
-
-        // put into started state & verify messages in wakeup queue
-        sensor.setState(context, ZWaveNodeState.RetrieveStatePending);
-        assertEquals(2, sensor.getWakeupQueueCount());
-        assertEquals(0, context.getSentFrameCount());
-
-        // send wakeup notification
-        sensor.onDataFrameReceived(context, new ApplicationCommand(
-                DataFrameType.REQUEST,
-                (byte) 0x00,
-                (byte) 0x09,
-                new byte[]{WakeUpCommandClass.ID, 0x07}
-        ));
-
-        // check that wakeup queue has been purged & there are 2 messages in the write queue
-        assertEquals(0, sensor.getWakeupQueueCount());
-        assertEquals(2, context.getSentFrameCount());
     }
 
     @Test
@@ -103,7 +78,7 @@ public class RoutingBinarySensorTest {
         );
 
         // receive SensorMultilevelCmd_Get response
-        sensor.onDataFrameReceived(context, new ApplicationCommand(
+        sensor.onApplicationCommand(context, new ApplicationCommand(
             DataFrameType.REQUEST,
             (byte) 0x00,
             (byte) 0x0d,

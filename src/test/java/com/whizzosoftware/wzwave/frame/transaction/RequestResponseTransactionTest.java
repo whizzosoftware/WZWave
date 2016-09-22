@@ -1,7 +1,11 @@
 package com.whizzosoftware.wzwave.frame.transaction;
 
+import com.whizzosoftware.wzwave.channel.MockZWaveChannelContext;
+import com.whizzosoftware.wzwave.channel.event.TransactionCompletedEvent;
+import com.whizzosoftware.wzwave.channel.event.TransactionStartedEvent;
 import com.whizzosoftware.wzwave.frame.ACK;
 import com.whizzosoftware.wzwave.frame.CAN;
+import com.whizzosoftware.wzwave.frame.OutboundDataFrame;
 import com.whizzosoftware.wzwave.frame.Version;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -9,42 +13,73 @@ import static org.junit.Assert.*;
 public class RequestResponseTransactionTest {
     @Test
     public void testSuccess() {
-        RequestResponseTransaction t = new RequestResponseTransaction(new Version(), true);
-        assertFalse(t.isComplete());
-        assertFalse(t.hasError());
+        MockZWaveChannelContext ctx = new MockZWaveChannelContext();
 
-        t.addFrame(new ACK());
+        RequestResponseTransaction t = new RequestResponseTransaction(ctx, new Version(), true);
         assertFalse(t.isComplete());
-        assertFalse(t.hasError());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+        assertTrue(ctx.getUserEvents().get(0) instanceof TransactionStartedEvent);
 
-        t.addFrame(new Version("version", (byte)0x01));
+        t.addFrame(ctx, new ACK());
+        assertFalse(t.isComplete());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+
+        t.addFrame(ctx, new Version("version", (byte)0x01));
         assertTrue(t.isComplete());
-        assertFalse(t.hasError());
+        assertEquals(2, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+        assertTrue(ctx.getUserEvents().get(1) instanceof TransactionCompletedEvent);
+        assertTrue(((TransactionCompletedEvent)ctx.getUserEvents().get(1)).getFrame() instanceof Version);
     }
 
     @Test
     public void testCANBeforeACK() {
-        RequestResponseTransaction t = new RequestResponseTransaction(new Version(), true);
-        assertFalse(t.isComplete());
-        assertFalse(t.hasError());
+        MockZWaveChannelContext ctx = new MockZWaveChannelContext();
 
-        assertTrue(t.addFrame(new CAN()));
-        assertTrue(t.isComplete());
-        assertTrue(t.hasError());
+        Version startFrame = new Version();
+        RequestResponseTransaction t = new RequestResponseTransaction(ctx, startFrame, true);
+        assertFalse(t.isComplete());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+        assertTrue(ctx.getUserEvents().get(0) instanceof TransactionStartedEvent);
+
+        assertTrue(t.addFrame(ctx, new CAN()));
+        assertFalse(t.isComplete());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(1, ctx.getWriteQueue().size());
+
+        assertTrue(ctx.getWriteQueue().get(0) instanceof OutboundDataFrame);
+        Version sd = (Version)((OutboundDataFrame)ctx.getWriteQueue().get(0)).getDataFrame();
+        assertTrue(sd == startFrame);
+        assertEquals(-1, sd.getSendCount());
     }
 
     @Test
     public void testCANAfterACK() {
-        RequestResponseTransaction t = new RequestResponseTransaction(new Version(), true);
-        assertFalse(t.isComplete());
-        assertFalse(t.hasError());
+        MockZWaveChannelContext ctx = new MockZWaveChannelContext();
 
-        assertTrue(t.addFrame(new ACK()));
+        Version startFrame = new Version();
+        RequestResponseTransaction t = new RequestResponseTransaction(ctx, startFrame, true);
         assertFalse(t.isComplete());
-        assertFalse(t.hasError());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+        assertTrue(ctx.getUserEvents().get(0) instanceof TransactionStartedEvent);
 
-        assertTrue(t.addFrame(new CAN()));
-        assertTrue(t.isComplete());
-        assertTrue(t.hasError());
+        assertTrue(t.addFrame(ctx, new ACK()));
+        assertFalse(t.isComplete());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(0, ctx.getWriteQueue().size());
+
+        assertTrue(t.addFrame(ctx, new CAN()));
+        assertFalse(t.isComplete());
+        assertEquals(1, ctx.getUserEvents().size());
+        assertEquals(1, ctx.getWriteQueue().size());
+
+        assertTrue(ctx.getWriteQueue().get(0) instanceof OutboundDataFrame);
+        Version sd = (Version)((OutboundDataFrame)ctx.getWriteQueue().get(0)).getDataFrame();
+        assertTrue(sd == startFrame);
+        assertEquals(-1, sd.getSendCount());
     }
 }

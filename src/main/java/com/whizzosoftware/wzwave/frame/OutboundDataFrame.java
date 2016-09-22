@@ -24,6 +24,10 @@ public class OutboundDataFrame {
         this.isListeningNode = isListeningNode;
     }
 
+    public boolean hasDataFrame() {
+        return (dataFrame != null);
+    }
+
     public DataFrame getDataFrame() {
         return dataFrame;
     }
@@ -34,5 +38,9 @@ public class OutboundDataFrame {
 
     public boolean matchesTransaction(String transactionId) {
         return (transactionId != null && transactionId.equals(dataFrame.getTransactionId()));
+    }
+
+    public String toString() {
+        return dataFrame.toString();
     }
 }

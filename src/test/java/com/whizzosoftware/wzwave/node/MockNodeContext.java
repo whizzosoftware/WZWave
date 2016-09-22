@@ -38,17 +38,17 @@ public class MockNodeContext implements NodeContext {
         sentDataFrames.add(d);
     }
 
+    @Override
+    public void setSleeping(boolean sleeping) {
+
+    }
+
     public List<DataFrame> getSentDataFrames() {
         return sentDataFrames;
     }
 
     public void clearSentDataFrames() {
         sentDataFrames.clear();
-    }
-
-    @Override
-    public void flushWakeupQueue() {
-
     }
 
     @Override
