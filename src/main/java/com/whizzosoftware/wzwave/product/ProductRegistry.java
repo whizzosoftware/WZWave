@@ -18,12 +18,13 @@ import org.slf4j.LoggerFactory;
 public class ProductRegistry {
     private static final Logger logger = LoggerFactory.getLogger(ProductRegistry.class);
 
-    public final static String UNKNOWN = "Unknown";
-
+    // Find info here: http://www.cd-jackson.com/index.php/zwave/zwave-device-database/zwave-device-list
+    public final static String M_PHILIO = "Philio Technology Corporation";
     public final static String M_AEON_LABS = "Aeon Labs";
     public final static String M_EVERSPRING = "Everspring";
     public final static String M_GE_JASCO = "GE/Jasco";
 
+    public final static String P_PAN11 = "Smart Energy Plug In Switch (PAN11)";
     public final static String P_45604_OUTDOOR_MODULE = "45604 Outdoor Module";
     public final static String P_45609_RELAY_SWITCH = "45609 On/Off Relay Switch";
     public final static String P_45612_DIMMER_SWITCH = "45612 Dimmer Switch";
@@ -36,8 +37,8 @@ public class ProductRegistry {
 
     static public ProductInfo lookupProduct(Integer manufacturerId, Integer productTypeId, Integer productId) {
         ProductInfo info = new ProductInfo(manufacturerId, productTypeId, productId);
-        info.setManufacturer(UNKNOWN);
-        info.setName(UNKNOWN);
+        info.setManufacturer(ProductInfo.UNKNOWN);
+        info.setName(ProductInfo.UNKNOWN);
 
         logger.debug("Looking up product info: {}, {}, {}", manufacturerId, productTypeId, productId);
 
@@ -118,6 +119,19 @@ public class ProductRegistry {
                 }
                 break;
 
+            // Philio
+            case 316:
+                info.setManufacturer(M_PHILIO);
+                switch (ptid) {
+                    case 1:
+                        switch (pid) {
+                            case 17:
+                                info.setName(P_PAN11);
+                                break;
+                        }
+                        break;
+                }
+
             default:
                 break;
         }
@@ -125,7 +139,7 @@ public class ProductRegistry {
         if (!info.isComplete() && manufacturerId != null && productTypeId != null && productId != null) {
             logger.error("You are using a product that is not in WZWave's product registry. If the product is " +
                     "working properly with WZWave, please submit the following to the project so it can be " +
-                    "added to the registry: {},{},{}", manufacturerId, productTypeId, productId);
+                    "added to the registry: Resolved {} from Manufacturer: {}, Product Type: {}, Product Id:{}", info, manufacturerId, productTypeId, productId);
         }
 
         return info;
