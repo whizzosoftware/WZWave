@@ -21,14 +21,14 @@ import org.slf4j.LoggerFactory;
  *
  * @author Dan Noguerol
  */
-class TransactionTimeoutHandler implements Runnable {
+public class TransactionTimeoutHandler implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(TransactionTimeoutHandler.class);
 
     private String id;
     private ChannelHandlerContext context;
     private ChannelInboundHandler handler;
 
-    TransactionTimeoutHandler(String id, ChannelHandlerContext context, ChannelInboundHandler handler) {
+    public TransactionTimeoutHandler(String id, ChannelHandlerContext context, ChannelInboundHandler handler) {
         this.id = id;
         this.context = context;
         this.handler = handler;
