@@ -67,4 +67,12 @@ public class BatteryCommandClass extends CommandClass {
     public DataFrame createGet(byte nodeId) {
         return createSendDataFrame("BATTERY_GET", nodeId, new byte[]{BatteryCommandClass.ID, BATTERY_GET}, true);
     }
+
+    @Override
+    public String toString() {
+        return "BatteryCommandClass{" +
+                "version=" + getVersion() +
+                ", level=" + level +
+                '}';
+    }
 }

@@ -122,4 +122,12 @@ public class ManufacturerSpecificCommandClass extends CommandClass {
     void setProductInfo(ProductInfo productInfo) {
         this.productInfo = productInfo;
     }
+
+    @Override
+    public String toString() {
+        return "ManufacturerSpecificCommandClass{" +
+                "version=" + getVersion() +
+                ", productInfo=" + productInfo +
+                '}';
+    }
 }

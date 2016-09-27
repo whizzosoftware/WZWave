@@ -52,4 +52,11 @@ public class WakeUpCommandClass extends CommandClass {
     public int queueStartupMessages(NodeContext context, byte nodeId) {
         return 0;
     }
+
+    @Override
+    public String toString() {
+        return "WakeUpCommandClass{" +
+                "version=" + getVersion() +
+                '}';
+    }
 }

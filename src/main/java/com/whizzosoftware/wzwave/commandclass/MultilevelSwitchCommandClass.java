@@ -70,4 +70,12 @@ public class MultilevelSwitchCommandClass extends CommandClass {
     public DataFrame createGet(byte nodeId) {
         return createSendDataFrame("SWITCH_MULTILEVEL_GET", nodeId, new byte[]{MultilevelSwitchCommandClass.ID, SWITCH_MULTILEVEL_GET}, true);
     }
+
+    @Override
+    public String toString() {
+        return "MultilevelSwitchCommandClass{" +
+                "version=" + getVersion() +
+                ", level=" + level +
+                '}';
+    }
 }

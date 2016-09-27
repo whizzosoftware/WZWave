@@ -71,4 +71,12 @@ public class BinarySensorCommandClass extends CommandClass {
     public DataFrame createGet(byte nodeId) {
         return createSendDataFrame("SENSOR_BINARY_GET", nodeId, new byte[]{BinarySensorCommandClass.ID, SENSOR_BINARY_GET}, true);
     }
+
+    @Override
+    public String toString() {
+        return "BinarySensorCommandClass{" +
+                "version=" + getVersion() +
+                ", isIdle=" + isIdle +
+                '}';
+    }
 }
