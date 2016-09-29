@@ -70,9 +70,7 @@ public class ConfigurationCommandClass extends CommandClass {
 
     @Override
     public int queueStartupMessages(NodeContext context, byte nodeId) {
-        context.sendDataFrame(createSetParamToValue(nodeId, (byte) 1, (short) 2));
-        context.sendDataFrame(createGet(nodeId, (byte) 1));
-        return 2;
+        return 0;
     }
 
     public DataFrame createGet(byte nodeId, byte parameter) {
