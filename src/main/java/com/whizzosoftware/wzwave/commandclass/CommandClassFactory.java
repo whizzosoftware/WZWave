@@ -31,8 +31,6 @@ public class CommandClassFactory {
                 return new BinarySwitchCommandClass();
             case ColorControlCommandClass.ID:
                 return new ColorControlCommandClass();
-            case ConfigurationCommandClass.ID:
-                return new ConfigurationCommandClass();
             case ManufacturerSpecificCommandClass.ID:
                 return new ManufacturerSpecificCommandClass();
             case MeterCommandClass.ID:
