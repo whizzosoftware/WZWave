@@ -15,6 +15,9 @@ import com.whizzosoftware.wzwave.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Meter command class
  *
@@ -28,11 +31,9 @@ public class MeterCommandClass extends CommandClass {
     private static final byte METER_GET = 0x01;
     private static final byte METER_REPORT = 0x02;
 
-    private Type type;
-    private Scale scale;
-    private Double currentValue;
-    private Double previousValue;
-    private Integer delta;
+
+
+    Map<Scale, MeterReadingValue> value = new HashMap<>();
 
     @Override
     public byte getId() {
@@ -49,24 +50,8 @@ public class MeterCommandClass extends CommandClass {
         return 2;
     }
 
-    public Type getType() {
-        return type;
-    }
-
-    public Scale getScale() {
-        return scale;
-    }
-
-    public Double getCurrentValue() {
-        return currentValue;
-    }
-
-    public Double getPreviousValue() {
-        return previousValue;
-    }
-
-    public Integer getDelta() {
-        return delta;
+    public MeterReadingValue getLastValue(Scale s) {
+        return value.get(s);
     }
 
     @Override
@@ -81,11 +66,16 @@ public class MeterCommandClass extends CommandClass {
 
     @Override
     public int queueStartupMessages(NodeContext context, byte nodeId) {
-        context.sendDataFrame(createGet(nodeId, scale));
-        return 1;
+        return 0;
     }
 
     private void parseMeterReport(byte[] ccb, int startIndex, int version) {
+        Type type;
+        Scale scale = Scale.Reserved;
+        Double currentValue;
+        Double previousValue = null;
+        Integer delta = null;
+
         // read meter type & scale
         int t;
         if (version > 1) {
@@ -174,6 +164,9 @@ public class MeterCommandClass extends CommandClass {
             delta = ((ccb[startIndex + size + 4] << 8) & 0xFF00) | (ccb[startIndex + size + 5] & 0xFF);
             logger.trace("Previous value was {} received {} seconds ago", previousValue, delta);
         }
+
+        MeterReadingValue val = new MeterReadingValue(type, currentValue, previousValue, delta);
+        value.put(scale, val);
     }
 
     /**
@@ -238,14 +231,51 @@ public class MeterCommandClass extends CommandClass {
         Reserved
     }
 
+    public class MeterReadingValue {
+
+        private Type type;
+        private Double currentValue;
+        private Double previousValue;
+        private Integer delta;
+
+        public MeterReadingValue(Type type, Double currentValue, Double previousValue, Integer delta) {
+            this.type = type;
+            this.currentValue = currentValue;
+            this.previousValue = previousValue;
+            this.delta = delta;
+        }
+
+        public Type getType() {
+            return type;
+        }
+
+        public Double getCurrentValue() {
+            return currentValue;
+        }
+
+        public Double getPreviousValue() {
+            return previousValue;
+        }
+
+        public Integer getDelta() {
+            return delta;
+        }
+
+        @Override
+        public String toString() {
+            return "MeterReadingValue{" +
+                    "type=" + type +
+                    ", currentValue=" + currentValue +
+                    ", previousValue=" + previousValue +
+                    ", delta=" + delta +
+                    '}';
+        }
+    }
+
     @Override
     public String toString() {
         return "MeterCommandClass{" +
-                "type=" + type +
-                ", scale=" + scale +
-                ", currentValue=" + currentValue +
-                ", previousValue=" + previousValue +
-                ", delta=" + delta +
+                "values=" + value +
                 '}';
     }
 }
