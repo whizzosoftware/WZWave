@@ -333,4 +333,15 @@ public class MultiInstanceCommandClass extends CommandClass {
             throw new RuntimeException("Unable to encapsulate frames other than SendData");
         }
     }
+
+    @Override
+    public String toString() {
+        return "MultiInstanceCommandClass{" +
+                "version=" + getVersion() +
+                ", endpointMap=" + endpointMap +
+                ", instanceCount=" + instanceCount +
+                ", endpointCount=" + endpointCount +
+                ", endpointsIdentical=" + endpointsIdentical +
+                '}';
+    }
 }

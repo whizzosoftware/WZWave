@@ -79,4 +79,13 @@ public class AlarmSensorCommandClass extends CommandClass {
             return Type.values()[b];
         }
     }
+
+    @Override
+    public String toString() {
+        return "AlarmSensorCommandClass{" +
+                "version=" + getVersion() +
+                ", type=" + type +
+                ", level=" + level +
+                '}';
+    }
 }

@@ -61,4 +61,13 @@ public class AlarmCommandClass extends CommandClass {
     public DataFrame createGet(byte nodeId) {
         return createSendDataFrame("SENSOR_ALARM_GET", nodeId, new byte[] {AlarmCommandClass.ID, ALARM_GET}, true);
     }
+
+    @Override
+    public String toString() {
+        return "AlarmCommandClass{" +
+                "version=" + getVersion() +
+                ", type=" + type +
+                ", level=" + level +
+                '}';
+    }
 }

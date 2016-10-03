@@ -125,4 +125,14 @@ public class VersionCommandClass extends CommandClass {
                 true
         );
     }
+
+    @Override
+    public String toString() {
+        return "VersionCommandClass{" +
+                "version=" + getVersion() +
+                ", library='" + library + '\'' +
+                ", protocol='" + protocol + '\'' +
+                ", application='" + application + '\'' +
+                '}';
+    }
 }

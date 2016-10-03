@@ -69,4 +69,13 @@ public class ColorControlCommandClass extends CommandClass {
     public DataFrame createSet(byte nodeId, byte capabilityId, byte value) {
         return createSendDataFrame("COLOR_CONTROL_SET", nodeId, new byte[]{ColorControlCommandClass.ID, STATE_SET, 0x02, capabilityId, value}, false);
     }
+
+    @Override
+    public String toString() {
+        return "ColorControlCommandClass{" +
+                "version=" + getVersion() +
+                ", capabilityId=" + capabilityId +
+                ", value=" + value +
+                '}';
+    }
 }

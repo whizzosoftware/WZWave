@@ -68,4 +68,12 @@ public class BasicCommandClass extends CommandClass {
     public DataFrame createGet(byte nodeId) {
         return createSendDataFrame("BASIC_GET", nodeId, new byte[]{BasicCommandClass.ID, BASIC_GET}, true);
     }
+
+    @Override
+    public String toString() {
+        return "BasicCommandClass{" +
+                "version=" + getVersion() +
+                ", value=" + value +
+                '}';
+    }
 }

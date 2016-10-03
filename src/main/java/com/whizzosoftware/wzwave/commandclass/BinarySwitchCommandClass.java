@@ -77,7 +77,8 @@ public class BinarySwitchCommandClass extends CommandClass {
     @Override
     public String toString() {
         return "BinarySwitchCommandClass{" +
-                "isOn=" + isOn +
+                "version=" + getVersion() +
+                ", isOn=" + isOn +
                 '}';
     }
 }

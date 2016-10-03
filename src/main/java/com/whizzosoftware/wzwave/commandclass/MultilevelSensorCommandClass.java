@@ -198,7 +198,8 @@ public class MultilevelSensorCommandClass extends CommandClass {
     @Override
     public String toString() {
         return "MultilevelSensorCommandClass{" +
-                "type=" + type +
+                "version=" + getVersion() +
+                ", type=" + type +
                 ", scale=" + scale +
                 ", values=" + values +
                 '}';
