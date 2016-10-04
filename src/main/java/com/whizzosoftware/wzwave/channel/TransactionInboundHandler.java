@@ -61,12 +61,7 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
                     if (currentDataFrameTransaction.isComplete()) {
                         logger.trace("*** Data frame transaction ({}) completed", tid);
                         logger.trace("");
-
-                        // cancel the timeout callback
-                        if (timeoutFuture != null) {
-                            timeoutFuture.cancel(true);
-                            timeoutFuture = null;
-                        }
+                        cancelTimeoutCallback();
                     }
                     zctx.process(ctx);
                 // if transaction didn't consume frame, then pass it down the pipeline
@@ -100,22 +95,12 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
                 currentDataFrameTransaction = dfse.getDataFrame().createWrapperTransaction(zctx, dfse.isListeningNode());
                 if (currentDataFrameTransaction != null) {
                     logger.trace("*** Data frame transaction started for {} with ID {}", dfse.getDataFrame(), currentDataFrameTransaction.getId());
-                    // start timeout timer
-                    if (currentDataFrameTransaction.getTimeout() > 0 && handlerContext != null && handlerContext.executor() != null) {
-                        timeoutFuture = handlerContext.executor().schedule(
-                                new TransactionTimeoutHandler(
-                                        currentDataFrameTransaction.getId(),
-                                        handlerContext,
-                                        this
-                                ),
-                                currentDataFrameTransaction.getTimeout(),
-                                TimeUnit.MILLISECONDS
-                        );
-                    } else {
-                        logger.warn("Unable to schedule transaction timeout callback");
-                    }
+                    startTimeoutCallback();
                     zctx.process(ctx);
                 }
+            } else if (currentDataFrameTransaction != null && currentDataFrameTransaction.getStartFrame() == dfse.getDataFrame()) {
+                logger.trace("Detected re-send of transaction start frame; starting timeout");
+                startTimeoutCallback();
             } else {
                 logger.trace("Wrote a data frame with a current transaction: {}", dfse.getDataFrame());
             }
@@ -123,6 +108,7 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
             TransactionTimeoutEvent tte = (TransactionTimeoutEvent)evt;
             if (tte.getId().equals(currentDataFrameTransaction.getId())) {
                 logger.trace("Detected transaction timeout");
+                timeoutFuture = null;
                 NettyZWaveChannelContext zctx = new NettyZWaveChannelContext();
                 currentDataFrameTransaction.timeout(zctx);
                 zctx.process(ctx);
@@ -141,6 +127,30 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
      */
     boolean hasCurrentTransaction() {
         return (currentDataFrameTransaction != null && !currentDataFrameTransaction.isComplete());
+    }
+
+    private void startTimeoutCallback() {
+        cancelTimeoutCallback();
+        if (currentDataFrameTransaction.getTimeout() > 0 && handlerContext != null && handlerContext.executor() != null) {
+            timeoutFuture = handlerContext.executor().schedule(
+                new TransactionTimeoutHandler(
+                    currentDataFrameTransaction.getId(),
+                    handlerContext,
+                    this
+                ),
+                currentDataFrameTransaction.getTimeout(),
+                TimeUnit.MILLISECONDS
+            );
+        } else {
+            logger.warn("Unable to schedule transaction timeout callback");
+        }
+    }
+
+    private void cancelTimeoutCallback() {
+        if (timeoutFuture != null) {
+            timeoutFuture.cancel(true);
+            timeoutFuture = null;
+        }
     }
 
     private class NettyZWaveChannelContext implements ZWaveChannelContext {
