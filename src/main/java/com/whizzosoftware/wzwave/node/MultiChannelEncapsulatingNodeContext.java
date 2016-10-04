@@ -1,15 +1,18 @@
-/*******************************************************************************
+/*
+ *******************************************************************************
  * Copyright (c) 2013 Whizzo Software, LLC.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *******************************************************************************/
+ *******************************************************************************
+*/
 package com.whizzosoftware.wzwave.node;
 
 import com.whizzosoftware.wzwave.commandclass.CommandClass;
 import com.whizzosoftware.wzwave.commandclass.MultiInstanceCommandClass;
 import com.whizzosoftware.wzwave.frame.DataFrame;
+import com.whizzosoftware.wzwave.frame.SendData;
 
 import java.util.Collection;
 
@@ -38,7 +41,8 @@ public class MultiChannelEncapsulatingNodeContext implements NodeContext {
 
     @Override
     public void sendDataFrame(DataFrame d) {
-        DataFrame ed = micc.createMultiChannelCommandEncapsulation((byte)0, destEndpoint, d, true);
+        boolean responseExpected = (d instanceof SendData) && ((SendData)d).isResponseExpected();
+        DataFrame ed = micc.createMultiChannelCommandEncapsulation((byte)0, destEndpoint, d, responseExpected);
         if (ed == null) {
             ed = d;
         }

@@ -9,6 +9,7 @@
 */
 package com.whizzosoftware.wzwave.frame;
 
+import com.whizzosoftware.wzwave.ZWaveRuntimeException;
 import com.whizzosoftware.wzwave.channel.ZWaveChannelContext;
 import com.whizzosoftware.wzwave.frame.transaction.DataFrameTransaction;
 import io.netty.buffer.ByteBuf;
@@ -35,11 +36,11 @@ abstract public class DataFrame extends Frame {
      */
     public DataFrame(ByteBuf buffer) {
         if (buffer.readByte() != START_OF_FRAME) {
-            throw new RuntimeException("Data frame parsing error: no SOF");
+            throw new ZWaveRuntimeException("Data frame parsing error: no SOF");
         }
         this.dataFrameLength = buffer.readByte();
         if (buffer.readableBytes() < dataFrameLength) {
-            throw new RuntimeException("Data framing length error");
+            throw new ZWaveRuntimeException("Data framing length error");
         }
         this.type = (buffer.readByte() == 0 ? DataFrameType.REQUEST : DataFrameType.RESPONSE);
         this.commandId = buffer.readByte();

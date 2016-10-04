@@ -36,19 +36,19 @@ public class SendData extends DataFrame {
     private Byte retVal;
     private Byte callbackId;
     private Byte tx;
-    private boolean isResponseExpected;
+    private boolean responseExpected;
 
-    public SendData(String name, byte nodeId, byte[] data, byte txOptions, boolean isResponseExpected) {
-        this(name, nodeId, data, txOptions, ++nextCallbackId, isResponseExpected);
+    public SendData(String name, byte nodeId, byte[] data, byte txOptions, boolean responseExpected) {
+        this(name, nodeId, data, txOptions, ++nextCallbackId, responseExpected);
     }
 
-    public SendData(String name, byte nodeId, byte[] data, byte txOptions, byte callbackId, boolean isResponseExpected) {
+    public SendData(String name, byte nodeId, byte[] data, byte txOptions, byte callbackId, boolean responseExpected) {
         super(DataFrameType.REQUEST, ID, null);
 
         this.name = name;
         this.sendData = data;
         this.nodeId = nodeId;
-        this.isResponseExpected = isResponseExpected;
+        this.responseExpected = responseExpected;
 
         byte b[] = new byte[data.length + 4];
         b[0] = nodeId;
@@ -111,6 +111,10 @@ public class SendData extends DataFrame {
         return sendData;
     }
 
+    public boolean isResponseExpected() {
+        return responseExpected;
+    }
+
     public String toString() {
         if (name != null) {
             return "SendData(" + ByteUtil.createString(getNodeId()) + ")[" + name + "]," + callbackId;
@@ -123,6 +127,6 @@ public class SendData extends DataFrame {
 
     @Override
     public DataFrameTransaction createTransaction(ZWaveChannelContext ctx, boolean listeningNode) {
-        return new SendDataTransaction(ctx, this, listeningNode, isResponseExpected);
+        return new SendDataTransaction(ctx, this, listeningNode, responseExpected);
     }
 }

@@ -9,6 +9,7 @@
 */
 package com.whizzosoftware.wzwave.commandclass;
 
+import com.whizzosoftware.wzwave.ZWaveRuntimeException;
 import com.whizzosoftware.wzwave.frame.DataFrame;
 import com.whizzosoftware.wzwave.frame.SendData;
 import com.whizzosoftware.wzwave.node.MultiChannelEncapsulatingNodeContext;
@@ -232,7 +233,7 @@ public class MultiInstanceCommandClass extends CommandClass {
      */
     public DataFrame createMultiInstanceGet(byte nodeId, byte commandClass) {
         if (getVersion() > 1) {
-            throw new RuntimeException("MULTI_INSTANCE_GET is deprecated for command class versions > 1");
+            throw new ZWaveRuntimeException("MULTI_INSTANCE_GET is deprecated for command class versions > 1");
         }
         return createSendDataFrame(
             "MULTI_INSTANCE_GET",
@@ -271,7 +272,7 @@ public class MultiInstanceCommandClass extends CommandClass {
      */
     public DataFrame createMultiChannelEndPointGet(byte nodeId) {
         if (getVersion() < 2) {
-            throw new RuntimeException("MULTI_CHANNEL_END_POINT_GET is not available in command class version 1");
+            throw new ZWaveRuntimeException("MULTI_CHANNEL_END_POINT_GET is not available in command class version 1");
         }
         return createSendDataFrame(
             "MULTI_CHANNEL_END_POINT_GET",
@@ -294,7 +295,7 @@ public class MultiInstanceCommandClass extends CommandClass {
      */
     public DataFrame createMultiChannelCapabilityGet(byte nodeId, byte endPoint) {
         if (getVersion() < 2) {
-            throw new RuntimeException("MULTI_CHANNEL_CAPABILITY_GET is not available in command class version 1");
+            throw new ZWaveRuntimeException("MULTI_CHANNEL_CAPABILITY_GET is not available in command class version 1");
         }
         return createSendDataFrame(
             "MULTI_CHANNEL_CAPABILITY_GET",
@@ -310,7 +311,7 @@ public class MultiInstanceCommandClass extends CommandClass {
 
     public DataFrame createMultiChannelCommandEncapsulation(byte sourceEndpoint, byte destEndpoint, DataFrame command, boolean responseExpected) {
         if (getVersion() < 2) {
-            throw new RuntimeException("MULTI_CHANNEL_CMD_ENCAP is not available in command class version 1");
+            throw new ZWaveRuntimeException("MULTI_CHANNEL_CMD_ENCAP is not available in command class version 1");
         }
         if (command instanceof SendData) {
             SendData sd = (SendData)command;
@@ -330,7 +331,7 @@ public class MultiInstanceCommandClass extends CommandClass {
                 responseExpected
             );
         } else {
-            throw new RuntimeException("Unable to encapsulate frames other than SendData");
+            throw new ZWaveRuntimeException("Unable to encapsulate frames other than SendData");
         }
     }
 
