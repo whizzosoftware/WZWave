@@ -23,6 +23,7 @@ public class ProductRegistry {
     public final static String M_AEON_LABS = "Aeon Labs";
     public final static String M_EVERSPRING = "Everspring";
     public final static String M_GE_JASCO = "GE/Jasco";
+    public final static String M_FIBARGROUP = "Fibargroup";
 
     public final static String P_PAN11 = "Smart Energy Plug In Switch (PAN11)";
     public final static String P_45604_OUTDOOR_MODULE = "45604 Outdoor Module";
@@ -34,6 +35,7 @@ public class ProductRegistry {
     public final static String P_SMART_ENERGY_SWITCH = "Smart Energy Switch";
     public final static String P_SMART_ENERGY_STRIP = "Smart Energy Strip";
     public final static String P_WATER_SENSOR = "Water Sensor";
+    public final static String P_METERED_WALL_PLUG = "Metered Wall Plug Switch";
 
     static public ProductInfo lookupProduct(Integer manufacturerId, Integer productTypeId, Integer productId) {
         ProductInfo info = new ProductInfo(manufacturerId, productTypeId, productId);
@@ -113,6 +115,20 @@ public class ProductRegistry {
                         switch (pid) {
                             case 13619:
                                 info.setName(P_45609_RELAY_SWITCH);
+                                break;
+                        }
+                        break;
+                }
+                break;
+
+            // Fibaro
+            case 271:
+                info.setManufacturer(M_FIBARGROUP);
+                switch (ptid) {
+                    case 1538:
+                        switch (pid) {
+                            case 4097:
+                                info.setName(P_METERED_WALL_PLUG);
                                 break;
                         }
                         break;
