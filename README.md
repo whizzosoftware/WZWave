@@ -11,6 +11,8 @@ lights, power outlets, thermostats and more. A PC controller (e.g. a USB dongle)
 to the wireless Z-Wave device network. More information can be found at
 [this Wikipedia article](http://en.wikipedia.org/wiki/Z-Wave).
 
+WZWave was primarily created to add Z-Wave support to the open source [Hobson automation hub](http://hobson-automation.com).
+
 ![](https://raw.githubusercontent.com/whizzosoftware/WZWave/master/wzwave.jpg)
 
 ### Why Z-Wave?
