@@ -165,6 +165,7 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
                         sendDataFrame(new MemoryGetId());
                         sendDataFrame(new InitData());
                     } else {
+                        shutdown();
                         onZWaveConnectionFailure(future.cause());
                     }
                 }
@@ -173,9 +174,13 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     }
 
     @Override
-    public void stop() throws InterruptedException {
+    public void stop() {
+        shutdown();
+    }
+
+    private void shutdown() {
         store.close();
-        eventLoopGroup.shutdownGracefully().sync();
+        eventLoopGroup.shutdownGracefully();
     }
 
     @Override
