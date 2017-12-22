@@ -27,10 +27,7 @@ import com.whizzosoftware.wzwave.persist.PersistentStore;
 import com.whizzosoftware.wzwave.persist.mapdb.MapDbPersistentStore;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.*;
 import io.netty.channel.oio.OioEventLoopGroup;
 import io.netty.channel.rxtx.RxtxChannel;
 import io.netty.channel.rxtx.RxtxChannelConfig;
@@ -91,6 +88,7 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     private String serialPort;
     private PersistentStore store;
     private Channel channel;
+    private EventLoopGroup eventLoopGroup;
     private String libraryVersion;
     private Integer homeId;
     private Byte nodeId;
@@ -134,11 +132,13 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
         this.listener = listener;
     }
 
+    @Override
     public void start() {
         if (channel == null) {
             // set up Netty bootstrap
             Bootstrap bootstrap = new Bootstrap();
-            bootstrap.group(new OioEventLoopGroup());
+            eventLoopGroup = new OioEventLoopGroup();
+            bootstrap.group(eventLoopGroup);
             bootstrap.channel(RxtxChannel.class);
             bootstrap.handler(new ChannelInitializer<RxtxChannel>() {
                 @Override
@@ -173,8 +173,9 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     }
 
     @Override
-    public void stop() {
-
+    public void stop() throws InterruptedException {
+        store.close();
+        eventLoopGroup.shutdownGracefully().sync();
     }
 
     @Override

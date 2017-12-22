@@ -45,4 +45,9 @@ public class MapDbPersistentStore implements PersistentStore {
         node.save(getContext());
         db.commit();
     }
+
+    @Override
+    public void close() {
+        db.close();
+    }
 }

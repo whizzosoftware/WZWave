@@ -27,4 +27,9 @@ public class MockPersistentStore implements PersistentStore {
     public void saveNode(ZWaveNode node) {
         nodes.put(node.getNodeId(), node);
     }
+
+    @Override
+    public void close() {
+
+    }
 }

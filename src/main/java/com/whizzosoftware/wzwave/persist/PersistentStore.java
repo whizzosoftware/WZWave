@@ -36,4 +36,9 @@ public interface PersistentStore {
      * @param node the node to save
      */
     void saveNode(ZWaveNode node);
+
+    /**
+     * Closes the persistent store.
+     */
+    void close();
 }

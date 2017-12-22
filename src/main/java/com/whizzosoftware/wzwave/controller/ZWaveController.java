@@ -35,7 +35,7 @@ public interface ZWaveController {
     /**
      * Stops the controller (i.e. stop processing events).
      */
-    void stop();
+    void stop() throws InterruptedException;
 
     /**
      * Returns the home ID of this controller.
