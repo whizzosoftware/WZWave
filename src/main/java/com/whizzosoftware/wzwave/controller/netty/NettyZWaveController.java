@@ -87,6 +87,7 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
 
     private String serialPort;
     private PersistentStore store;
+    private boolean autoCloseStore;
     private Channel channel;
     private EventLoopGroup eventLoopGroup;
     private String libraryVersion;
@@ -104,7 +105,7 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
      * @param dataDirectory a directory in which to store persistent data
      */
     public NettyZWaveController(String serialPort, File dataDirectory) {
-        this(serialPort, new MapDbPersistentStore(dataDirectory));
+        this(serialPort, new MapDbPersistentStore(dataDirectory), true);
     }
 
     /**
@@ -113,9 +114,21 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
      * @param serialPort the serial port for Z-Wave controller is accessible from
      * @param store the persistent store to use for storing/retrieving node information
      */
-    NettyZWaveController(String serialPort, PersistentStore store) {
+    public NettyZWaveController(String serialPort, PersistentStore store) {
+        this(serialPort, store, false);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param serialPort the serial port for Z-Wave controller is accessible from
+     * @param store the persistent store to use for storing/retrieving node information
+     * @param autoCloseStore indicates whether store should be automatically closed when controller is stopped
+     */
+    public NettyZWaveController(String serialPort, PersistentStore store, boolean autoCloseStore) {
         this.serialPort = serialPort;
         this.store = store;
+        this.autoCloseStore = autoCloseStore;
         this.inboundHandler = new ZWaveChannelInboundHandler(this);
     }
 
@@ -134,6 +147,12 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
 
     @Override
     public void start() {
+        // make sure there is a persistence store available
+        if (store == null) {
+            throw new RuntimeException("No persistence store available. Either one was not provided or controller start() was called after stop().");
+        }
+
+        // ignore the start call if the controller was already started
         if (channel == null) {
             // set up Netty bootstrap
             Bootstrap bootstrap = new Bootstrap();
@@ -179,8 +198,22 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
     }
 
     private void shutdown() {
-        store.close();
-        eventLoopGroup.shutdownGracefully();
+        // clean up the persistence store
+        if (store != null && autoCloseStore) {
+            store.close();
+        }
+        store = null;
+
+        // clean up the channel
+        if (channel != null) {
+            channel.close();
+            channel = null;
+        }
+
+        // shutdown the event loop group
+        if (eventLoopGroup != null) {
+            eventLoopGroup.shutdownGracefully();
+        }
     }
 
     @Override
