@@ -26,6 +26,7 @@ public class ProductRegistry {
     public final static String M_FIBARGROUP = "Fibargroup";
 
     public final static String P_PAN11 = "Smart Energy Plug In Switch (PAN11)";
+    public final static String P_PAN16 = "Smart Energy Plug In Switch (PAN16)";
     public final static String P_45604_OUTDOOR_MODULE = "45604 Outdoor Module";
     public final static String P_45609_RELAY_SWITCH = "45609 On/Off Relay Switch";
     public final static String P_45612_DIMMER_SWITCH = "45612 Dimmer Switch";
@@ -143,6 +144,9 @@ public class ProductRegistry {
                         switch (pid) {
                             case 17:
                                 info.setName(P_PAN11);
+                                break;
+                            case 41:
+                                info.setName(P_PAN16);
                                 break;
                         }
                         break;
