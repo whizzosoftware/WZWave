@@ -138,7 +138,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                     // sometimes the ApplicationCommand is returned before the SendData callback; flag that case here
                     applicationCommandReceived = true;
                 } else {
-                    logger.warn("Received unexpected frame for STATE_RETVAL_RECEIVED: {}", bs);
+                    logger.warn("Received unexpected frame for STATE_RESPONSE_RECEIVED: {}", bs);
                 }
                 break;
 
@@ -152,7 +152,7 @@ public class SendDataTransaction extends AbstractDataFrameTransaction {
                     completeTransaction(ctx, (DataFrame)bs);
                     return true;
                 } else {
-                    logger.warn("Received unexpected frame for STATE_REQUEST_RECEIVED: {}", bs);
+                    logger.warn("Received unexpected frame for STATE_CALLBACK_RECEIVED: {}", bs);
                 }
                 break;
         }
