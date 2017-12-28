@@ -1,3 +1,12 @@
+/*
+ *******************************************************************************
+ * Copyright (c) 2016 Whizzo Software, LLC.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *******************************************************************************
+ */
 package com.whizzosoftware.wzwave.channel;
 
 import io.netty.buffer.ByteBufAllocator;
@@ -13,6 +22,7 @@ import java.util.List;
 public class MockChannelHandlerContext implements ChannelHandlerContext {
     private final List<Object> writeQueue = new ArrayList<>();
     private final List<Object> userEvents = new ArrayList<>();
+    private final MockEventExecutor executor = new MockEventExecutor();
 
     public List<Object> getWriteQueue() {
         return writeQueue;
@@ -228,7 +238,7 @@ public class MockChannelHandlerContext implements ChannelHandlerContext {
 
     @Override
     public EventExecutor executor() {
-        return null;
+        return executor;
     }
 
     @Override
