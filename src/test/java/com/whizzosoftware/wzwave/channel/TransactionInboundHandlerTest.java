@@ -9,8 +9,6 @@
 */
 package com.whizzosoftware.wzwave.channel;
 
-import com.whizzosoftware.wzwave.channel.MockChannelHandlerContext;
-import com.whizzosoftware.wzwave.channel.TransactionInboundHandler;
 import com.whizzosoftware.wzwave.channel.event.*;
 import com.whizzosoftware.wzwave.frame.*;
 import io.netty.buffer.Unpooled;
@@ -30,20 +28,20 @@ public class TransactionInboundHandlerTest {
         assertEquals(0, ctx.getWriteQueue().size());
         assertEquals(1, ctx.getUserEvents().size());
         assertTrue(ctx.getUserEvents().get(0) instanceof TransactionStartedEvent);
-        assertFalse(h.getCurrentTransaction().isComplete());
+        assertFalse(h.getTransactionContext().isComplete());
 
         // receive ACK
         h.channelRead(ctx, new ACK());
         assertEquals(0, ctx.getWriteQueue().size());
         assertEquals(1, ctx.getUserEvents().size());
-        assertFalse(h.getCurrentTransaction().isComplete());
+        assertFalse(h.getTransactionContext().isComplete());
 
         // receive successful send
         h.channelRead(ctx, new RequestNodeInfo(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x60, RequestNodeInfo.UPDATE_STATE_NODE_INFO_RECEIVED, (byte)0x9a})));
         assertEquals(0, ctx.getWriteQueue().size());
         assertEquals(1, ctx.getUserEvents().size());
         assertTrue(h.hasCurrentTransaction());
-        assertFalse(h.getCurrentTransaction().isComplete());
+        assertFalse(h.getTransactionContext().isComplete());
 
         // receive application update callback
         h.channelRead(ctx, new ApplicationUpdate(Unpooled.wrappedBuffer(new byte[] {0x01, 16, 0x00, 0x49, (byte)0x84, 0x02, 0x0a, 0x04, 0x10, 0x01, 0x25, 0x27, 0x75, 0x73, (byte)0x86, 0x72, 0x77, (byte)0xb8})));
@@ -69,20 +67,20 @@ public class TransactionInboundHandlerTest {
         assertEquals(0, ctx.getWriteQueue().size());
         assertEquals(1, ctx.getUserEvents().size());
         assertTrue(ctx.getUserEvents().get(0) instanceof TransactionStartedEvent);
-        assertFalse(h.getCurrentTransaction().isComplete());
+        assertFalse(h.getTransactionContext().isComplete());
 
         // receive ACK
         h.channelRead(ctx, new ACK());
         assertEquals(0, ctx.getWriteQueue().size());
         assertEquals(1, ctx.getUserEvents().size());
-        assertFalse(h.getCurrentTransaction().isComplete());
+        assertFalse(h.getTransactionContext().isComplete());
 
         // receive successful send
         h.channelRead(ctx, new RequestNodeInfo(Unpooled.wrappedBuffer(new byte[] {0x01, 0x04, 0x01, 0x60, RequestNodeInfo.UPDATE_STATE_NODE_INFO_RECEIVED, (byte)0x9a})));
         assertEquals(0, ctx.getWriteQueue().size());
         assertEquals(1, ctx.getUserEvents().size());
         assertTrue(h.hasCurrentTransaction());
-        assertFalse(h.getCurrentTransaction().isComplete());
+        assertFalse(h.getTransactionContext().isComplete());
 
         // receive application update callback
         h.channelRead(ctx, new ApplicationUpdate(Unpooled.wrappedBuffer(new byte[] {0x01, 16, 0x00, 0x49, (byte)0x84, 0x00, 0x0a, 0x04, 0x10, 0x01, 0x25, 0x27, 0x75, 0x73, (byte)0x86, 0x72, 0x77, (byte)0xb8})));
@@ -171,7 +169,11 @@ public class TransactionInboundHandlerTest {
     public void testSendDataTransactionTimeout() throws Exception {
         MockChannelHandlerContext ctx = new MockChannelHandlerContext();
         TransactionInboundHandler h = new TransactionInboundHandler();
+        assertFalse(h.hasCurrentTransaction());
         h.userEventTriggered(ctx, new DataFrameSentEvent(new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x09, 0x00, 0x13, 0x03, 0x02, 0x20, 0x02, 0x05, 0x31, (byte)0xF2})), true));
+        assertTrue(h.hasCurrentTransaction());
+        h.userEventTriggered(ctx, new TransactionTimeoutEvent(h.getTransactionContext().getId()));
+        assertFalse(h.hasCurrentTransaction());
     }
 
     @Test
@@ -230,7 +232,7 @@ public class TransactionInboundHandlerTest {
         h.channelRead(ctx, new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x05, 0x00, 0x13, 0x0a, 0x00, (byte)0xe2})));
         assertEquals(1, ctx.getUserEvents().size());
         assertEquals(0, ctx.getWriteQueue().size());
-        h.userEventTriggered(ctx, new TransactionTimeoutEvent(h.getCurrentTransaction().getId()));
+        h.userEventTriggered(ctx, new TransactionTimeoutEvent(h.getTransactionContext().getId()));
         assertEquals(1, ctx.getWriteQueue().size());
         assertTrue(ctx.getWriteQueue().get(0) instanceof OutboundDataFrame);
         assertTrue(((OutboundDataFrame)ctx.getWriteQueue().get(0)).getDataFrame() instanceof SendData);
@@ -254,5 +256,23 @@ public class TransactionInboundHandlerTest {
         h.channelRead(ctx, new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x05, 0x00, 0x13, 0x0a, 0x00, (byte)0xe2})));
         assertEquals(2, ctx.getUserEvents().size());
         assertTrue(ctx.getUserEvents().get(1) instanceof TransactionCompletedEvent);
+    }
+
+    @Test
+    public void testTransactionTimeoutExtension() throws Exception {
+        MockChannelHandlerContext ctx = new MockChannelHandlerContext();
+        TransactionInboundHandler h = new TransactionInboundHandler();
+        h.handlerAdded(ctx);
+        assertFalse(h.hasCurrentTransaction());
+
+        long now = System.currentTimeMillis();
+        h.processEvent(ctx, new DataFrameSentEvent(new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x09, 0x00, 0x13, 0x03, 0x02, 0x20, 0x02, 0x05, 0x31, (byte)0xF2})), true), now);
+        assertTrue(h.hasCurrentTransaction());
+        assertEquals(now, h.getTransactionContext().getTimeoutStartTime());
+
+        now = System.currentTimeMillis();
+        h.userEventTriggered(ctx, new IncompleteDataFrameEvent());
+        assertTrue(h.hasCurrentTransaction());
+        assertEquals(now, h.getTransactionContext().getTimeoutStartTime());
     }
 }
