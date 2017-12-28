@@ -20,3 +20,4 @@ GE / Jasco   | 45604 Outdoor Module      | Power outlet
 GE / Jasco   | 45609 Relay switch        | Power outlet        
 GE / Jasco   | 45612 Dimmer switch       | Light dimmer/switch        
 Philio       | PAN11 Smart Energy Switch | Power outlet
+Z-Wave.Me    | UZB                       | PC Controller
