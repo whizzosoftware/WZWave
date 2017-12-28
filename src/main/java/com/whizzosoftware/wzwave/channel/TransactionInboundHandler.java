@@ -105,7 +105,7 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
                 logger.trace("Wrote a data frame with a current transaction: {}", dfse.getDataFrame());
             }
         } else if (evt instanceof TransactionTimeoutEvent) {
-            TransactionTimeoutEvent tte = (TransactionTimeoutEvent)evt;
+            TransactionTimeoutEvent tte = (TransactionTimeoutEvent) evt;
             if (tte.getId().equals(currentDataFrameTransaction.getId())) {
                 logger.trace("Detected transaction timeout");
                 timeoutFuture = null;
@@ -114,6 +114,14 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
                 zctx.process(ctx);
             } else {
                 logger.error("Received timeout event for unknown transaction: {}", tte.getId());
+            }
+        } else if (evt instanceof TransactionFailedEvent) {
+            TransactionFailedEvent tfe = (TransactionFailedEvent)evt;
+            if (tfe.getId().equals(currentDataFrameTransaction.getId())) {
+                logger.trace("Aborting failed transaction: {}", tfe.getId());
+                currentDataFrameTransaction = null;
+            } else {
+                logger.error("Received transaction failure for unknown transaction: {}", tfe.getId());
             }
         } else {
             ctx.fireUserEventTriggered(evt);
