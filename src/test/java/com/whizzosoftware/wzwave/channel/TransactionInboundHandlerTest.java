@@ -217,7 +217,10 @@ public class TransactionInboundHandlerTest {
         MockChannelHandlerContext ctx = new MockChannelHandlerContext();
         TransactionInboundHandler h = new TransactionInboundHandler();
 
-        h.userEventTriggered(ctx, new DataFrameSentEvent(new SendData("", (byte)0x01, new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x00, 0x00, 0x25, 0x0a, (byte)0xce}, (byte)0x05, true), true));
+        assertEquals(0, ctx.getUserEvents().size());
+
+        SendData sendData = new SendData("", (byte)0x01, new byte[] {0x01, 0x09, 0x00, 0x13, 0x06, 0x02, 0x00, 0x00, 0x25, 0x0a, (byte)0xce}, (byte)0x05, true);
+        h.userEventTriggered(ctx, new DataFrameSentEvent(sendData, true));
         assertEquals(1, ctx.getUserEvents().size());
         assertEquals(0, ctx.getWriteQueue().size());
         assertTrue(ctx.getUserEvents().get(0) instanceof TransactionStartedEvent);
@@ -234,6 +237,24 @@ public class TransactionInboundHandlerTest {
         assertEquals(1, ctx.getWriteQueue().size());
         assertTrue(ctx.getWriteQueue().get(0) instanceof OutboundDataFrame);
         assertTrue(((OutboundDataFrame)ctx.getWriteQueue().get(0)).getDataFrame() instanceof SendData);
+        sendData.incremenentSendCount(); // simulate that the frame was sent to the network
+
+        h.userEventTriggered(ctx, new TransactionTimeoutEvent(h.getCurrentTransaction().getId()));
+        assertEquals(2, ctx.getWriteQueue().size());
+        assertTrue(ctx.getWriteQueue().get(1) instanceof OutboundDataFrame);
+        assertTrue(((OutboundDataFrame)ctx.getWriteQueue().get(1)).getDataFrame() instanceof SendData);
+        sendData.incremenentSendCount(); // simulate that the frame was sent to the network
+
+        assertEquals(1, ctx.getUserEvents().size());
+        h.userEventTriggered(ctx, new TransactionTimeoutEvent(h.getCurrentTransaction().getId()));
+        assertEquals(2, ctx.getWriteQueue().size());
+        assertEquals(2, ctx.getUserEvents().size());
+        assertTrue(ctx.getUserEvents().get(1) instanceof TransactionFailedEvent);
+        assertTrue(h.hasCurrentTransaction());
+
+        // simulate Netty passing along the TransactionFailedEvent
+        h.userEventTriggered(ctx, ctx.getUserEvents().get(1));
+        assertFalse(h.hasCurrentTransaction());
     }
 
     @Test
