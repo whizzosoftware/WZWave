@@ -170,6 +170,7 @@ public class TransactionInboundHandlerTest {
         MockChannelHandlerContext ctx = new MockChannelHandlerContext();
         TransactionInboundHandler h = new TransactionInboundHandler();
         assertFalse(h.hasCurrentTransaction());
+
         SendData startFrame = new SendData(Unpooled.wrappedBuffer(new byte[] {0x01, 0x09, 0x00, 0x13, 0x03, 0x02, 0x20, 0x02, 0x05, 0x31, (byte)0xF2}));
         h.userEventTriggered(ctx, new DataFrameSentEvent(startFrame, true));
         assertTrue(h.hasCurrentTransaction());
