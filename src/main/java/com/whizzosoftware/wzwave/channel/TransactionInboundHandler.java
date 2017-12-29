@@ -148,7 +148,7 @@ public class TransactionInboundHandler extends ChannelInboundHandlerAdapter {
         } else if (evt instanceof IncompleteDataFrameEvent) {
             if (transactionContext != null) {
                 logger.trace("Incomplete data received from network; extending transaction timeout for {}", transactionContext.getId());
-                transactionContext.resetTimeout(System.currentTimeMillis());
+                transactionContext.resetTimeout(time);
             }
             ctx.fireUserEventTriggered(evt);
         } else {

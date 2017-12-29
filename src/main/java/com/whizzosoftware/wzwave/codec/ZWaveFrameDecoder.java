@@ -9,6 +9,7 @@
 */
 package com.whizzosoftware.wzwave.codec;
 
+import com.whizzosoftware.wzwave.channel.event.IncompleteDataFrameEvent;
 import com.whizzosoftware.wzwave.frame.*;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 import io.netty.buffer.ByteBuf;
@@ -84,6 +85,9 @@ public class ZWaveFrameDecoder extends ByteToMessageDecoder {
                 }
                 if (!foundFrame) {
                     previousBuf = data.copy();
+                    if (ctx != null) {
+                        ctx.fireUserEventTriggered(new IncompleteDataFrameEvent());
+                    }
                     break;
                 }
             }
