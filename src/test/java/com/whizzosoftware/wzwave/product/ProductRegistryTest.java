@@ -12,7 +12,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- * Tests of ProductRegistry
+ * Tests of {@link ProductRegistry}.
  *
  * @author Linus Brimstedt
  */
@@ -34,4 +34,11 @@ public class ProductRegistryTest {
         assertTrue(info.isComplete());
     }
 
+    @Test
+    public void testLookupPhilioPan16() {
+        ProductInfo info = ProductRegistry.lookupProduct(316, 1, 41);
+        assertEquals("Philio Technology Corporation", info.getManufacturer());
+        assertEquals("Smart Energy Plug In Switch (PAN16)", info.getName());
+        assertTrue(info.isComplete());
+    }
 }
