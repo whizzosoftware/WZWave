@@ -29,9 +29,9 @@ import com.whizzosoftware.wzwave.util.ByteUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.oio.OioEventLoopGroup;
-import io.netty.channel.rxtx.RxtxChannel;
-import io.netty.channel.rxtx.RxtxChannelConfig;
-import io.netty.channel.rxtx.RxtxDeviceAddress;
+import io.netty.channel.jsc.JSerialCommChannel;
+import io.netty.channel.jsc.JSerialCommChannelConfig;
+import io.netty.channel.jsc.JSerialCommDeviceAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -158,15 +158,15 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
             Bootstrap bootstrap = new Bootstrap();
             eventLoopGroup = new OioEventLoopGroup();
             bootstrap.group(eventLoopGroup);
-            bootstrap.channel(RxtxChannel.class);
-            bootstrap.handler(new ChannelInitializer<RxtxChannel>() {
+            bootstrap.channel(JSerialCommChannel.class);
+            bootstrap.handler(new ChannelInitializer<JSerialCommChannel>() {
                 @Override
-                protected void initChannel(RxtxChannel channel) throws Exception {
+                protected void initChannel(JSerialCommChannel channel) throws Exception {
                     NettyZWaveController.this.channel = channel;
                     channel.config().setBaudrate(115200);
-                    channel.config().setDatabits(RxtxChannelConfig.Databits.DATABITS_8);
-                    channel.config().setParitybit(RxtxChannelConfig.Paritybit.NONE);
-                    channel.config().setStopbits(RxtxChannelConfig.Stopbits.STOPBITS_1);
+                    channel.config().setDatabits(8);
+                    channel.config().setParitybit(JSerialCommChannelConfig.Paritybit.NONE);
+                    channel.config().setStopbits(JSerialCommChannelConfig.Stopbits.STOPBITS_1);
                     channel.pipeline().addLast("decoder", new ZWaveFrameDecoder());
                     channel.pipeline().addLast("ack", new ACKInboundHandler());
                     channel.pipeline().addLast("encoder", new ZWaveFrameEncoder());
@@ -176,7 +176,7 @@ public class NettyZWaveController implements ZWaveController, ZWaveControllerCon
                 }
             });
 
-            bootstrap.connect(new RxtxDeviceAddress(serialPort)).addListener(new ChannelFutureListener() {
+            bootstrap.connect(new JSerialCommDeviceAddress(serialPort)).addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (future.isSuccess()) {
