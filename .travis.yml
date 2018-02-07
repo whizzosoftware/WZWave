@@ -2,6 +2,6 @@ language: java
 jdk:
   - oraclejdk8
 after_success:
-  - echo "<settings><servers><server><id>oss-jfrog-artifactory</id><username>\${env.OSSRH_USER}</username><password>\${env.OSSRH_PASS}</password></server></servers></settings>" > ~/settings.xml
+  - echo "<settings><servers><server><id>oss-jfrog-artifactory-snapshots</id><username>\${env.OSSRH_USER}</username><password>\${env.OSSRH_PASS}</password></server></servers></settings>" > ~/settings.xml
   - mvn deploy --settings ~/settings.xml
   - mvn clean test jacoco:report coveralls:report
