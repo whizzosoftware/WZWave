@@ -4,10 +4,7 @@ import com.whizzosoftware.wzwave.commandclass.BasicCommandClass;
 import com.whizzosoftware.wzwave.commandclass.BinarySwitchCommandClass;
 import com.whizzosoftware.wzwave.commandclass.CommandClass;
 import com.whizzosoftware.wzwave.commandclass.NoOperationCommandClass;
-import com.whizzosoftware.wzwave.node.generic.BinarySensor;
-import com.whizzosoftware.wzwave.node.generic.BinarySwitch;
-import com.whizzosoftware.wzwave.node.generic.MultilevelSwitch;
-import com.whizzosoftware.wzwave.node.generic.StaticController;
+import com.whizzosoftware.wzwave.node.generic.*;
 import com.whizzosoftware.wzwave.node.specific.BinaryPowerSwitch;
 import com.whizzosoftware.wzwave.node.specific.MultilevelPowerSwitch;
 import com.whizzosoftware.wzwave.node.specific.PCController;
@@ -31,6 +28,8 @@ public class ZWaveNodeFactoryTest {
 
         assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte) 0x00, MultilevelSwitch.ID, (byte)0x00), false, null) instanceof MultilevelSwitch);
         assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte) 0x00, MultilevelSwitch.ID, MultilevelPowerSwitch.ID), false, null) instanceof MultilevelPowerSwitch);
+
+        assertTrue(ZWaveNodeFactory.createNode(new NodeInfo((byte)0x01, (byte)0x00, PortableSceneController.ID, (byte)0x02), false, null) instanceof PortableSceneController);
     }
 
     @Test

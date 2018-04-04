@@ -106,6 +106,13 @@ public class ZWaveNodeFactory {
                 }
             }
 
+            case PortableSceneController.ID: {
+                switch (info.getSpecificDeviceClass()) {
+                    default:
+                        return new PortableSceneController(info, listening, listener);
+                }
+            }
+
             default:
                 throw new NodeCreationException("Unable to create node " + info.getNodeId() + " due to unknown generic device class: " + ByteUtil.createString(info.getGenericDeviceClass()));
         }
