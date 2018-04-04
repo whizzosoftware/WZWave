@@ -9,9 +9,7 @@
 */
 package com.whizzosoftware.wzwave.node.generic;
 
-import com.whizzosoftware.wzwave.commandclass.BasicCommandClass;
-import com.whizzosoftware.wzwave.commandclass.CommandClass;
-import com.whizzosoftware.wzwave.commandclass.VersionCommandClass;
+import com.whizzosoftware.wzwave.commandclass.*;
 import com.whizzosoftware.wzwave.node.NodeInfo;
 import com.whizzosoftware.wzwave.node.NodeListener;
 import com.whizzosoftware.wzwave.node.ZWaveNode;
@@ -21,21 +19,17 @@ import com.whizzosoftware.wzwave.persist.PersistenceContext;
 public class PortableSceneController extends ZWaveNode {
     public static final byte ID = 0x01;
 
-    private Byte value = null;
-
     public PortableSceneController(NodeInfo info, boolean listening, NodeListener listener) {
         super(info, listening, listener);
 
         addCommandClass(BasicCommandClass.ID, new BasicCommandClass());
         addCommandClass(VersionCommandClass.ID, new VersionCommandClass());
+        addCommandClass(BatteryCommandClass.ID, new BatteryCommandClass());
+        addCommandClass(CentralSceneCommandClass.ID, new CentralSceneCommandClass());
     }
 
     public PortableSceneController(PersistenceContext pctx, Byte nodeId, NodeListener listener) {
         super(pctx, nodeId, listener);
-    }
-
-    public Byte getValue() {
-        return value;
     }
 
     public CommandClass getCommandClass(byte commandClassId) {
