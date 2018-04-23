@@ -37,6 +37,7 @@ public class ProductRegistry {
     public final static String P_SMART_ENERGY_STRIP = "Smart Energy Strip";
     public final static String P_WATER_SENSOR = "Water Sensor";
     public final static String P_METERED_WALL_PLUG = "Metered Wall Plug Switch";
+    public final static String P_MULTISENSOR_6 = "MultiSensor 6";
 
     static public ProductInfo lookupProduct(Integer manufacturerId, Integer productTypeId, Integer productId) {
         ProductInfo info = new ProductInfo(manufacturerId, productTypeId, productId);
@@ -64,6 +65,9 @@ public class ProductRegistry {
                                 break;
                             case 45:
                                 info.setName(P_WATER_SENSOR);
+                                break;
+                            case 100:
+                                info.setName(P_MULTISENSOR_6);
                                 break;
                         }
                         break;
