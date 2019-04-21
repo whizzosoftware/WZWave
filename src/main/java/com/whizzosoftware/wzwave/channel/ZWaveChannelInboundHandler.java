@@ -112,7 +112,7 @@ public class ZWaveChannelInboundHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void processNodeProtocolInfo(NodeProtocolInfo nodeProtocolInfo) {
-        Byte nodeId = nodeProtocolInfoQueue.remove();
+        Byte nodeId = nodeProtocolInfoQueue.poll();
         if (nodeId != null) {
             listener.onNodeProtocolInfo(nodeId, nodeProtocolInfo);
         } else {
