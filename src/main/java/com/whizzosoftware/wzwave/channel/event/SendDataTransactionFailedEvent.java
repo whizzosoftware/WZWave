@@ -28,4 +28,15 @@ public class SendDataTransactionFailedEvent extends TransactionFailedEvent {
     public boolean isTargetNodeACKReceived() {
         return tgtNodeACKReceived;
     }
+
+    @Override
+    public String toString()
+    {
+        return "SendDataTransactionFailedEvent{" +
+                "id=" + getId() +
+                ", nodeId=" + getNodeId() +
+                ", listeningNode=" + isListeningNode() +
+                ", tgtNodeACKReceived=" + isTargetNodeACKReceived() +
+                '}';
+    }
 }

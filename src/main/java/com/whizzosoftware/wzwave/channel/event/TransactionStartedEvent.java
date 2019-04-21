@@ -24,4 +24,12 @@ public class TransactionStartedEvent {
     public String getId() {
         return id;
     }
+
+    @Override
+    public String toString()
+    {
+        return "TransactionStartedEvent{" +
+                "id=" + getId() +
+                '}';
+    }
 }

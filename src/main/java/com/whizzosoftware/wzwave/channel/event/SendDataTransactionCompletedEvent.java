@@ -15,4 +15,13 @@ public class SendDataTransactionCompletedEvent extends TransactionCompletedEvent
     public SendDataTransactionCompletedEvent(String id, DataFrame frame, byte nodeId) {
         super(id, frame, nodeId);
     }
+
+    @Override
+    public String toString()
+    {
+        return "SendDataTransactionCompletedEvent{" +
+                "id=" + getId() +
+                ", nodeId=" + getNodeId() +
+                '}';
+    }
 }

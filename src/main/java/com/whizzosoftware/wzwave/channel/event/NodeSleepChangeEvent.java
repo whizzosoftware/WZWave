@@ -30,4 +30,13 @@ public class NodeSleepChangeEvent {
     public boolean isSleeping() {
         return sleeping;
     }
+
+    @Override
+    public String toString()
+    {
+        return "NodeSleepChangeEvent{" +
+                "sleeping=" + isSleeping() +
+                ", nodeId=" + getNodeId() +
+                '}';
+    }
 }

@@ -59,4 +59,13 @@ public class TransactionCompletedEvent {
     public Byte getNodeId() {
         return nodeId;
     }
+
+    @Override
+    public String toString()
+    {
+        return "TransactionCompletedEvent{" +
+                "id=" + getId() +
+                ", nodeId=" + getNodeId() +
+                '}';
+    }
 }
