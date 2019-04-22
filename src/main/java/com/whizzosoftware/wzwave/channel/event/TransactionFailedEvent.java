@@ -25,6 +25,7 @@ public class TransactionFailedEvent {
      * Constructor.
      *
      * @param id the transaction ID
+     * @param startFrame the data frame that initiated the transaction
      */
     public TransactionFailedEvent(String id, DataFrame startFrame) {
         this(id, startFrame, null);
@@ -57,5 +58,14 @@ public class TransactionFailedEvent {
 
     public DataFrame getStartFrame() {
         return startFrame;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "TransactionFailedEvent{" +
+                "id=" + getId() +
+                ", nodeId=" + getNodeId() +
+                '}';
     }
 }

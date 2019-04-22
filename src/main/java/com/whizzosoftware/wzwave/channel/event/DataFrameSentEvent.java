@@ -38,4 +38,12 @@ public class DataFrameSentEvent {
     public boolean isListeningNode() {
         return listeningNode;
     }
+
+    @Override
+    public String toString()
+    {
+        return "DataFrameSentEvent{" +
+                "listeningNode=" + isListeningNode() +
+                '}';
+    }
 }
