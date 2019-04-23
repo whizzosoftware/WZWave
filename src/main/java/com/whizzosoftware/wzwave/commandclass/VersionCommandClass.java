@@ -61,10 +61,10 @@ public class VersionCommandClass extends CommandClass {
         if (ccb[startIndex+1] == VERSION_REPORT) {
             int start = startIndex+2;
             library = String.format("%d", ccb[start]);
-            protocol = String.format("%d.%2d", ccb[start + 1], ccb[start + 2]);
-            application = String.format("%d.%2d", ccb[start + 3], ccb[start + 4]);
+            protocol = String.format("%d.%02d", ccb[start + 1], ccb[start + 2]);
+            application = String.format("%d.%02d", ccb[start + 3], ccb[start + 4]);
             logger.debug("Node {} uses library {}, protocol {} and application {}", ByteUtil.createString(context.getNodeId()), library, protocol, application);
-        } else if (ccb[1] == VERSION_COMMAND_CLASS_REPORT) {
+        } else if (ccb[startIndex+1] == VERSION_COMMAND_CLASS_REPORT) {
             CommandClass cc = context.getCommandClass(ccb[startIndex+2]);
             byte version = ccb[startIndex+3];
             if (version >= 1 && cc != null) {
