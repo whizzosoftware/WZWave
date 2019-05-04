@@ -17,6 +17,8 @@ public class CommandClassFactoryTest {
         assertTrue(CommandClassFactory.createCommandClass(BatteryCommandClass.ID) instanceof BatteryCommandClass);
         assertTrue(CommandClassFactory.createCommandClass(BinarySensorCommandClass.ID) instanceof BinarySensorCommandClass);
         assertTrue(CommandClassFactory.createCommandClass(BinarySwitchCommandClass.ID) instanceof BinarySwitchCommandClass);
+        assertTrue(CommandClassFactory.createCommandClass(ColorControlCommandClass.ID) instanceof ColorControlCommandClass);
+        assertTrue(CommandClassFactory.createCommandClass(IndicatorCommandClass.ID) instanceof IndicatorCommandClass);
         assertTrue(CommandClassFactory.createCommandClass(ManufacturerSpecificCommandClass.ID) instanceof ManufacturerSpecificCommandClass);
         assertTrue(CommandClassFactory.createCommandClass(MeterCommandClass.ID) instanceof MeterCommandClass);
         assertTrue(CommandClassFactory.createCommandClass(MultiInstanceCommandClass.ID) instanceof MultiInstanceCommandClass);
