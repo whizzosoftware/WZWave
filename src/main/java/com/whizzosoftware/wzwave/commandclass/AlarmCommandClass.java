@@ -31,7 +31,7 @@ public class AlarmCommandClass extends CommandClass {
 
     @Override
     public String getName() {
-        return "COMMAND_CLASS_SENSOR_ALARM";
+        return "COMMAND_CLASS_ALARM";
     }
 
     public byte getType() {
@@ -59,7 +59,7 @@ public class AlarmCommandClass extends CommandClass {
     }
 
     public DataFrame createGet(byte nodeId) {
-        return createSendDataFrame("SENSOR_ALARM_GET", nodeId, new byte[] {AlarmCommandClass.ID, ALARM_GET}, true);
+        return createSendDataFrame("ALARM_GET", nodeId, new byte[] {AlarmCommandClass.ID, ALARM_GET}, true);
     }
 
     @Override
