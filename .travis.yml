@@ -1,7 +1,25 @@
 language: java
-jdk:
-  - oraclejdk8
+jdk: oraclejdk8
+cache:
+  directories:
+    - $HOME/.m2
+matrix:
+  include:
+    - name: "Javadoc"
+      env:
+      - TEST_SUITE='javadoc:jar'
+      - TEST_TAG=javadoc
+    - name: "Unit tests"
+      env:
+      - TEST_SUITE='test jacoco:report coveralls:report'
+      - TEST_TAG=utest
+script:
+  - mvn $TEST_SUITE -B
 after_success:
-  - echo "<settings><servers><server><id>oss-jfrog-artifactory-snapshots</id><username>\${env.OSSRH_USER}</username><password>\${env.OSSRH_PASS}</password></server></servers></settings>" > ~/settings.xml
-  - mvn deploy --settings ~/settings.xml
-  - mvn clean test jacoco:report coveralls:report
+  - echo $TEST_TAG
+  - echo $TRAVIS_REPO_SLUG
+  - echo $TRAVIS_BRANCH
+  - echo $TRAVIS_PULL_REQUEST
+  - echo $TRAVIS_TEST_RESULT
+  - test $TEST_TAG = utest && test $TRAVIS_REPO_SLUG = whizzosoftware/WZWave && test $TRAVIS_BRANCH = master && test $TRAVIS_PULL_REQUEST = false && test $TRAVIS_TEST_RESULT = 0 && echo "<settings><servers><server><id>oss-jfrog-artifactory-snapshots</id><username>\${env.OSSRH_USER}</username><password>\${env.OSSRH_PASS}</password></server></servers></settings>" > ~/settings.xml
+  - test $TEST_TAG = utest && test $TRAVIS_REPO_SLUG = whizzosoftware/WZWave && test $TRAVIS_BRANCH = master && test $TRAVIS_PULL_REQUEST = false && test $TRAVIS_TEST_RESULT = 0 && mvn deploy --settings ~/settings.xml
