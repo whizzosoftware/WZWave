@@ -12,10 +12,9 @@ package com.whizzosoftware.wzwave.codec;
 import com.whizzosoftware.wzwave.frame.*;
 import com.whizzosoftware.wzwave.util.ByteUtil;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.CompositeByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.codec.CorruptedFrameException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,70 +28,39 @@ import java.util.List;
 public class ZWaveFrameDecoder extends ByteToMessageDecoder {
     private static final Logger logger = LoggerFactory.getLogger(ZWaveFrameDecoder.class);
 
-    private ByteBuf previousBuf;
+    // Visible for testing
+    @Override
+    protected void callDecode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
+        super.callDecode(ctx, in, out);
+    }
 
     @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         if (logger.isDebugEnabled()) {
             logger.debug("RCVD: {}", ByteUtil.createString(in));
         }
 
-        ByteBuf data;
-
-        // if there was data left from the last decode call, create a composite ByteBuf that contains both
-        // previous and new data
-        if (previousBuf != null) {
-            CompositeByteBuf cbuf = Unpooled.compositeBuffer(2);
-            cbuf.addComponent(previousBuf.copy());
-            cbuf.addComponent(in);
-            cbuf.writerIndex(previousBuf.readableBytes() + in.readableBytes());
-            data = cbuf;
-            // release the data from the previous decode call
-            previousBuf.release();
-            previousBuf = null;
-        } else {
-            data = in;
+        if (isSingleByteFrame(in, in.readerIndex())) {
+            out.add(createSingleByteFrame(in));
         }
-
-        while (data.isReadable()) {
-            // check for single ACK/NAK/CAN
-            if (data.readableBytes() == 1 && isSingleByteFrame(data, data.readerIndex())) {
-                out.add(createSingleByteFrame(data));
-            } else {
-                boolean foundFrame = false;
-                // search for a valid frame in the data
-                for (int searchStartIx = data.readerIndex(); searchStartIx < data.readerIndex() + data.readableBytes(); searchStartIx++) {
-                    if (data.getByte(searchStartIx) == DataFrame.START_OF_FRAME) {
-                        int frameEndIx = scanForFrame(data, searchStartIx);
-                        if (frameEndIx > 0) {
-                            if (searchStartIx > data.readerIndex() && isSingleByteFrame(data, searchStartIx - 1)) {
-                                data.readerIndex(searchStartIx - 1);
-                                out.add(createSingleByteFrame(data));
-                            } else if (searchStartIx > data.readerIndex()) {
-                                data.readerIndex(searchStartIx);
-                            }
-                            DataFrame df = createDataFrame(data);
-                            if (df != null) {
-                                out.add(df);
-                                data.readByte(); // discard checksum
-                                foundFrame = true;
-                            } else {
-                                logger.debug("Unable to determine frame type");
-                            }
-                        }
-                    }
-                }
-                if (!foundFrame) {
-                    previousBuf = data.copy();
-                    break;
-                }
+        else if (isDataFrame(in, in.readerIndex()))
+        {
+            DataFrame dataFrame = tryCreateDataFrame(in);
+            if (dataFrame != null) {
+                out.add(dataFrame);
             }
+        } else {
+            in.readByte(); // discard invalid START OF FRAME
         }
-
-        // make sure we read from the input ByteBuf so Netty doesn't throw an exception
-        in.readBytes(in.readableBytes());
 
         logger.trace("Done processing received data: {}", out);
+    }
+
+    @Override
+    protected void decodeLast(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
+        if (in.isReadable()) {
+            decode(ctx, in, out);
+        }
     }
 
     private boolean isSingleByteFrame(ByteBuf data, int ix) {
@@ -106,31 +74,60 @@ public class ZWaveFrameDecoder extends ByteToMessageDecoder {
             return new ACK();
         } else if (b == NAK.ID) {
             return new NAK();
-        } else if (b == CAN.ID) {
+        } else {
             return new CAN();
+        }
+    }
+
+    private boolean isDataFrame(ByteBuf in, int readerIndex) {
+        return in.getByte(readerIndex) == DataFrame.START_OF_FRAME;
+    }
+
+    private DataFrame tryCreateDataFrame(ByteBuf in) {
+        if (isFullDataFrame(in, in.readerIndex()))
+        {
+            int frameLength = peekLength(in, in.readerIndex());
+            byte calculatedChecksum = calculateChecksum(in, in.readerIndex() + 1, in.readerIndex() + 1 + frameLength);
+            byte frameChecksum = peekChecksum(in, in.readerIndex(), frameLength);
+            if (calculatedChecksum != frameChecksum)
+            {
+                in.readBytes(frameLength + 2); // discard frame
+                throw new CorruptedFrameException("Invalid frame checksum calc=" + ByteUtil.createString(calculatedChecksum) + " field=" + ByteUtil.createString(frameChecksum));
+            }
+            ByteBuf frameBuffer = in.readSlice(frameLength + 1);
+            in.readByte(); // discard checksum
+            return createDataFrame(frameBuffer);
         } else {
             return null;
         }
     }
 
-    private int scanForFrame(ByteBuf data, int startIndex) {
-        int readableBytes = data.readableBytes();
-        if (data.getByte(startIndex) == DataFrame.START_OF_FRAME && startIndex + 1 < data.readerIndex() + readableBytes) {
-            byte frameLen = data.getByte(startIndex + 1);
-            int checksumIx = startIndex + frameLen + 1;
-            if (frameLen > 0 && checksumIx < data.readerIndex() + readableBytes) {
-                byte frameChecksum = data.getByte(checksumIx);
-                byte checksum = 0;
-                for (int i = startIndex + 1; i < checksumIx; i++) {
-                    checksum ^= data.getByte(i);
-                }
-                checksum = (byte)(~checksum);
-                if (frameChecksum == checksum) {
-                    return checksumIx;
-                }
-            }
+    private boolean isFullDataFrame(ByteBuf in, int readerIndex) {
+        if (in.readableBytes() >= 2) {
+            int length = peekLength(in, readerIndex);
+            return in.readableBytes() >= length + 2;
         }
-        return -1;
+        else
+        {
+            return false;
+        }
+    }
+
+    private int peekLength(ByteBuf in, int readerIndex) {
+        return in.getByte(readerIndex + 1);
+    }
+
+    private byte peekChecksum(ByteBuf in, int readerIndex, int frameLength) {
+        return in.getByte(readerIndex + 1 + frameLength);
+    }
+
+    private byte calculateChecksum(ByteBuf data, int startIndex, int checksumIx) {
+        byte checksum = 0;
+        for (int i = startIndex; i < checksumIx; i++) {
+            checksum ^= data.getByte(i);
+        }
+        checksum = (byte)(~checksum);
+        return checksum;
     }
 
     /**

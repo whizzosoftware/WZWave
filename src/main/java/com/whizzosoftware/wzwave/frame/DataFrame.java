@@ -39,7 +39,7 @@ abstract public class DataFrame extends Frame {
             throw new ZWaveRuntimeException("Data frame parsing error: no SOF");
         }
         this.dataFrameLength = buffer.readByte();
-        if (buffer.readableBytes() < dataFrameLength) {
+        if (buffer.readableBytes() + 1 < dataFrameLength) {
             throw new ZWaveRuntimeException("Data framing length error");
         }
         this.type = (buffer.readByte() == 0 ? DataFrameType.REQUEST : DataFrameType.RESPONSE);
