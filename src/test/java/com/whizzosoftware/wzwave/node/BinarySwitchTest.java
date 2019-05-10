@@ -63,7 +63,7 @@ public class BinarySwitchTest {
             (byte)0x29,
             new byte[] {(byte)0x86, 0x12, 0x03, 0x03, 0x43, 0x01, 0x01}
         ));
-        assertEquals("1. 1", ((VersionCommandClass)bs.getCommandClass(VersionCommandClass.ID)).getApplication());
+        assertEquals("1.01", ((VersionCommandClass)bs.getCommandClass(VersionCommandClass.ID)).getApplication());
         assertEquals("3", ((VersionCommandClass)bs.getCommandClass(VersionCommandClass.ID)).getLibrary());
         assertEquals("3.67", ((VersionCommandClass)bs.getCommandClass(VersionCommandClass.ID)).getProtocol());
 

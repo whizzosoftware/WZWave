@@ -61,20 +61,21 @@ public class VersionCommandClass extends CommandClass {
         if (ccb[startIndex+1] == VERSION_REPORT) {
             int start = startIndex+2;
             library = String.format("%d", ccb[start]);
-            protocol = String.format("%d.%2d", ccb[start + 1], ccb[start + 2]);
-            application = String.format("%d.%2d", ccb[start + 3], ccb[start + 4]);
+            protocol = String.format("%d.%02d", ccb[start + 1], ccb[start + 2]);
+            application = String.format("%d.%02d", ccb[start + 3], ccb[start + 4]);
             logger.debug("Node {} uses library {}, protocol {} and application {}", ByteUtil.createString(context.getNodeId()), library, protocol, application);
-        } else if (ccb[1] == VERSION_COMMAND_CLASS_REPORT) {
+        } else if (ccb[startIndex+1] == VERSION_COMMAND_CLASS_REPORT) {
             CommandClass cc = context.getCommandClass(ccb[startIndex+2]);
-            if (cc != null) {
+            byte version = ccb[startIndex+3];
+            if (version >= 1 && cc != null) {
                 logger.debug(
                     "Setting command class {} to version {}",
                     cc.getName(),
-                    ByteUtil.createString(ccb[startIndex+3])
+                    ByteUtil.createString(version)
                 );
-                cc.setVersion(ccb[startIndex+3]);
+                cc.setVersion(version);
             } else {
-                logger.error("Received version for unknown command class: {}", ByteUtil.createString(ccb[startIndex+2]));
+                logger.error("Received unsupported version ({}) or unknown command class: {}", version, ByteUtil.createString(ccb[startIndex+2]));
             }
         } else {
             logger.warn("Ignoring unsupported command: {}", ByteUtil.createString(ccb[startIndex+1]));
